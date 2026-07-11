@@ -1,0 +1,2 @@
+# Development dependencies for Loops project
+pytest>=8.0.0
