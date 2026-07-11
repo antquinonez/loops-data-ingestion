@@ -3,12 +3,18 @@ Prefect flow for data ingestion with intentional errors for troubleshooting demo
 This flow will fail due to data quality issues in the source CSV.
 """
 
+import os
+import sys
+
+# Configure Prefect to use local mode ONLY (no cloud connection)
+# This must be set BEFORE importing prefect
+os.environ["PREFECT_API_URL"] = ""
+os.environ.pop("PREFECT_API_KEY", None)
+
 from prefect import flow, task, get_run_logger
 import duckdb
 import csv
-import os
 import json
-import sys
 from datetime import datetime
 from pathlib import Path
 

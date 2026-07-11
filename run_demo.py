@@ -52,10 +52,15 @@ def cleanup_and_initialize(archive_logs: bool = False) -> dict:
     from datetime import datetime
     run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
     
+    # Configure Prefect to use local mode for all subprocesses
+    os.environ["PREFECT_API_URL"] = ""
+    os.environ.pop("PREFECT_API_KEY", None)
+    
     print("\n" + "=" * 80)
     print("INITIALIZING: Cleaning up previous run artifacts")
     print("=" * 80)
     print(f"Run ID: {run_id}")
+    print("Prefect configured for LOCAL MODE (no cloud connection)")
     
     try:
         from utils.cleanup import cleanup_all, clean_database, clean_generated_pipelines, clean_logs, archive_logs
@@ -412,6 +417,9 @@ async def trigger_nanobot_investigation(mcp_process=None):
     print(message)
     print("\nThis may take a moment... (agent is thinking and using tools)")
     
+    # Setup Nanobot logging to file
+    nanobot_log_path = paths.logs_dir / f"nanobot_{run_id}.log"
+    
     try:
         # Run the bot
         result: RunResult = await bot.run(
@@ -607,7 +615,41 @@ def run_full_demo(archive_logs: bool = False):
         setup_environment()
         
         import asyncio
-        asyncio.run(trigger_nanobot_investigation())
+        
+        # Setup Nanobot logging to file (in addition to console)
+        nanobot_log_path = paths.logs_dir / f"nanobot_{run_id}.log"
+        
+        # Create a tee class to write to both file and stdout
+        class Tee:
+            def __init__(self, *files):
+                self.files = files
+            def write(self, obj):
+                for f in self.files:
+                    f.write(obj)
+                    f.flush()
+            def flush(self):
+                for f in self.files:
+                    f.flush()
+        
+        try:
+            with open(nanobot_log_path, 'w') as nanobot_log_file:
+                # Tee stdout to both console and file
+                import sys
+                original_stdout = sys.stdout
+                original_stderr = sys.stderr
+                sys.stdout = Tee(original_stdout, nanobot_log_file)
+                sys.stderr = Tee(original_stderr, nanobot_log_file)
+                
+                try:
+                    asyncio.run(trigger_nanobot_investigation())
+                finally:
+                    # Restore original stdout/stderr
+                    sys.stdout = original_stdout
+                    sys.stderr = original_stderr
+        except Exception as e:
+            print(f"Error capturing Nanobot output: {e}")
+            # Fallback: run without capture
+            asyncio.run(trigger_nanobot_investigation())
         
         # After nanobot runs, check if it created a pipeline
         if generated_pipeline.exists():
