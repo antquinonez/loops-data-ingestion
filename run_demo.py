@@ -9,6 +9,7 @@ Main demo script to:
 import sys
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -45,6 +46,10 @@ except Exception:
 if not os.environ.get("OPENAI_API_KEY"):
     # Try to load from .env in current directory
     load_dotenv()
+
+# Import and initialize pipeline attempt tracker
+from utils.limits import PipelineAttemptTracker, log_attempt, is_repeated_error, get_backoff_delay
+pipeline_tracker = PipelineAttemptTracker()
 
 
 def cleanup_and_initialize(archive_logs: bool = False) -> dict:
@@ -470,6 +475,9 @@ def run_full_demo(archive_logs: bool = False):
     cleanup_result = cleanup_and_initialize(archive_logs=archive_logs)
     run_id = cleanup_result.get("run_id")
     
+    # Reset pipeline attempt tracker for this run
+    pipeline_tracker.reset()
+    
     print("\n" + "=" * 80)
     print("DATA INGESTION TROUBLESHOOTING DEMO")
     print("=" * 80)
@@ -603,6 +611,14 @@ def run_full_demo(archive_logs: bool = False):
     print("TRIGGERING NANOBOT INVESTIGATION")
     print("=" * 80)
     
+    # Check global limits before proceeding
+    limits = pipeline_tracker.get_limits('')
+    if limits['total_attempts'] >= limits['max_total_attempts']:
+        print(f"\n❌ MAX TOTAL ATTEMPTS REACHED: {limits['total_attempts']}/{limits['max_total_attempts']}")
+        print("   Cannot trigger Nanobot investigation.")
+        print("   Some pipelines may have exceeded their attempt limits.")
+        return
+    
     # Load .env and check for API key
     from dotenv import load_dotenv
     load_dotenv()
@@ -662,18 +678,137 @@ def run_full_demo(archive_logs: bool = False):
         else:
             print("\n⚠️  Nanobot did not create a pipeline file.")
             print("  Running pipeline builder demo as fallback...")
-            run_pipeline_builder_demo(run_id=run_id)
+            # Check limits before fallback
+            limits = pipeline_tracker.get_limits('')
+            if limits['total_attempts'] >= limits['max_total_attempts']:
+                print(f"\n❌ MAX ATTEMPTS REACHED: Cannot run fallback pipeline builder")
+            else:
+                run_pipeline_builder_demo(run_id=run_id)
     else:
         print("\n⚠️  No OpenAI API key detected.")
         print("To run a live investigation with Nanobot:")
         print("  1. Create .env file with OPENAI_API_KEY")
         print("  2. Or set it: export OPENAI_API_KEY='your-key'")
         print("\nFor now, running pipeline builder demo...")
-        run_pipeline_builder_demo(run_id=run_id)
+        # Check limits before fallback
+        limits = pipeline_tracker.get_limits('')
+        if limits['total_attempts'] >= limits['max_total_attempts']:
+            print(f"\n❌ MAX ATTEMPTS REACHED: Cannot run fallback pipeline builder")
+        else:
+            run_pipeline_builder_demo(run_id=run_id)
+
+
+def process_pipeline_with_limits(
+    pipeline_name: str,
+    source_path: str,
+    ideal_path: str,
+    output_table: str,
+    output_file: str,
+    base_env: dict,
+    run_id: Optional[str] = None
+) -> bool:
+    """
+    Process a single pipeline with attempt tracking and limits.
+    
+    Args:
+        pipeline_name: Name of the pipeline (e.g., 'users', 'orders', 'transactions')
+        source_path: Path to source data file
+        ideal_path: Path to ideal schema file
+        output_table: Name of output table
+        output_file: Path to save generated pipeline
+        base_env: Environment variables for subprocess
+        run_id: Optional run identifier
+        
+    Returns:
+        True if pipeline succeeded, False if limits exceeded or failed
+    """
+    from agents.pipeline_builder.tools import (
+        compare_schemas,
+        generate_cleaning_pipeline
+    )
+    
+    # Check if we've exceeded limits before starting
+    if not pipeline_tracker._check_limits(pipeline_name, 'regeneration'):
+        limits_msg = pipeline_tracker.get_limit_message(pipeline_name)
+        print(f"\n❌ SKIPPING {pipeline_name}: {limits_msg}")
+        return False
+    
+    print(f"\n--- Processing {pipeline_name} data ---")
+    
+    # Compare schemas
+    comparison = compare_schemas(source_path)
+    
+    if 'error' in comparison:
+        error_msg = f"Schema comparison error: {comparison['error']}"
+        print(f"Error: {error_msg}")
+        pipeline_tracker.record_attempt(pipeline_name, 'regeneration', error_msg, False)
+        return False
+    
+    print(f"Found {len(comparison.get('mismatches', []))} schema mismatches")
+    
+    # Generate pipeline
+    pipeline = generate_cleaning_pipeline(
+        source_path=source_path,
+        ideal_path=ideal_path,
+        output_table=output_table
+    )
+    
+    if 'error' in pipeline:
+        error_msg = f"Pipeline generation error: {pipeline.get('error')}"
+        print(f"Error: {error_msg}")
+        pipeline_tracker.record_attempt(pipeline_name, 'regeneration', error_msg, False)
+        return False
+    
+    print("\n✓ Pipeline generated successfully!")
+    print("\nGenerated SQL:")
+    print(pipeline['cleaning_sql'])
+    
+    # Save the pipeline
+    os.makedirs("pipelines/generated", exist_ok=True)
+    with open(output_file, "w") as f:
+        f.write(pipeline['pipeline_code'])
+    print(f"\n✓ Pipeline saved to: {output_file}")
+    
+    # Log successful generation
+    pipeline_tracker.record_attempt(pipeline_name, 'regeneration', None, True)
+    
+    # Execute the pipeline
+    print(f"\n--- Executing {pipeline_name} pipeline ---")
+    result = run_and_log_subprocess(
+        [sys.executable, output_file],
+        cwd=PROJECT_ROOT,
+        env=base_env,
+        run_id=run_id
+    )
+    
+    # Log execution attempt
+    if result.returncode == 0:
+        print(f"✓ {pipeline_name} pipeline executed successfully!")
+        print(f"Output: {result.stdout[:500]}...")
+        pipeline_tracker.record_attempt(pipeline_name, 'execution', None, True)
+        return True
+    else:
+        error_msg = result.stderr[:500] if result.stderr else "Unknown error"
+        print(f"⚠️  {pipeline_name} pipeline execution failed: {error_msg[:200]}")
+        
+        # Check for repeated error
+        if pipeline_tracker.is_repeated_error(pipeline_name, error_msg):
+            print(f"   ⚠️  REPEATED ERROR DETECTED - same issue as last attempt")
+            print(f"   This suggests a fundamental incompatibility or bug in generation logic")
+        
+        pipeline_tracker.record_attempt(pipeline_name, 'execution', error_msg, False)
+        
+        # Apply backoff if we'll try again
+        backoff = pipeline_tracker.get_backoff_delay(pipeline_name, 'execution')
+        if backoff > 0:
+            print(f"   Applying backoff: waiting {backoff:.1f}s...")
+            time.sleep(backoff)
+        
+        return False
 
 
 def run_pipeline_builder_demo(run_id: Optional[str] = None):
-    """Demonstrate the pipeline builder auto-generating cleaning code."""
+    """Demonstrate the pipeline builder auto-generating cleaning code with limits."""
     print("\nPipeline Builder: Analyzing source data and generating cleaning pipeline...")
     
     # Build environment with run_id for unique log files
@@ -687,127 +822,69 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
     if run_id:
         base_env["RUN_ID"] = run_id
     
-    from agents.pipeline_builder.tools import (
-        load_ideal_schema,
-        infer_source_schema,
-        compare_schemas,
-        generate_cleaning_pipeline
-    )
+    # Reset tracker for this demo run
+    pipeline_tracker.reset()
     
-    # Test with users data
-    print("\n--- Processing users data ---")
-    comparison = compare_schemas("data/source_data.csv")
+    # Define pipelines to process
+    pipelines = [
+        {
+            'name': 'users',
+            'source_path': str(paths.source_data),
+            'ideal_path': str(paths.users_schema),
+            'output_table': 'users_clean',
+            'output_file': 'pipelines/generated/clean_users_pipeline.py'
+        }
+    ]
     
-    if 'error' in comparison:
-        print(f"Error: {comparison['error']}")
-    else:
-        print(f"Found {len(comparison.get('mismatches', []))} schema mismatches")
-        
-        pipeline = generate_cleaning_pipeline(
-            source_path=str(paths.source_data),
-            ideal_path=str(paths.users_schema),
-            output_table="users_clean"
+    # Add transactions if exists
+    if paths.transactions_data.exists():
+        pipelines.append({
+            'name': 'transactions',
+            'source_path': str(paths.transactions_data),
+            'ideal_path': str(paths.transactions_schema),
+            'output_table': 'transactions_clean',
+            'output_file': 'pipelines/generated/clean_transactions_pipeline.py'
+        })
+    
+    # Add orders if exists
+    if paths.orders_data.exists():
+        pipelines.append({
+            'name': 'orders',
+            'source_path': str(paths.orders_data),
+            'ideal_path': str(paths.orders_schema),
+            'output_table': 'orders_clean',
+            'output_file': 'pipelines/generated/clean_orders_pipeline.py'
+        })
+    
+    # Check total pipelines limit
+    max_pipelines = pipeline_tracker._limits.get('max_total_pipelines', 3)
+    if len(pipelines) > max_pipelines:
+        print(f"\n⚠️  Limiting to {max_pipelines} pipelines (found {len(pipelines)})")
+        pipelines = pipelines[:max_pipelines]
+    
+    # Process each pipeline
+    all_succeeded = True
+    for pipeline_config in pipelines:
+        success = process_pipeline_with_limits(
+            pipeline_name=pipeline_config['name'],
+            source_path=pipeline_config['source_path'],
+            ideal_path=pipeline_config['ideal_path'],
+            output_table=pipeline_config['output_table'],
+            output_file=pipeline_config['output_file'],
+            base_env=base_env,
+            run_id=run_id
         )
-        
-        if 'error' not in pipeline:
-            print("\n✓ Pipeline generated successfully!")
-            print("\nGenerated SQL:")
-            print(pipeline['cleaning_sql'])
-            
-            # Save the pipeline
-            os.makedirs("pipelines/generated", exist_ok=True)
-            with open("pipelines/generated/clean_users_pipeline.py", "w") as f:
-                f.write(pipeline['pipeline_code'])
-            print(f"\n✓ Pipeline saved to: pipelines/generated/clean_users_pipeline.py")
-            
-            # Execute the pipeline
-            print("\n--- Executing generated pipeline ---")
-            result = run_and_log_subprocess(
-                [sys.executable, "pipelines/generated/clean_users_pipeline.py"],
-                cwd=PROJECT_ROOT,
-                env=base_env,
-                run_id=run_id
-            )
-            
-            if result.returncode == 0:
-                print("✓ Pipeline executed successfully!")
-                print(f"Output: {result.stdout[:500]}...")
-            else:
-                print(f"⚠️  Pipeline execution issue: {result.stderr[:200]}")
-        else:
-            print(f"Error generating pipeline: {pipeline.get('error')}")
+        if not success:
+            all_succeeded = False
     
-    # Check if we have additional files
-    transactions_csv = paths.transactions_data
-    if transactions_csv.exists():
-        print("\n--- Processing transactions data ---")
-        pipeline = generate_cleaning_pipeline(
-            source_path=str(transactions_csv),
-            ideal_path=str(paths.transactions_schema),
-            output_table="transactions_clean"
-        )
-        
-        if 'error' not in pipeline:
-            print("✓ Transactions pipeline generated successfully!")
-            
-            # Save the pipeline
-            os.makedirs("pipelines/generated", exist_ok=True)
-            with open("pipelines/generated/clean_transactions_pipeline.py", "w") as f:
-                f.write(pipeline['pipeline_code'])
-            print(f"✓ Pipeline saved to: pipelines/generated/clean_transactions_pipeline.py")
-            
-            # Execute the pipeline
-            print("--- Executing transactions pipeline ---")
-            result = run_and_log_subprocess(
-                [sys.executable, "pipelines/generated/clean_transactions_pipeline.py"],
-                cwd=PROJECT_ROOT,
-                env=base_env,
-                run_id=run_id
-            )
-            
-            if result.returncode == 0:
-                print("✓ Transactions pipeline executed successfully!")
-                print(f"Output: {result.stdout[:200]}...")
-            else:
-                print(f"⚠️  Pipeline execution issue: {result.stderr[:200]}")
-        else:
-            print(f"Error generating transactions pipeline: {pipeline.get('error')}")
+    # Check if we exceeded total limits
+    limits = pipeline_tracker.get_limits('')
+    if limits['total_attempts'] >= limits['max_total_attempts']:
+        print(f"\n❌ MAX TOTAL ATTEMPTS REACHED: {limits['total_attempts']}/{limits['max_total_attempts']}")
+        print("   Some pipelines may not have been processed.")
+        all_succeeded = False
     
-    # Check if we have orders data
-    orders_csv = paths.orders_data
-    if orders_csv.exists():
-        print("\n--- Processing orders data ---")
-        pipeline = generate_cleaning_pipeline(
-            source_path=str(orders_csv),
-            ideal_path=str(paths.orders_schema),
-            output_table="orders_clean"
-        )
-        
-        if 'error' not in pipeline:
-            print("✓ Orders pipeline generated successfully!")
-            
-            # Save the pipeline
-            os.makedirs("pipelines/generated", exist_ok=True)
-            with open("pipelines/generated/clean_orders_pipeline.py", "w") as f:
-                f.write(pipeline['pipeline_code'])
-            print(f"✓ Pipeline saved to: pipelines/generated/clean_orders_pipeline.py")
-            
-            # Execute the pipeline
-            print("--- Executing orders pipeline ---")
-            result = run_and_log_subprocess(
-                [sys.executable, "pipelines/generated/clean_orders_pipeline.py"],
-                cwd=PROJECT_ROOT,
-                env=base_env,
-                run_id=run_id
-            )
-            
-            if result.returncode == 0:
-                print("✓ Orders pipeline executed successfully!")
-                print(f"Output: {result.stdout[:200]}...")
-            else:
-                print(f"⚠️  Pipeline execution issue: {result.stderr[:200]}")
-        else:
-            print(f"Error generating orders pipeline: {pipeline.get('error')}")
+    return all_succeeded
 
 
 if __name__ == "__main__":

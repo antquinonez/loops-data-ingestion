@@ -1,0 +1,58 @@
+# Pipeline Regeneration and Execution Limits Configuration
+# For the Loops Data Ingestion Troubleshooting System
+
+# Per-pipeline limits
+limits:
+  # Maximum number of times to regenerate a pipeline for the same data
+  # Each regeneration creates a new version of the cleaning pipeline
+  max_regenerations_per_pipeline: 3
+  
+  # Maximum number of times to execute a generated pipeline
+  # Each execution attempts to run the pipeline against the data
+  max_executions_per_pipeline: 2
+  
+  # Maximum number of pipelines to process in a single run
+  # For demo: 3 (users, orders, transactions)
+  max_total_pipelines: 3
+  
+  # Maximum total attempts across all pipelines
+  # Calculated as: max_total_pipelines * max_regenerations * max_executions
+  # For demo: 3 * 3 * 2 = 18
+  max_total_attempts: 18
+
+# Timeout settings (in seconds)
+timeouts:
+  # Maximum time to wait for a single pipeline execution
+  pipeline_execution: 60
+  
+  # Maximum time for a complete investigation cycle
+  investigation: 300
+  
+  # Maximum time for schema comparison
+  schema_comparison: 30
+
+# Resource limits
+resources:
+  # Maximum API tokens to use per run (approximate)
+  # At ~$0.000005/token for gpt-4o-mini, 25000 tokens = ~$0.125
+  max_api_tokens_per_run: 25000
+  
+  # Maximum disk space for logs and generated files (MB)
+  max_disk_space_mb: 50
+
+# Behavior settings
+behavior:
+  # Enable backoff delays between regeneration attempts
+  enable_backoff: true
+  
+  # Base delay in seconds for backoff (exponential: base * 2^attempt)
+  backoff_base_seconds: 1
+  
+  # Maximum backoff delay in seconds
+  backoff_max_seconds: 5
+  
+  # Detect and handle repeated errors (same error twice)
+  detect_repeated_errors: true
+  
+  # Log detailed attempt information to file
+  log_attempts: true
