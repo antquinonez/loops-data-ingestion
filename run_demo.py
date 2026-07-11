@@ -455,7 +455,6 @@ def run_pipeline_builder_demo():
             print(pipeline['cleaning_sql'])
             
             # Save the pipeline
-            import os
             os.makedirs("pipelines/generated", exist_ok=True)
             with open("pipelines/generated/clean_users_pipeline.py", "w") as f:
                 f.write(pipeline['pipeline_code'])
