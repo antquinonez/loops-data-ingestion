@@ -51,7 +51,7 @@ def load_ideal_schema(schema_path: Optional[str] = None) -> Dict[str, Any]:
             schema = yaml.safe_load(f)
         return schema
     except Exception as e:
-        return {"error": f"Failed to load ideal schema: {e}"
+        return {"error": f"Failed to load ideal schema: {e}"}
 
 
 def infer_source_schema(file_path: str, sample_size: int = 100) -> Dict[str, Any]:
