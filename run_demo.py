@@ -747,10 +747,16 @@ def process_pipeline_with_limits(
     print(f"Found {len(comparison.get('mismatches', []))} schema mismatches")
     
     # Generate pipeline
+    # Derive source table name from output table (e.g., orders_clean -> raw_orders)
+    source_table = output_table.replace("_clean", "")
+    if not source_table.startswith("raw_"):
+        source_table = f"raw_{source_table}"
+    
     pipeline = generate_cleaning_pipeline(
         source_path=source_path,
         ideal_path=ideal_path,
-        output_table=output_table
+        output_table=output_table,
+        source_table=source_table
     )
     
     if 'error' in pipeline:

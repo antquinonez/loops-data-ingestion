@@ -240,8 +240,15 @@ class ValidationAgent:
         output_row_count = None
         
         try:
-            # Try to get row count from raw_users or source table
-            source_tables = ["raw_users", f"raw_{output_table}", output_table.replace("_clean", "")]
+            # Try to get row count from source table
+            # Try common patterns: raw_{base}, raw_{base}_clean, {base}
+            table_base = output_table.replace("_clean", "")
+            source_tables = [
+                f"raw_{table_base}",      # e.g., raw_orders
+                f"raw_{output_table}",    # e.g., raw_orders_clean (unlikely but possible)
+                "raw_users",              # legacy default
+                table_base,               # e.g., orders
+            ]
             for table in source_tables:
                 try:
                     count = self._execute_query(f"SELECT COUNT(*) FROM {table}")
@@ -252,7 +259,10 @@ class ValidationAgent:
                     continue
                     
             # Get output table row count
-            output_row_count = int(self._execute_query(f"SELECT COUNT(*) FROM {output_table}"))
+            try:
+                output_row_count = int(self._execute_query(f"SELECT COUNT(*) FROM {output_table}"))
+            except Exception as e:
+                logger.warning(f"Could not get output row count for {output_table}: {e}")
         except Exception as e:
             logger.warning(f"Could not get row counts: {e}")
             
