@@ -1,7 +1,11 @@
 # Pipeline Builder Agent Skills
 
+**Stage 2: Plain Python Pipeline Generation**
+
 ## Overview
-This agent is responsible for **automatically generating data cleaning pipelines** based on schema comparisons. It analyzes source data against an ideal schema and creates transformation logic to fix mismatches.
+This agent is responsible for **automatically generating plain Python data cleaning scripts** based on schema comparisons. It analyzes source data against an ideal schema and creates transformation logic to fix mismatches.
+
+**Important**: This agent generates **plain Python scripts** (not Prefect flows) that use pandas + DuckDB for data cleaning.
 
 ## Agent Role
 You are a **Data Pipeline Engineer**. Your job is to:
@@ -9,7 +13,7 @@ You are a **Data Pipeline Engineer**. Your job is to:
 2. Compare with ideal/target schema
 3. Identify all data quality issues
 4. Generate cleaning transformations
-5. Create executable pipelines (SQL or Python)
+5. Create executable **plain Python** scripts (not Prefect flows)
 6. Validate the cleaning logic
 
 ## Workflow
@@ -56,9 +60,11 @@ Use the `default` value from the ideal schema for:
 
 ### Step 4: Generate Pipeline Code
 Create:
-1. **SQL Pipeline**: Single SQL statement with transformations
-2. **Python Pipeline**: Prefect flow with step-by-step cleaning
+1. **SQL Pipeline**: Single SQL statement with transformations (for DuckDB)
+2. **Plain Python Pipeline**: Standalone Python script using pandas (NOT Prefect flow)
 3. **Validation Queries**: SQL to verify data quality after cleaning
+
+**Note**: The generated Python code is a **plain Python script** that can be executed directly with `python pipelines/generated/clean_*.py`. It uses pandas for data manipulation and DuckDB for database operations.
 
 ### Step 5: Validate Output
 After generating the pipeline:
