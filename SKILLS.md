@@ -6,7 +6,7 @@ This document serves as the **entry point** and **index** for all specialized sk
 
 ## Overview
 
-The Loops project implements a **3-stage autonomous workflow** for troubleshooting and fixing data ingestion failures using a **hybrid pipeline architecture**:
+The Loops project implements a **3-stage autonomous workflow** for troubleshooting and fixing data ingestion failures using a **consistent Prefect pipeline architecture**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -17,8 +17,8 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 │  │  STAGE 1:        │    │  STAGE 2:        │    │  STAGE 3:    │  │
 │  │  INVESTIGATION  │───▶│  PIPELINE       │───▶│  VALIDATION  │  │
 │  │                 │    │  BUILDER        │    │              │  │
-│  │  (Prefect      │    │  (Generates     │    │  (Plain     │  │
-│  │   Analysis)   │    │   Plain Python) │    │   Python)   │  │
+│  │  (Prefect      │    │  (Generates     │    │  (Prefect   │  │
+│  │   Analysis)   │    │   Prefect)      │    │   Flows)   │  │
 │  └─────────────────┘    └─────────────────┘    └─────────────┘  │
 │         │                  │                   │            │
 │         ▼                  ▼                   ▼            │
@@ -35,18 +35,19 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 
 ### Pipeline Architecture Clarification
 
-This project uses a **hybrid model** with two distinct pipeline types:
+This project uses a **consistent Prefect model** for all pipeline types:
 
 | Pipeline Type | Location | Purpose | Technology |
 |---------------|----------|---------|------------|
 | **Prefect Flow** | `flows/ingestion_flow.py` | Demonstrate failure | Prefect + DuckDB |
-| **Plain Python** | `pipelines/generated/*.py` | Fix data issues | Pandas + DuckDB |
+| **Prefect Flow** | `pipelines/generated/*.py` | Fix data issues | Prefect + Pandas + DuckDB |
 
-**Why the distinction?**
-- **Prefect Flow**: Used only for the **demo** to show what happens when data quality issues occur. It has orchestration, retries, logging - the full Prefect experience.
-- **Plain Python**: Used for **generated cleaning pipelines** because they're simple, focused transformations that don't need orchestration overhead.
+**Why use Prefect for all pipelines?**
+- **Prefect Flow**: Used for both the **demo** to show failures and for **generated cleaning pipelines** to fix data issues.
+- **Consistent orchestration**: All pipelines benefit from Prefect's built-in retry, logging, and task dependency management.
+- **Unified deployment**: Single deployment strategy for all pipeline types.
 
-The **Pipeline Builder** (Stage 2) generates **plain Python scripts**, not Prefect flows.
+The **Pipeline Builder** (Stage 2) generates **Prefect flows**, not plain Python scripts.
 
 ---
 
@@ -79,7 +80,7 @@ The **Pipeline Builder** (Stage 2) generates **plain Python scripts**, not Prefe
 
 **Trigger**: Prefect flow fails or user requests investigation
 
-**Handoff**: To Stage 2 with findings: "Generate **plain Python** cleaning pipeline"
+**Handoff**: To Stage 2 with findings: "Generate **Prefect** cleaning pipeline"
 
 **When to use**: Always the **first stage** after a failure is detected
 
@@ -91,35 +92,45 @@ The **Pipeline Builder** (Stage 2) generates **plain Python scripts**, not Prefe
 
 **Agent Identity**: Data Pipeline Engineer
 
-**Mission**: Automatically generate **plain Python cleaning scripts** based on schema comparisons and identified issues.
+**Mission**: Automatically generate **Prefect cleaning flows** based on schema comparisons and identified issues.
 
 **Key Responsibilities**:
 - Load and compare schemas (source vs ideal)
 - Identify type mismatches, NULL issues, constraint violations
-- Generate **plain Python** (not Prefect) cleaning transformations
-- Create executable Python scripts using pandas + DuckDB
+- Generate **Prefect flows** with @task and @flow decorators
+- Create executable Python scripts using pandas + DuckDB with Prefect orchestration
 - Generate validation queries
-- Save **plain Python** pipeline to `pipelines/generated/`
+- Save **Prefect flow** pipeline to `pipelines/generated/`
 
-**Tools Used** (generate plain Python code):
+**Tools Used** (generate Prefect flow code):
 - `load_ideal_schema()` - Load schema from YAML
 - `infer_source_schema(file_path, sample_size)` - Infer schema from CSV
 - `compare_schemas(source_path, ideal_path)` - Compare schemas
-- `generate_cleaning_pipeline(source_path, ideal_path, output_table)` - Generate **plain Python** cleaning script
+- `generate_cleaning_pipeline(source_path, ideal_path, output_table)` - Generate **Prefect flow** cleaning pipeline
 - `write_file(path, content)` - Save generated code
 
-**Output**: Plain Python scripts (e.g., `pipelines/generated/clean_users_pipeline.py`) that:
+**Output**: Prefect flow scripts (e.g., `pipelines/generated/clean_users_pipeline.py`) that:
 ```python
+from prefect import flow, task
+import pandas as pd
+
+@task
 def clean_data(df):
-    # Uses pandas, not Prefect
+    # Uses pandas within Prefect tasks
     df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
     df['email'] = df['email'].fillna('unknown@example.com')
     return df
+
+@flow
+def clean_and_load_pipeline():
+    df = load_source_data()
+    df = clean_data(df)
+    save_to_duckdb(df, "users_clean")
 ```
 
 **Trigger**: Investigation complete with identified data quality issues
 
-**Handoff**: To Stage 3 with generated **plain Python** pipeline path
+**Handoff**: To Stage 3 with generated **Prefect** pipeline path
 
 **When to use**: After Stage 1 identifies data quality issues that require transformation
 
@@ -131,11 +142,11 @@ def clean_data(df):
 
 **Agent Identity**: Data Quality Assurance Engineer
 
-**Mission**: Execute generated **plain Python** pipelines and validate they produce correct, high-quality data.
+**Mission**: Execute generated **Prefect** pipelines and validate they produce correct, high-quality data.
 
 **Key Responsibilities**:
 - Pre-execution checks (file exists, syntax valid, etc.)
-- Execute **plain Python** pipeline using subprocess
+- Execute **Prefect flow** pipeline using subprocess
 - Validate row counts match expectations
 - Check for NULL values in NOT NULL columns
 - Verify all types match target schema
@@ -147,10 +158,10 @@ def clean_data(df):
 
 **Tools Used**:
 - `query_duckdb(query)` - Query DuckDB for validation
-- `subprocess.run()` - Execute plain Python pipeline
+- `subprocess.run()` - Execute Prefect flow pipeline
 - Custom validation queries (NULL checks, type checks, etc.)
 
-**Trigger**: Pipeline Builder generates a **plain Python** cleaning pipeline
+**Trigger**: Pipeline Builder generates a **Prefect** cleaning pipeline
 
 **Handooff**: 
 - To deployment if PASS
@@ -184,13 +195,13 @@ All agents have access to:
 - `data/ingestion.db` - DuckDB database
 - `schemas/users_schema.yaml` - Target schema
 - `logs/ingestion.log` - Main ingestion log (from Prefect flow)
-- `pipelines/generated/` - **Plain Python** cleaning pipelines (auto-generated)
+- `pipelines/generated/` - **Prefect** cleaning flows (auto-generated)
 - `config/nanobot_config.yaml` - Agent configuration
 
 **Key Tables**:
 - `raw_users` - Staging table (all source data, created by Prefect flow)
 - `users` - Target table (strict constraints, Prefect flow fails here)
-- `users_clean` - Cleaned output table (**created by plain Python pipeline**)
+- `users_clean` - Cleaned output table (**created by Prefect cleaning flow**)
 
 ### Communication Patterns
 
@@ -206,14 +217,14 @@ Instructions: [Specific instructions]
 Tools to Use: [List of relevant tools]
 Expected Output: [What should be produced]
 
-Note: Generated pipelines will be PLAIN PYTHON, not Prefect flows.
+Note: Generated pipelines will be PREFECT flows, not plain Python.
 ```
 
 **Final Output Format** (Stage 3):
 ```json
 {
   "status": "PASS|FAIL|WARN",
-  "pipeline": "path/to/plain_python_pipeline.py",
+  "pipeline": "path/to/prefect_pipeline.py",
   "findings": [...],
   "validation": {...},
   "recommendations": [...]
@@ -229,7 +240,7 @@ Note: Generated pipelines will be PLAIN PYTHON, not Prefect flows.
    - Type mismatches
    - Format violations
    - Constraint violations
-   - → **Fix**: Generate **plain Python** cleaning pipeline
+   - → **Fix**: Generate **Prefect** cleaning pipeline
 
 2. **Configuration Errors**
    - Missing files
@@ -243,10 +254,10 @@ Note: Generated pipelines will be PLAIN PYTHON, not Prefect flows.
    - → **Fix**: Check connections, credentials, network
 
 4. **Code Errors**
-   - Syntax errors in generated plain Python
+   - Syntax errors in generated Prefect flows
    - Import errors
    - Logic errors
-   - → **Fix**: Debug and correct the generated Python code
+   - → **Fix**: Debug and correct the generated Prefect flow code
 
 ---
 
@@ -268,7 +279,7 @@ USER REQUEST / DETECTED FAILURE
 │ │ 5. Identify all issues                                  │ │ │
 │ │ 6. Formulate root cause analysis                       │ │ │
 │ └─────────────────────────────────────────────────────────┘ │
-│ Output: "Generate plain Python cleaning pipeline"          │
+│ Output: "Generate Prefect cleaning pipeline"          │
 └─────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -278,12 +289,12 @@ USER REQUEST / DETECTED FAILURE
 │ │ 1. Load ideal schema                                    │ │ │
 │ │ 2. Infer source schema                                 │ │ │
 │ │ 3. Compare schemas to identify mismatches                │ │ │
-│ │ 4. Generate TRANSFORMATIONS (for plain Python)          │ │ │
-│ │ 5. Generate plain Python cleaning script                │ │ │
+│ │ 4. Generate TRANSFORMATIONS (for Prefect tasks)           │ │ │
+│ │ 5. Generate Prefect flow cleaning pipeline                │ │ │
 │ │ 6. Generate validation queries                         │ │ │
 │ │ 7. Save to pipelines/generated/clean_*.py              │ │ │
 │ └─────────────────────────────────────────────────────────┘ │
-│ Output: PLAIN PYTHON SCRIPT (not Prefect flow)             │
+│ Output: PREFECT FLOW (with @flow and @task decorators)      │
 └─────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -291,7 +302,7 @@ USER REQUEST / DETECTED FAILURE
 │ STAGE 3: VALIDATION                                         │
 │ ┌─────────────────────────────────────────────────────────┐ │
 │ │ 1. Pre-execution checks                                 │ │ │
-│ │ 2. Execute generated PLAIN PYTHON pipeline              │ │ │
+│ │ 2. Execute generated PREFECT pipeline                 │ │ │
 │ │ 3. Validate row counts                                   │ │ │
 │ │ 4. Check NULL constraints                               │ │ │
 │ │ 5. Verify types match                                   │ │ │
@@ -300,12 +311,12 @@ USER REQUEST / DETECTED FAILURE
 │ │ 8. Verify data consistency                               │ │ │
 │ │ 9. Test performance                                     │ │ │
 │ └─────────────────────────────────────────────────────────┘ │
-│ Output: Validation report for PLAIN PYTHON pipeline         │
+│ Output: Validation report for PREFECT pipeline          │
 └─────────────────────────────────────────────────────────────┘
     │
     ├── FAIL ──► Return to Stage 2 with specific issues
     │
-    └── PASS ──► Deploy plain Python pipeline
+    └── PASS ──► Deploy Prefect pipeline
 ```
 
 ### Agent-to-Agent Communication
@@ -326,17 +337,17 @@ Identified Issues:
      - Problem values: ['N/A']
      - Fix: COALESCE(CAST(age AS INTEGER), 0)
 
-Action: Generate PLAIN PYTHON cleaning pipeline for data/source_data.csv
+Action: Generate PREFECT cleaning pipeline for data/source_data.csv
 Target: users_clean table
 Schema: schemas/users_schema.yaml
 Tools: load_ideal_schema, infer_source_schema, compare_schemas, generate_cleaning_pipeline
 Save to: pipelines/generated/clean_users_pipeline.py
 
-Expected Output: A PLAIN PYTHON script (not Prefect) that:
-  1. Loads data/source_data.csv with pandas
-  2. Applies type conversions with fillna fallback
-  3. Fills NULL values with schema defaults
-  4. Inserts cleaned data into users_clean table using DuckDB
+Expected Output: A PREFECT flow (with @flow and @task decorators) that:
+  1. Loads data/source_data.csv with pandas in @task functions
+  2. Applies type conversions with fillna fallback in @task functions
+  3. Fills NULL values with schema defaults in @task functions
+  4. Inserts cleaned data into users_clean table using DuckDB in @task function
 ```
 
 **Stage 2 → Stage 3 (Pipeline Builder → Validation)**:
@@ -345,7 +356,7 @@ PIPELINE GENERATION COMPLETE - HANDOFF TO VALIDATION
 ====================================================
 
 Pipeline Generated: pipelines/generated/clean_users_pipeline.py
-Pipeline Type: PLAIN PYTHON (not Prefect flow)
+Pipeline Type: PREFECT FLOW (with @flow and @task decorators)
 
 Source: data/source_data.csv
 Target: users_clean
@@ -356,7 +367,7 @@ Issues Addressed:
   ✓ Type mismatch (age) → pd.to_numeric(df['age'], errors='coerce').fillna(0)
   ✓ Format invalid (email) → Email validation with regex
 
-Transformations Applied (PLAIN PYTHON/pandas):
+Transformations Applied (PREFECT tasks with pandas):
   1. email: df['email'].fillna('unknown@example.com')
   2. age: pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
   3. join_date: pd.to_datetime(df['join_date'], errors='coerce').fillna('1970-01-01')
@@ -369,7 +380,7 @@ Validation Queries Generated:
   - Type checks for all columns
   - Constraint checks (age range, status enum)
 
-Action: Execute and validate the PLAIN PYTHON pipeline
+Action: Execute and validate the PREFECT pipeline
 Expected: All 13 rows processed, no NULLs, all types correct
 ```
 
@@ -381,7 +392,7 @@ VALIDATION PASSED - READY FOR DEPLOYMENT
 ========================================
 
 Pipeline: pipelines/generated/clean_users_pipeline.py
-Pipeline Type: PLAIN PYTHON
+Pipeline Type: PREFECT FLOW
 Status: ALL CHECKS PASSED
 
 Validation Results:
@@ -396,7 +407,7 @@ Validation Results:
 Cleaned data available in:
   - Table: users_clean
   - Database: data/ingestion.db
-  - Created by: PLAIN PYTHON pipeline
+  - Created by: PREFECT pipeline
 
 Action: Deploy pipeline to production workflow
 ```
@@ -407,29 +418,29 @@ VALIDATION FAILED - RETURNING TO PIPELINE BUILDER
 =================================================
 
 Pipeline: pipelines/generated/clean_users_pipeline.py
-Pipeline Type: PLAIN PYTHON
+Pipeline Type: PREFECT FLOW
 Status: VALIDATION FAILED
 
 Failed Checks:
   1. Type Check - age column
      - Expected: INTEGER
      - Actual: VARCHAR
-     - Issue: Type conversion in plain Python not working correctly
+     - Issue: Type conversion in Prefect task not working correctly
   
   2. NULL Check - email column
      - Expected: 0 NULLs
      - Actual: 2 NULLs
-     - Issue: fillna not applied properly
+     - Issue: fillna not applied properly in Prefect task
 
-Root Cause: Plain Python pipeline generated with incorrect logic
+Root Cause: Prefect pipeline generated with incorrect logic
 
 Action: Pipeline Builder should:
   - Fix pandas type conversion: pd.to_numeric(..., errors='coerce')
-  - Ensure all fillna defaults are applied
-  - Add explicit validation in the plain Python script
+  - Ensure all fillna defaults are applied in Prefect tasks
+  - Add explicit validation in the Prefect flow
 
 Trigger Pipeline Builder with:
-  "Fix type conversion for age and NULL handling for email in the PLAIN PYTHON pipeline. Use pandas properly."
+  "Fix type conversion for age and NULL handling for email in the PREFECT pipeline. Use pandas properly."
 ```
 
 ---
@@ -447,13 +458,13 @@ Is this about...?
 │   ├── Need to query database? → flows/investigation_skills.md
 │   └── Need to validate schema? → flows/investigation_skills.md
 │
-├── Generating a plain Python fix?
+├── Generating a Prefect fix?
 │   ├── Need to compare schemas? → agents/pipeline_builder/skills.md
 │   ├── Need to generate transformations? → agents/pipeline_builder/skills.md
-│   ├── Need to create cleaning script? → agents/pipeline_builder/skills.md
+│   ├── Need to create cleaning flow? → agents/pipeline_builder/skills.md
 │   └── Need to save generated code? → agents/pipeline_builder/skills.md
 │
-└── Testing a plain Python pipeline?
+└── Testing a Prefect pipeline?
     ├── Need to execute pipeline? → flows/validation_skills.md
     ├── Need to validate output? → flows/validation_skills.md
     ├── Need to check row counts? → flows/validation_skills.md
@@ -466,14 +477,14 @@ Is this about...?
 
 If you're new to this project, follow this learning path:
 
-1. **Read this file (SKILLS.md)** - Understand the overall workflow and hybrid architecture
+1. **Read this file (SKILLS.md)** - Understand the overall workflow and consistent Prefect architecture
 2. **Read flows/investigation_skills.md** - Learn how to diagnose Prefect flow failures
-3. **Read agents/pipeline_builder/skills.md** - Learn how to generate plain Python fixes
-4. **Read flows/validation_skills.md** - Learn how to verify plain Python pipelines
+3. **Read agents/pipeline_builder/skills.md** - Learn how to generate Prefect fixes
+4. **Read flows/validation_skills.md** - Learn how to verify Prefect pipelines
 5. **Read AGENTS.md** - Learn project conventions and constraints
 6. **Read README.md** - Learn project structure and setup
 
-**Key Concept**: This project uses **two pipeline types** - Prefect for orchestration/demo, plain Python for cleaning/fixes.
+**Key Concept**: This project uses **one consistent pipeline type** - Prefect for both orchestration/demo and cleaning/fixes.
 
 ---
 
@@ -490,15 +501,15 @@ Stage 1 (Investigation):
   
 Stage 2 (Pipeline Builder):
   → Compare schemas
-  → Generate plain Python cleaning script
+  → Generate Prefect cleaning flow
   → Output: "Generated pipelines/generated/clean_users_pipeline.py"
   
 Stage 3 (Validation):
-  → Execute plain Python pipeline
+  → Execute Prefect pipeline
   → Validate output
   → Output: "Pipeline works, data is clean"
 
-Result: Self-healing complete with plain Python fix
+Result: Self-healing complete with Prefect fix
 ```
 
 ### Workflow 2: Investigation Only
@@ -514,25 +525,25 @@ Result: Analysis report (no fix generated)
 
 ### Workflow 3: Pipeline Generation Only
 ```
-User: "Generate a plain Python cleaning pipeline for this data"
+User: "Generate a Prefect cleaning pipeline for this data"
 
 Stage 2 (Pipeline Builder):
   → Load schemas, compare, generate
-  → Output: Generated plain Python cleaning script
+  → Output: Generated Prefect cleaning flow
 
-Result: Plain Python pipeline code (no investigation or validation)
+Result: Prefect pipeline code (no investigation or validation)
 ```
 
 ### Workflow 4: Validation Only
 ```
-User: "Validate this plain Python pipeline"
+User: "Validate this Prefect pipeline"
 
 Stage 3 (Validation):
-  → Execute plain Python pipeline
+  → Execute Prefect pipeline
   → Validate output
   → Output: Validation report
 
-Result: Pass/Fail report for plain Python pipeline
+Result: Pass/Fail report for Prefect pipeline
 ```
 
 ---
@@ -542,15 +553,15 @@ Result: Pass/Fail report for plain Python pipeline
 | Stage | Agent Type | Skills File | Purpose | Pipeline Type |
 |-------|------------|-------------|---------|----------------|
 | 1 | Investigation Agent | `flows/investigation_skills.md` | Diagnose Prefect flow failures | N/A |
-| 2 | Pipeline Builder Agent | `agents/pipeline_builder/skills.md` | Generate fixes | Plain Python |
-| 3 | Validation Agent | `flows/validation_skills.md` | Verify fixes | Plain Python |
-| All | Any Agent | `SKILLS.md` (this file) | Master index + shared skills | Both |
+| 2 | Pipeline Builder Agent | `agents/pipeline_builder/skills.md` | Generate fixes | Prefect |
+| 3 | Validation Agent | `flows/validation_skills.md` | Verify fixes | Prefect |
+| All | Any Agent | `SKILLS.md` (this file) | Master index + shared skills | Prefect |
 
 ---
 
 ## Related Documentation
 
-- **README.md** - Project setup, structure, hybrid architecture, and usage
+- **README.md** - Project setup, structure, consistent Prefect architecture, and usage
 - **AGENTS.md** - Instructions for AI agents working with this codebase
 - **config/nanobot_config.yaml** - Agent configuration
 - **run_demo.py** - Main entry point that orchestrates all stages
@@ -570,19 +581,18 @@ Result: Pass/Fail report for plain Python pipeline
 
 ## Summary
 
-This project implements a **multi-stage autonomous workflow** with a **hybrid pipeline architecture**:
+This project implements a **multi-stage autonomous workflow** with a **consistent Prefect pipeline architecture**:
 
 1. **Investigation** → Find what's wrong with the Prefect flow
-2. **Pipeline Building** → Generate a **plain Python** fix  
-3. **Validation** → Verify the **plain Python** fix works
+2. **Pipeline Building** → Generate a **Prefect** fix  
+3. **Validation** → Verify the **Prefect** fix works
 
 **Important Distinction**:
-- **Prefect flows** are used for the **failing demo** (`flows/ingestion_flow.py`)
-- **Plain Python scripts** are generated as **solutions** (`pipelines/generated/*.py`)
+- **Prefect flows** are used for **both** the failing demo (`flows/ingestion_flow.py`) **and** the generated solutions (`pipelines/generated/*.py`)
 
 Each stage has specialized skills documented in its own file. This master SKILLS.md file serves as the index to help you find the right guidance for your current task.
 
-**Remember**: The workflow is **sequential** - each stage builds on the previous one. Start with investigation, then build a plain Python fix, then validate it.
+**Remember**: The workflow is **sequential** - each stage builds on the previous one. Start with investigation, then build a Prefect fix, then validate it.
 
 ---
 

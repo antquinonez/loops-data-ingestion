@@ -1,6 +1,6 @@
 # Data Ingestion Troubleshooting with Nanobot
 
-An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues using a **hybrid pipeline architecture**.
+An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues using a **consistent Prefect pipeline architecture**.
 
 ## Overview
 
@@ -8,7 +8,7 @@ This project showcases:
 
 1. **Intentional Data Errors**: A **Prefect** ingestion flow that fails due to data quality issues (NULL values, type mismatches, malformed data)
 2. **Autonomous Investigation**: A Nanobot agent that automatically troubleshoots failures using custom tools
-3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **plain Python cleaning scripts** to fix data issues
+3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **Prefect cleaning flows** to fix data issues
 4. **Schema Validation**: Automatic comparison of source data against ideal schemas
 5. **Self-Healing**: The system can generate and execute cleaning pipelines to resolve ingestion failures
 
@@ -16,8 +16,8 @@ This project showcases:
 
 - **Nanobot**: Autonomous AI agent framework with tool integration
 - **DuckDB**: Embedded analytical database for data processing
-- **Prefect**: Workflow orchestration (used only for the **failing** demo pipeline)
-- **Pandas**: Data manipulation library (used for **cleaning** pipelines)
+- **Prefect**: Workflow orchestration (used for **all** pipelines)
+- **Pandas**: Data manipulation library (used within Prefect flows)
 - **OpenAI API**: LLM-powered investigation and code generation
 - **MCP Server**: Model Context Protocol for enhanced agent capabilities (optional)
 
@@ -33,11 +33,11 @@ This project uses a **two-tier pipeline architecture**:
 - **Type**: Full Prefect flow with `@flow` and `@task` decorators
 - **Status**: Will fail due to data quality issues
 
-### Tier 2: Plain Python Cleaning Pipelines (AUTO-GENERATED)
+### Tier 2: Prefect Cleaning Flows (AUTO-GENERATED)
 - **Files**: `pipelines/generated/clean_*.py`
 - **Purpose**: **Fixes** the data quality issues
-- **Type**: Standalone Python scripts using pandas + DuckDB
-- **Status**: Succeeds by applying type conversions and NULL handling
+- **Type**: Prefect flows with `@flow` and `@task` decorators
+- **Status**: Succeeds by applying type conversions, NULL handling, and constraint enforcement
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -70,51 +70,54 @@ This project uses a **two-tier pipeline architecture**:
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  TIER 2: Plain Python (Cleaning)                              │
+│  TIER 2: Prefect (Cleaning)                                   │
 │  ─────────────────────────────────                           │
 │  pipelines/generated/clean_users_pipeline.py                 │
 │                                                             │
+│  @task                                                       │
 │  def load_source_data(path):                                │
-│      return pd.read_csv(path)                               │
+│      return pd.read_csv(path)                               ✓ PASS│
 │                                                             │
+│  @task                                                       │
 │  def clean_data(df):                                        │
-│      # Type conversions with COALESCE fallback              │
+│      # Type conversions with defaults                       │
 │      df['age'] = pd.to_numeric(df['age'], errors='coerce')   │
 │                   .fillna(0).astype(int)                       │
-│      # NULL handling                                         │
+│      # Enforce constraints                                   │
 │      df['email'] = df['email'].fillna('unknown@example.com') │
-│      # Date conversion                                        │
-│      df['join_date'] = pd.to_datetime(df['join_date'])       │
+│      df['status'] = df['status'].apply(lambda x: x if x      │
+│                   in {'active', 'inactive'} else 'inactive')  │
 │                                                             │
+│  @task                                                       │
 │  def save_to_duckdb(df, table):                              │
 │      conn = duckdb.connect(...)                              │
-│      conn.register('df', df)                                 │
-│      conn.execute(f"CREATE TABLE {table} AS SELECT * FROM df")│
+│      df.to_sql(table, conn, if_exists='replace')             ✓ PASS│
 │                                                             │
-│  if __name__ == "__main__":                                  │
-│      df = load_source_data("data/source_data.csv")          │
+│  @flow                                                       │
+│  def clean_and_load_pipeline():                             │
+│      df = load_source_data(...)                              │
 │      df = clean_data(df)                                     │
 │      save_to_duckdb(df, "users_clean")                      │
 │                                                             │
-│                    ✓ ALL CHECKS PASS                          │
+│                    ✓ ALL CHECKS PASS
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Why Two Different Pipeline Types?
 
-| Aspect | Prefect Flow | Plain Python Cleaning |
-|--------|--------------|----------------------|
+| Aspect | Prefect Flow (Demo) | Prefect Flow (Cleaning) |
+|--------|---------------------|-------------------------|
 | **Purpose** | Demonstration (show failure) | Solution (fix data) |
-| **Complexity** | Orchestration overhead | Simple & fast |
-| **Dependencies** | Prefect library | pandas + DuckDB only |
-| **Error Handling** | Built-in retry, logging | Direct, explicit |
-| **Use Case** | Multi-step workflows | Single-step transformations |
+| **Complexity** | Orchestration overhead | Orchestration with task dependencies |
+| **Dependencies** | Prefect library | Prefect + pandas + DuckDB |
+| **Error Handling** | Built-in retry, logging | Built-in retry, logging |
+| **Use Case** | Multi-step workflows | Multi-step data cleaning workflows |
 
-The **Prefect flow** is used **only for the demo** to show what happens when data quality issues occur. The **generated cleaning pipelines** are **standalone Python scripts** because:
-1. They perform a single, focused operation (clean → load)
-2. They don't need orchestration (no dependencies between steps)
-3. They're simpler and faster without Prefect overhead
-4. They're easier to debug and modify
+The **Prefect flow** is used for **both tiers** - the demo flow shows failures, and the generated cleaning flows fix them. Using Prefect for all pipelines provides:
+1. Consistent orchestration across the entire workflow
+2. Built-in retry, logging, and observability for all steps
+3. Task dependency management for complex cleaning operations
+4. Unified deployment and monitoring experience
 
 ---
 
@@ -185,10 +188,10 @@ These issues cause the **Prefect flow** to fail with:
 - `ConversionException: Could not convert string 'N/A' to INT32`
 - `NOT NULL constraint failed: users.email`
 
-The **plain Python cleaning pipelines** handle these issues by:
-- Using `pd.to_numeric(..., errors='coerce').fillna(default)` for type conversions
-- Using `df['column'].fillna(default)` for NULL values
-- Using proper validation before loading
+The **Prefect cleaning flows** handle these issues by:
+- Using `pd.to_numeric(..., errors='coerce').fillna(default)` for type conversions in @task functions
+- Using `df['column'].fillna(default)` for NULL values in @task functions
+- Using proper validation before loading in @task functions
 
 ---
 
@@ -228,16 +231,16 @@ export OPENAI_MODEL="gpt-4o-mini"
 # 1. Run the PREFECT ingestion flow (it will fail)
 # 2. Test investigation tools
 # 3. Trigger Nanobot to analyze and fix the issues
-# 4. Generate PLAIN PYTHON cleaning pipelines (not Prefect)
-# 5. Execute the generated plain Python pipelines to verify the fix
+# 4. Generate PREFECT cleaning pipelines
+# 5. Execute the generated PREFECT pipelines to verify the fix
 python run_demo.py
 ```
 
 The demo will:
 1. **Prefect flow fails** (expected) due to data errors
 2. Nanobot investigates using the tools in `flows/nanobot_tools.py`
-3. Pipeline builder generates **plain Python cleaning scripts** in `pipelines/generated/`
-4. Generated **plain Python pipelines** are executed and succeed
+3. Pipeline builder generates **Prefect cleaning flows** in `pipelines/generated/`
+4. Generated **Prefect pipelines** are executed and succeed
 
 ### Run Individual Components
 
@@ -245,10 +248,10 @@ The demo will:
 # Step 1: Run the failing PREFECT ingestion (creates errors)
 python flows/ingestion_flow.py
 
-# Step 2: Run the pipeline builder to generate PLAIN PYTHON fixes
+# Step 2: Run the pipeline builder to generate PREFECT fixes
 python demo_pipeline_builder.py
 
-# Step 3: Run the generated PLAIN PYTHON cleaning pipeline
+# Step 3: Run the generated PREFECT cleaning pipeline
 python pipelines/generated/clean_users_pipeline.py
 
 # Step 4: Start Nanobot server for manual investigation
@@ -300,22 +303,22 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 │  ┌─────────────────┐    ┌─────────────────────────────────┐  │
 │  │ Tools:           │    │ generate_cleaning_pipeline()      │  │
 │  │ - load_ideal_    │───▶│ - Compares source vs ideal       │  │
-│  │   schema        │    │ - Generates PLAIN PYTHON code    │  │
-│  │ - infer_source_  │    │   (not Prefect flows)          │  │
-│  │   schema        │    │ - Handles type casting, NULLs   │  │
-│  │ - compare_      │    │ - Saves to pipelines/generated  │  │
+│  │   schema        │    │ - Generates PREFECT flow code    │  │
+│  │ - infer_source_  │    │ - Handles type casting, NULLs   │  │
+│  │   schema        │    │ - Saves to pipelines/generated  │  │
+│  │ - compare_      │    │                                   │  │
 │  │   schemas       │    │                                   │  │
 │  └─────────────────┘    └─────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│            TIER 2: PLAIN PYTHON CLEANING PIPELINE               │
+│            TIER 2: PREFECT CLEANING PIPELINE                   │
 │          pipelines/generated/clean_users_pipeline.py           │
-│  - Loads source data with pandas                                  │
-│  - Applies type conversions with fillna fallback                │
-│  - Fills NULL values with schema defaults                       │
-│  - Inserts cleaned data into DuckDB                              │
+│  - Loads source data with pandas in @task functions          │
+│  - Applies type conversions with fillna fallback in @task      │
+│  - Fills NULL values with schema defaults in @task            │
+│  - Inserts cleaned data into DuckDB in @task                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -326,9 +329,9 @@ Source CSV → [Prefect Flow] → raw_users (staging) → [FAILS]
                          ↓
                   [Nanobot investigates]
                          ↓
-                  [Pipeline Builder generates PLAIN PYTHON]
+                  [Pipeline Builder generates PREFECT flows]
                          ↓
-                  [Plain Python Script] → users_clean (fixed)
+                  [Prefect Flow] → users_clean (fixed)
 ```
 
 ---
@@ -384,7 +387,7 @@ for tool_class in PIPELINE_TOOL_CLASSES:
     tool_instance = tool_class()
     bot.register_tool(tool_instance)
 
-# Trigger pipeline generation (generates PLAIN PYTHON, not Prefect)
+# Trigger pipeline generation (generates PREFECT flows)
 result = bot.run("""
     Investigate the failed data ingestion. 
     Use: infer_source_schema, load_ideal_schema, compare_schemas, 
@@ -410,14 +413,14 @@ result = bot.run("""
 
 ### Pipeline Builder Tools (`agents/pipeline_builder/tools.py`)
 
-These tools generate **plain Python scripts**, not Prefect flows:
+These tools generate **Prefect flows** for data cleaning:
 
 | Tool | Description | Output |
 |------|-------------|--------|
 | `load_ideal_schema` | Load ideal schema definition from YAML | Schema dictionary |
 | `infer_source_schema` | Infer schema from source CSV file | Inferred schema |
 | `compare_schemas` | Compare source and ideal schemas | Comparison with mismatches |
-| `generate_cleaning_pipeline` | Generate **plain Python** cleaning pipeline | Python code (not Prefect) |
+| `generate_cleaning_pipeline` | Generate **Prefect flow** cleaning pipeline | Prefect flow code |
 
 ---
 
@@ -430,7 +433,7 @@ When the agent is triggered, it follows this protocol:
 3. **Query Database**: Use `query_duckdb` to check `raw_users` table state
 4. **Validate Schema**: Use `check_schema` to identify data quality issues
 5. **Analyze Findings**: Identify root causes and impact
-6. **Generate Fix**: Use Pipeline Builder to create **plain Python cleaning script**
+6. **Generate Fix**: Use Pipeline Builder to create **Prefect cleaning flow**
 7. **Send Alert**: Use `send_slack_alert` to notify team
 
 ### Expected Findings
@@ -444,7 +447,7 @@ The agent should identify:
    - Row 11: Malformed email ('karen@example' missing TLD)
 3. **Root Cause**: Source CSV contains data that doesn't match target schema constraints
 4. **Recommended Actions**:
-   - Generate **plain Python cleaning pipeline** using Pipeline Builder
+   - Generate **Prefect cleaning flow** using Pipeline Builder
    - Apply COALESCE with CAST for type conversions
    - Fill NULL values with defaults from schema
 
@@ -517,9 +520,9 @@ CREATE TABLE users (
 )
 ```
 
-### `users_clean` (Cleaned Table - Created by Plain Python Pipeline)
+### `users_clean` (Cleaned Table - Created by Prefect Cleaning Flow)
 
-This is the table that the **generated plain Python pipeline** successfully creates:
+This is the table that the **generated Prefect cleaning flow** successfully creates:
 
 ```sql
 CREATE TABLE users_clean (
@@ -564,8 +567,8 @@ For production use, consider:
 4. **Add monitoring** for agent health and performance
 5. **Implement circuit breakers** to prevent infinite loops
 6. **Add rate limiting** for database queries
-7. **For Prefect flows**: Set up Prefect Cloud/Server for orchestration
-8. **For cleaning pipelines**: Consider wrapping in Prefect if orchestration is needed
+7. **For all Prefect flows**: Set up Prefect Cloud/Server for orchestration
+8. All pipelines (demo and cleaning) use Prefect for consistent orchestration
 
 ---
 
@@ -618,7 +621,7 @@ log_level: DEBUG
 | `config/nanobot_logging.yaml` | Logging configuration | Config |
 | `data/source_data.csv` | Source data with intentional errors | Data |
 | `data/ingestion.db` | DuckDB database (auto-created) | Database |
-| `pipelines/generated/*.py` | **Plain Python** cleaning pipelines (auto-generated) | Tier 2 - Solution |
+| `pipelines/generated/*.py` | **Prefect** cleaning flows (auto-generated) | Tier 2 - Solution |
 | `SKILLS.md` | Master skills index for all stages | Documentation |
 | `AGENTS.md` | Instructions for AI agents | Documentation |
 | `.env` | Environment variables | Config |
@@ -639,11 +642,11 @@ log_level: DEBUG
 
 This project demonstrates a **practical pattern** for self-healing data pipelines:
 
-1. **Use Prefect** for complex orchestration where you need retries, logging, and task dependencies
-2. **Use plain Python** for simple transformations where orchestration overhead isn't needed
-3. **Let AI agents** detect failures and generate the appropriate fix (Prefect or plain Python)
+1. **Use Prefect** for all pipeline orchestration to maintain consistency across the entire workflow
+2. **Use Prefect** for both demo flows and cleaning flows to leverage built-in retries, logging, and task dependencies
+3. **Let AI agents** detect failures and generate Prefect flows to fix data issues
 
-The **generated cleaning pipelines are plain Python** because they're simple, focused transformations that don't require the complexity of a workflow orchestrator.
+The **generated cleaning pipelines are Prefect flows** because they provide consistent orchestration, observability, and error handling across the entire data processing workflow.
 
 ---
 

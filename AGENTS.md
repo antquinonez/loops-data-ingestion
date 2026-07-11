@@ -344,7 +344,7 @@ data_path = "../data/source_data.csv"
 2. **Follow the pattern** from existing generated pipelines
 3. **Include proper error handling**
 4. **Add logging** for debugging
-5. **Use COALESCE and CAST** for type conversions
+5. **Use COALESCE and CAST** for type conversions in SQL, or pandas with Prefect tasks
 6. **Respect default values** from schema definitions
 
 ### Pipeline Generation Checklist
@@ -366,6 +366,7 @@ Auto-generated data cleaning pipeline.
 Created by pipeline_builder agent.
 """
 
+from prefect import flow, task
 import duckdb
 import pandas as pd
 from pathlib import Path
@@ -374,12 +375,15 @@ import logging
 PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
 DB_PATH = str(PROJECT_ROOT / "data" / "ingestion.db")
 
-def clean_data():
-    """Clean source data and insert into target table."""
-    # Load source
+@task
+def load_source_data():
+    """Load source data from CSV file."""
     source_path = str(PROJECT_ROOT / "data" / "source_data.csv")
-    df = pd.read_csv(source_path)
-    
+    return pd.read_csv(source_path)
+
+@task
+def clean_data(df):
+    """Clean source data and return cleaned DataFrame."""
     # Apply transformations
     # Type conversions
     df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
@@ -390,7 +394,11 @@ def clean_data():
     # Date conversion
     df['join_date'] = pd.to_datetime(df['join_date'], errors='coerce').fillna('1970-01-01')
     
-    # Save to DuckDB
+    return df
+
+@task
+def save_to_duckdb(df):
+    """Save cleaned data to DuckDB table."""
     conn = duckdb.connect(database=DB_PATH, read_only=False)
     try:
         conn.register('df', df)
@@ -402,8 +410,15 @@ def clean_data():
     finally:
         conn.close()
 
+@flow
+def clean_and_load_pipeline():
+    """Main cleaning pipeline flow."""
+    df = load_source_data()
+    df = clean_data(df)
+    save_to_duckdb(df)
+
 if __name__ == "__main__":
-    clean_data()
+    clean_and_load_pipeline()
 ```
 
 ---
