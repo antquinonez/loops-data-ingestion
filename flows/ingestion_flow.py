@@ -14,12 +14,20 @@ from pathlib import Path
 # Configure logging
 import logging
 
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from utils.paths import paths
+
 # Create a dedicated logger for ingestion
 ingestion_logger = logging.getLogger('ingestion')
 ingestion_logger.setLevel(logging.DEBUG)
 
 # File handler for ingestion log
-file_handler = logging.FileHandler('/home/aq/Documents/Source/loops/logs/ingestion.log')
+file_handler = logging.FileHandler(str(paths.ingestion_log))
 file_handler.setLevel(logging.DEBUG)
 file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(file_formatter)
@@ -44,9 +52,9 @@ logging.basicConfig(
 # Use the ingestion logger for our tasks
 logger = ingestion_logger
 
-DATA_DIR = Path("/home/aq/Documents/Source/loops/data")
-DB_PATH = str(DATA_DIR / "ingestion.db")
-SOURCE_FILE = str(DATA_DIR / "source_data.csv")
+DATA_DIR = paths.data_dir
+DB_PATH = str(paths.database)
+SOURCE_FILE = str(paths.source_data)
 
 
 @task(name="validate_source_file")

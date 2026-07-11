@@ -29,9 +29,17 @@ from mcp.types import (
     Tool,
 )
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-DATA_DIR = PROJECT_ROOT / "data"
-LOG_DIR = PROJECT_ROOT / "logs"
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from utils.paths import paths
+
+PROJECT_ROOT = paths.get_abs("project_root")
+DATA_DIR = paths.data_dir
+LOG_DIR = paths.logs_dir
 
 
 # Define the MCP server
@@ -229,7 +237,7 @@ async def get_data_quality_report(table_name: str = "raw_users") -> str:
         return json.dumps({"error": str(e)})
 
 
-async def get_recent_errors(log_path: str = "/home/aq/Documents/Source/loops/logs/ingestion.log", 
+async def get_recent_errors(log_path: str = None, 
                            hours: int = 24) -> str:
     """
     Get recent errors from log files.
@@ -246,6 +254,10 @@ async def get_recent_errors(log_path: str = "/home/aq/Documents/Source/loops/log
     
     errors = []
     cutoff = datetime.now() - timedelta(hours=hours)
+    
+    # Use default log path if not provided
+    if log_path is None:
+        log_path = str(paths.ingestion_log)
     
     try:
         with open(log_path, 'r') as f:

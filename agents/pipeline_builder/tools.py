@@ -13,9 +13,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-SCHEMAS_DIR = PROJECT_ROOT / "schemas"
-PIPELINES_DIR = PROJECT_ROOT / "pipelines"
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    # Fallback for backward compatibility
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from utils.paths import paths
+
+# Get paths from configuration
+PROJECT_ROOT = paths.get_abs("project_root")
+SCHEMAS_DIR = paths.schemas_dir
+PIPELINES_DIR = paths.pipelines_dir
 
 
 def load_ideal_schema(schema_path: Optional[str] = None) -> Dict[str, Any]:
@@ -23,13 +33,13 @@ def load_ideal_schema(schema_path: Optional[str] = None) -> Dict[str, Any]:
     
     Args:
         schema_path: Optional path to schema file. If not provided, uses the default
-                    path (SCHEMAS_DIR / "users_schema.yaml").
+                    path from configuration (users_schema.yaml).
     
     Returns:
         Dictionary with schema definition, or dict with "error" key on failure.
     """
     if schema_path is None:
-        schema_path = SCHEMAS_DIR / "users_schema.yaml"
+        schema_path = paths.users_schema
     else:
         schema_path = Path(schema_path)
     
@@ -41,7 +51,7 @@ def load_ideal_schema(schema_path: Optional[str] = None) -> Dict[str, Any]:
             schema = yaml.safe_load(f)
         return schema
     except Exception as e:
-        return {"error": f"Failed to load ideal schema: {e}"}
+        return {"error": f"Failed to load ideal schema: {e}"
 
 
 def infer_source_schema(file_path: str, sample_size: int = 100) -> Dict[str, Any]:
@@ -699,7 +709,7 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
     transformation_code = "\n".join(indented_transformations)
     
     # Load template and replace placeholders
-    template_path = PROJECT_ROOT / "agents" / "pipeline_builder" / "flow_template_prefect.txt"
+    template_path = paths.get_abs("project_root") / "agents" / "pipeline_builder" / "flow_template_prefect.txt"
     with open(template_path, 'r') as f:
         template = f.read()
     

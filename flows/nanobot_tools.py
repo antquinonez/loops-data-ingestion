@@ -15,10 +15,20 @@ from datetime import datetime
 # Set up logging for tools
 logger = logging.getLogger("nanobot.tools")
 
-DATA_DIR = Path("/home/aq/Documents/Source/loops/data")
-DB_PATH = str(DATA_DIR / "ingestion.db")
-SOURCE_FILE = str(DATA_DIR / "source_data.csv")
-LOG_DIR = Path("/home/aq/Documents/Source/loops/logs")
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    # Fallback for backward compatibility - import from parent directory
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from utils.paths import paths
+
+# Get paths from configuration
+DATA_DIR = paths.data_dir
+DB_PATH = str(paths.database)
+SOURCE_FILE = str(paths.source_data)
+LOG_DIR = paths.logs_dir
 
 
 def read_logs(path: str, tail_n: int = 100) -> str:
@@ -350,7 +360,7 @@ def send_slack_alert(message: str, severity: str = "medium") -> str:
     
     # In production, this would actually send to Slack
     # For demo purposes, we'll just log it
-    alert_log_path = str(LOG_DIR / "slack_alerts.log")
+    alert_log_path = str(paths.logs_dir / "slack_alerts.log")
     timestamp = datetime.now().isoformat()
     
     alert_entry = f"[{timestamp}] [{severity.upper()}] {message}\n"
@@ -384,8 +394,8 @@ def get_ingestion_status() -> str:
     logger.info("Getting ingestion status")
     
     status = {
-        "database": DB_PATH,
-        "source_file": SOURCE_FILE,
+        "database": str(paths.database),
+        "source_file": str(paths.source_data),
         "timestamp": datetime.now().isoformat()
     }
     
@@ -491,11 +501,11 @@ if __name__ == "__main__":
     
     # Test inspect_file
     print("\n=== Inspecting source file ===")
-    print(inspect_file(SOURCE_FILE))
+    print(inspect_file(str(paths.source_data)))
     
     # Test check_schema
     print("\n=== Checking schema ===")
-    print(check_schema(SOURCE_FILE))
+    print(check_schema(str(paths.source_data)))
     
     # Test get_ingestion_status
     print("\n=== Getting ingestion status ===")

@@ -1,0 +1,46 @@
+# Path Configuration for Loops Data Ingestion Project
+# All paths are relative to project_root unless specified as absolute
+
+# Base configuration
+project_root: "/home/aq/Documents/Source/loops"
+
+# Directory paths (relative to project_root)
+data_dir: "data"
+logs_dir: "logs" 
+schemas_dir: "schemas"
+pipelines_dir: "pipelines"
+generated_dir: "generated"
+config_dir: "config"
+flows_dir: "flows"
+agents_dir: "agents"
+
+# File paths (relative to project_root)
+source_data: "data/source_data.csv"
+orders_data: "data/orders.csv"  
+transactions_data: "data/transactions.csv"
+database: "data/ingestion.db"
+nanobot_db: "data/nanobot.db"
+
+# Log files (relative to project_root)
+ingestion_log: "logs/ingestion.log"
+prefect_log: "logs/prefect.log"  
+nanobot_log: "logs/nanobot.log"
+orders_ingestion_log: "logs/orders_ingestion.log"
+transactions_ingestion_log: "logs/transactions_ingestion.log"
+mcp_server_log: "logs/mcp_server.log"
+
+# Schema files (relative to project_root)
+users_schema: "schemas/users_schema.yaml"
+orders_schema: "schemas/orders_schema.yaml"
+transactions_schema: "schemas/transactions_schema.yaml"
+
+# Generated pipeline paths
+clean_users_pipeline: "pipelines/generated/clean_users_pipeline.py"
+clean_orders_pipeline: "pipelines/generated/clean_orders_pipeline.py"
+clean_transactions_pipeline: "pipelines/generated/clean_transactions_pipeline.py"
+
+# Configuration files
+nanobot_config: "config/nanobot_config.yaml"
+nanobot_config_minimal: "config/nanobot_config_minimal.json"
+nanobot_logging_config: "config/nanobot_logging.yaml"
+pipeline_builder_config: "agents/pipeline_builder/config.json"

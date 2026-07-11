@@ -11,16 +11,27 @@ import os
 import subprocess
 from pathlib import Path
 
-# Add project root to path
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-sys.path.insert(0, str(PROJECT_ROOT))
-
-# Set environment
-os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
+# Import path configuration
+try:
+    from utils.paths import paths, get_project_root
+except ImportError:
+    # Fallback - use hardcoded path
+    PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+    sys.path.insert(0, str(PROJECT_ROOT))
+    os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
+    from utils.paths import paths, get_project_root
+    PROJECT_ROOT = get_project_root()
+else:
+    PROJECT_ROOT = get_project_root()
+    sys.path.insert(0, str(PROJECT_ROOT))
+    os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
 
 # Load .env file at startup
 from dotenv import load_dotenv
-load_dotenv(PROJECT_ROOT / ".env")
+try:
+    load_dotenv(paths.get_abs("project_root") / ".env")
+except Exception:
+    load_dotenv()
 
 # Ensure OPENAI_API_KEY is in environment
 if not os.environ.get("OPENAI_API_KEY"):
@@ -41,7 +52,7 @@ def run_ingestion_flow():
     print("=" * 80)
     
     # Check if we have a generated pipeline
-    generated_pipeline = PROJECT_ROOT / "pipelines" / "generated" / "clean_users_pipeline.py"
+    generated_pipeline = paths.clean_users_pipeline
     
     if generated_pipeline.exists():
         print("\n✓ Using GENERATED cleaning pipeline (from previous pipeline builder run)")
@@ -50,7 +61,7 @@ def run_ingestion_flow():
         used_generated = True
     else:
         print("\n⚠️  No generated pipeline found - using original (will fail due to data errors)")
-        flow_path = PROJECT_ROOT / "flows" / "ingestion_flow.py"
+        flow_path = paths.get_abs("project_root") / "flows" / "ingestion_flow.py"
         used_generated = False
     
     # Run the flow
@@ -92,7 +103,7 @@ def start_nanobot_server():
     print("STEP 2: Starting nanobot server")
     print("=" * 80)
     
-    config_path = str(PROJECT_ROOT / "config" / "nanobot_config.yaml")
+    config_path = str(paths.nanobot_config)
     
     # Start nanobot server
     nanobot_cmd = [
@@ -120,7 +131,7 @@ def setup_environment():
     import os
     
     # Add venv/bin to PATH so duckdb CLI is accessible
-    venv_bin = str(PROJECT_ROOT / "venv" / "bin")
+    venv_bin = str(paths.get_abs("project_root") / "venv" / "bin")
     if os.path.exists(venv_bin) and venv_bin not in os.environ["PATH"]:
         os.environ["PATH"] = f"{venv_bin}:{os.environ.get('PATH', '')}"
         print(f"✓ Added venv/bin to PATH: {venv_bin}")
@@ -178,7 +189,7 @@ async def trigger_nanobot_investigation(mcp_process=None):
     print(f"\n✓ OpenAI API key loaded, using model: {os.environ.get('OPENAI_MODEL', 'gpt-4o-mini')}")
     
     # Load SKILLS.md as context
-    skills_path = PROJECT_ROOT / "SKILLS.md"
+    skills_path = paths.get_abs("project_root") / "SKILLS.md"
     with open(skills_path, 'r') as f:
         skills_context = f.read()
     
@@ -203,7 +214,7 @@ async def trigger_nanobot_investigation(mcp_process=None):
     print(f"  Total custom tools registered: {len(PIPELINE_TOOL_CLASSES)}")
     
     # Create the bot with explicit config
-    config_path = str(PROJECT_ROOT / "config" / "nanobot_config_minimal.json")
+    config_path = str(paths.nanobot_config_minimal)
     
     print("\nInitializing Nanobot...")
     print(f"  Config: {config_path}")
@@ -280,7 +291,7 @@ def run_full_demo():
         print("=" * 80)
         
         import duckdb
-        db_path = str(PROJECT_ROOT / "data" / "ingestion.db")
+        db_path = str(paths.database)
         try:
             conn = duckdb.connect(database=db_path, read_only=True)
             tables = conn.execute("SHOW TABLES").fetchall()
@@ -311,8 +322,8 @@ def run_full_demo():
     print("=" * 80)
     
     log_files = [
-        PROJECT_ROOT / "logs" / "ingestion.log",
-        PROJECT_ROOT / "logs" / "prefect.log",
+        paths.ingestion_log,
+        paths.prefect_log,
     ]
     
     for log_file in log_files:
@@ -333,7 +344,7 @@ def run_full_demo():
     print("=" * 80)
     
     import duckdb
-    db_path = str(PROJECT_ROOT / "data" / "ingestion.db")
+    db_path = str(paths.database)
     
     try:
         conn = duckdb.connect(database=db_path, read_only=True)
@@ -371,7 +382,7 @@ def run_full_demo():
     
     # Test inspect_file
     print("\n1. Inspecting source file:")
-    source_file = str(PROJECT_ROOT / "data" / "source_data.csv")
+    source_file = str(paths.source_data)
     print(inspect_file(source_file, sample_size=5))
     
     # Test check_schema
@@ -394,7 +405,7 @@ def run_full_demo():
     has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
     
     # Check if a generated pipeline already exists
-    generated_pipeline = PROJECT_ROOT / "pipelines" / "generated" / "clean_users_pipeline.py"
+    generated_pipeline = paths.clean_users_pipeline
     
     if has_api_key:
         print(f"\n✓ OpenAI API key detected, using model: {os.environ.get('OPENAI_MODEL', 'unknown')}")
@@ -479,12 +490,12 @@ def run_pipeline_builder_demo():
             print(f"Error generating pipeline: {pipeline.get('error')}")
     
     # Check if we have additional files
-    transactions_csv = PROJECT_ROOT / "data" / "transactions.csv"
+    transactions_csv = paths.transactions_data
     if transactions_csv.exists():
         print("\n--- Processing transactions data ---")
         pipeline = generate_cleaning_pipeline(
             source_path=str(transactions_csv),
-            ideal_path="schemas/transactions_schema.yaml",
+            ideal_path=str(paths.transactions_schema),
             output_table="transactions_clean"
         )
         
@@ -516,12 +527,12 @@ def run_pipeline_builder_demo():
             print(f"Error generating transactions pipeline: {pipeline.get('error')}")
     
     # Check if we have orders data
-    orders_csv = PROJECT_ROOT / "data" / "orders.csv"
+    orders_csv = paths.orders_data
     if orders_csv.exists():
         print("\n--- Processing orders data ---")
         pipeline = generate_cleaning_pipeline(
             source_path=str(orders_csv),
-            ideal_path="schemas/orders_schema.yaml",
+            ideal_path=str(paths.orders_schema),
             output_table="orders_clean"
         )
         

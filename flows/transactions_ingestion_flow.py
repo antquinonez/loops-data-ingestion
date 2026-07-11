@@ -9,11 +9,19 @@ import os
 from pathlib import Path
 import logging
 
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from utils.paths import paths
+
 # Configure logging
 transactions_logger = logging.getLogger('transactions_ingestion')
 transactions_logger.setLevel(logging.DEBUG)
 
-file_handler = logging.FileHandler('/home/aq/Documents/Source/loops/logs/transactions_ingestion.log')
+file_handler = logging.FileHandler(str(paths.transactions_ingestion_log))
 file_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
@@ -21,9 +29,9 @@ transactions_logger.addHandler(file_handler)
 
 logger = transactions_logger
 
-DATA_DIR = Path("/home/aq/Documents/Source/loops/data")
-DB_PATH = str(DATA_DIR / "ingestion.db")
-SOURCE_FILE = str(DATA_DIR / "transactions.csv")
+DATA_DIR = paths.data_dir
+DB_PATH = str(paths.database)
+SOURCE_FILE = str(paths.transactions_data)
 
 
 @task(name="validate_transactions_source_file")

@@ -15,9 +15,17 @@ from nanobot.agent.tools.base import Tool, tool_parameters, ToolResult
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-SCHEMAS_DIR = PROJECT_ROOT / "schemas"
-PIPELINES_DIR = PROJECT_ROOT / "pipelines"
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from utils.paths import paths
+
+PROJECT_ROOT = paths.get_abs("project_root")
+SCHEMAS_DIR = paths.schemas_dir
+PIPELINES_DIR = paths.pipelines_dir
 
 
 class LoadIdealSchemaTool(Tool):
