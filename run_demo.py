@@ -12,6 +12,25 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+# Check if we're running with venv Python
+venv_python = str(Path("/home/aq/Documents/Source/loops") / "venv" / "bin" / "python")
+if sys.executable != venv_python and not sys.executable.endswith("venv/bin/python"):
+    # Try to find venv python
+    venv_candidates = [
+        Path("/home/aq/Documents/Source/loops") / "venv" / "bin" / "python",
+        Path("venv") / "bin" / "python",
+        Path(sys.executable).parent.parent / "venv" / "bin" / "python",
+    ]
+    for candidate in venv_candidates:
+        if candidate.exists():
+            print(f"ERROR: Not using venv Python.")
+            print(f"Please run with: {candidate}")
+            print(f"Current Python: {sys.executable}")
+            sys.exit(1)
+    
+    # If no venv found, warn but continue
+    print(f"Warning: No venv Python found. Running with system Python: {sys.executable}")
+
 # Import path configuration
 try:
     from utils.paths import paths, get_project_root
@@ -54,7 +73,9 @@ def cleanup_and_initialize(archive_logs: bool = False) -> dict:
     
     # Configure Prefect to use local mode for all subprocesses
     os.environ["PREFECT_API_URL"] = ""
+    os.environ["PREFECT_CLOUD_API_URL"] = ""
     os.environ.pop("PREFECT_API_KEY", None)
+    os.environ.pop("PREFECT_CLOUD_API_KEY", None)
     
     print("\n" + "=" * 80)
     print("INITIALIZING: Cleaning up previous run artifacts")
@@ -175,6 +196,12 @@ def run_and_log_subprocess(cmd: list, cwd: Path, env: dict, run_id: Optional[str
     Returns:
         CompletedProcess with stdout/stderr captured
     """
+    # If cmd[0] is sys.executable and we're not in venv, use venv python
+    if cmd and cmd[0] == sys.executable:
+        venv_python = str(PROJECT_ROOT / "venv" / "bin" / "python")
+        if Path(venv_python).exists():
+            cmd = [venv_python] + cmd[1:]
+    
     result = subprocess.run(
         cmd,
         capture_output=True,
@@ -231,11 +258,22 @@ def run_ingestion_flow(run_id: Optional[str] = None):
         used_generated = True
     else:
         print("\n⚠️  No generated pipeline found - using original (will fail due to data errors)")
-        flow_path = paths.get_abs("project_root") / "flows" / "ingestion_flow.py"
+        # Use simple version that doesn't require Prefect server
+        simple_flow = paths.get_abs("project_root") / "flows" / "ingestion_flow_simple.py"
+        if simple_flow.exists():
+            flow_path = simple_flow
+        else:
+            flow_path = paths.get_abs("project_root") / "flows" / "ingestion_flow.py"
         used_generated = False
     
     # Build environment with run_id for unique log files
     run_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    # Ensure Prefect uses local mode
+    run_env["PREFECT_API_URL"] = ""
+    run_env["PREFECT_CLOUD_API_URL"] = ""
+    run_env["PREFECT_MODE"] = "local"
+    run_env.pop("PREFECT_API_KEY", None)
+    run_env.pop("PREFECT_CLOUD_API_KEY", None)
     if run_id:
         run_env["RUN_ID"] = run_id
     
@@ -674,6 +712,12 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
     
     # Build environment with run_id for unique log files
     base_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    # Ensure Prefect uses local mode
+    base_env["PREFECT_API_URL"] = ""
+    base_env["PREFECT_CLOUD_API_URL"] = ""
+    base_env["PREFECT_MODE"] = "local"
+    base_env.pop("PREFECT_API_KEY", None)
+    base_env.pop("PREFECT_CLOUD_API_KEY", None)
     if run_id:
         base_env["RUN_ID"] = run_id
     
@@ -694,8 +738,8 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
         print(f"Found {len(comparison.get('mismatches', []))} schema mismatches")
         
         pipeline = generate_cleaning_pipeline(
-            source_path="data/source_data.csv",
-            ideal_path="schemas/users_schema.yaml",
+            source_path=str(paths.source_data),
+            ideal_path=str(paths.users_schema),
             output_table="users_clean"
         )
         
