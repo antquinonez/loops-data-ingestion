@@ -324,6 +324,7 @@ async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] 
     from nanobot import Nanobot, RunResult
     from nanobot.agent.tools.registry import ToolRegistry
     from flows.nanobot_tools import NANOBOT_TOOLS
+    from flows.nanobot_tool_classes import NANOBOT_TOOL_CLASSES
     from agents.pipeline_builder.nanobot_tools import PIPELINE_TOOL_CLASSES
     import json
     import asyncio
@@ -345,12 +346,12 @@ async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] 
     print("\nRegistering custom tools with Nanobot...")
     registry = ToolRegistry()
     
-    # Register nanobot_tools (simple function-based tools)
-    # These are skipped for now as they need to be converted to Tool classes
-    # The pipeline builder tools are registered below
-    print("  Loading NANOBOT_TOOLS...")
-    for tool_name, tool_config in NANOBOT_TOOLS.items():
-        print(f"    - {tool_name}: {tool_config['description'][:50]}...")
+    # Register investigation Tool classes (from nanobot_tool_classes.py)
+    print("  Loading NANOBOT_TOOL_CLASSES...")
+    for tool_class in NANOBOT_TOOL_CLASSES:
+        tool_instance = tool_class()
+        registry.register(tool_instance)
+        print(f"    ✓ Registered: {tool_instance.name} - {tool_instance.description[:50]}...")
 
     # Register pipeline builder Tool classes
     print("  Loading PIPELINE_TOOL_CLASSES...")
