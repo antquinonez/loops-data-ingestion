@@ -22,12 +22,17 @@ except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from utils.paths import paths
 
+# Get run ID from environment for unique log files
+RUN_ID = os.environ.get('RUN_ID', datetime.now().strftime('%Y%m%d_%H%M%S'))
+
 # Create a dedicated logger for ingestion
 ingestion_logger = logging.getLogger('ingestion')
 ingestion_logger.setLevel(logging.DEBUG)
 
-# File handler for ingestion log
-file_handler = logging.FileHandler(str(paths.ingestion_log))
+# File handler for ingestion log - use timestamped filename
+log_filename = f"ingestion_{RUN_ID}.log" if RUN_ID else "ingestion.log"
+log_path = paths.logs_dir / log_filename
+file_handler = logging.FileHandler(str(log_path))
 file_handler.setLevel(logging.DEBUG)
 file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(file_formatter)

@@ -10,6 +10,7 @@ import sys
 import os
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 # Import path configuration
 try:
@@ -39,8 +40,129 @@ if not os.environ.get("OPENAI_API_KEY"):
     load_dotenv()
 
 
-def run_ingestion_flow():
+def cleanup_and_initialize(archive_logs: bool = False) -> dict:
+    """Clean up previous run artifacts and initialize fresh state.
+    
+    Args:
+        archive_logs: If True, archive old logs instead of deleting them
+    
+    Returns:
+        Dictionary with cleanup summary and run_id
+    """
+    from datetime import datetime
+    run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    print("\n" + "=" * 80)
+    print("INITIALIZING: Cleaning up previous run artifacts")
+    print("=" * 80)
+    print(f"Run ID: {run_id}")
+    
+    try:
+        from utils.cleanup import cleanup_all, clean_database, clean_generated_pipelines, clean_logs, archive_logs
+    except ImportError:
+        # Fallback: do manual cleanup
+        print("\nCleanup module not available, performing manual cleanup...")
+        result = {
+            "logs_cleaned": [],
+            "logs_archived": [],
+            "db_cleaned": [],
+            "pipelines_cleaned": [],
+            "errors": []
+        }
+        
+        # Clean database files
+        for db_file in [paths.database, paths.nanobot_db]:
+            if db_file.exists():
+                try:
+                    db_file.unlink()
+                    result["db_cleaned"].append(str(db_file.name))
+                except Exception as e:
+                    result["errors"].append(f"Failed to delete {db_file.name}: {e}")
+        
+        # Clean generated pipelines
+        generated_dir = paths.pipelines_dir / "generated"
+        if generated_dir.exists():
+            for pipe_file in generated_dir.glob("*.py"):
+                try:
+                    pipe_file.unlink()
+                    result["pipelines_cleaned"].append(str(pipe_file.name))
+                except Exception as e:
+                    result["errors"].append(f"Failed to delete {pipe_file.name}: {e}")
+        
+        # Clean logs
+        if archive_logs:
+            logs_dir = paths.logs_dir
+            if logs_dir.exists():
+                import shutil
+                from datetime import datetime
+                archive_dir = logs_dir / "archive"
+                archive_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                timestamped_dir = archive_dir / f"run_{timestamp}"
+                timestamped_dir.mkdir(exist_ok=True)
+                
+                for log_file in logs_dir.glob("*.log"):
+                    try:
+                        dest = timestamped_dir / log_file.name
+                        shutil.copy2(log_file, dest)
+                        log_file.unlink()
+                        result["logs_archived"].append(str(log_file.name))
+                    except Exception as e:
+                        result["errors"].append(f"Failed to archive {log_file.name}: {e}")
+                
+                for log_file in logs_dir.glob("*.md"):
+                    try:
+                        dest = timestamped_dir / log_file.name
+                        shutil.copy2(log_file, dest)
+                        log_file.unlink()
+                        result["logs_archived"].append(str(log_file.name))
+                    except Exception as e:
+                        result["errors"].append(f"Failed to archive {log_file.name}: {e}")
+        else:
+            logs_dir = paths.logs_dir
+            if logs_dir.exists():
+                for log_file in logs_dir.glob("*.log"):
+                    try:
+                        log_file.unlink()
+                        result["logs_cleaned"].append(str(log_file.name))
+                    except Exception as e:
+                        result["errors"].append(f"Failed to delete {log_file.name}: {e}")
+                
+                for log_file in logs_dir.glob("*.md"):
+                    try:
+                        log_file.unlink()
+                        result["logs_cleaned"].append(str(log_file.name))
+                    except Exception as e:
+                        result["errors"].append(f"Failed to delete {log_file.name}: {e}")
+        
+        return result
+    
+    # Use the cleanup module
+    result = cleanup_all(archive_logs=archive_logs)
+    
+    # Print summary
+    if result["logs_cleaned"]:
+        print(f"  Cleaned logs: {', '.join(result['logs_cleaned'])}")
+    if result["logs_archived"]:
+        print(f"  Archived logs: {', '.join(result['logs_archived'])}")
+    if result["db_cleaned"]:
+        print(f"  Cleaned databases: {', '.join(result['db_cleaned'])}")
+    if result["pipelines_cleaned"]:
+        print(f"  Cleaned pipelines: {', '.join(result['pipelines_cleaned'])}")
+    if result["errors"]:
+        print(f"  Errors during cleanup: {len(result['errors'])}")
+        for error in result["errors"]:
+            print(f"    - {error}")
+    
+    print("\nInitialization complete.\n")
+    return {**result, "run_id": run_id}
+
+
+def run_ingestion_flow(run_id: Optional[str] = None):
     """Run the data ingestion flow. Uses generated pipeline if available, otherwise runs the original (which will fail).
+    
+    Args:
+        run_id: Optional run identifier for unique log files
     
     Returns:
         tuple: (used_generated, succeeded) where:
@@ -64,13 +186,18 @@ def run_ingestion_flow():
         flow_path = paths.get_abs("project_root") / "flows" / "ingestion_flow.py"
         used_generated = False
     
+    # Build environment with run_id for unique log files
+    run_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    if run_id:
+        run_env["RUN_ID"] = run_id
+    
     # Run the flow
     result = subprocess.run(
         [sys.executable, str(flow_path)],
         capture_output=True,
         text=True,
         cwd=PROJECT_ROOT,
-        env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+        env=run_env
     )
     
     print("\n--- FLOW OUTPUT ---")
@@ -128,8 +255,6 @@ def start_nanobot_server():
 
 def setup_environment():
     """Setup environment for nanobot to access duckdb CLI and other tools."""
-    import os
-    
     # Add venv/bin to PATH so duckdb CLI is accessible
     venv_bin = str(paths.get_abs("project_root") / "venv" / "bin")
     if os.path.exists(venv_bin) and venv_bin not in os.environ["PATH"]:
@@ -177,7 +302,6 @@ async def trigger_nanobot_investigation(mcp_process=None):
     from flows.nanobot_tools import NANOBOT_TOOLS
     from agents.pipeline_builder.nanobot_tools import PIPELINE_TOOL_CLASSES
     import json
-    import os
     import asyncio
     
     # Verify API key
@@ -268,10 +392,37 @@ async def trigger_nanobot_investigation(mcp_process=None):
         print(f"\n❌ Error running nanobot: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Enhanced error logging for OpenAI API issues
+        error_str = str(e)
+        if "Missing required parameter" in error_str and "messages" in error_str:
+            print("\nOPENAI API FORMAT ERROR DETECTED:")
+            print("   This appears to be a message format issue with the OpenAI API.")
+            print("   Possible causes:")
+            print("   - Nanobot version compatibility issue with newer OpenAI API")
+            print("   - Model-specific message format requirements")
+            print("   - Token limit or rate limiting (less likely - would be different error)")
+            print("\n   Recommendations:")
+            print("   1. Try a different OpenAI model (e.g., gpt-4o-mini)")
+            print("   2. Check Nanobot version compatibility")
+            print("   3. Add debug logging to see exact messages being sent")
+        
+        # Save detailed error to file
+        with open("logs/nanobot_error_details.log", "w") as f:
+            f.write(f"# Nanobot Error Details\n\n")
+            f.write(f"Error: {e}\n\n")
+            f.write(f"Type: {type(e).__name__}\n\n")
+            f.write("Traceback:\n")
+            traceback.print_exc(file=f)
+        print("\n✓ Detailed error saved to logs/nanobot_error_details.log")
 
 
-def run_full_demo():
+def run_full_demo(archive_logs: bool = False):
     """Run the complete demo."""
+    # Initialize: clean up previous run artifacts
+    cleanup_result = cleanup_and_initialize(archive_logs=archive_logs)
+    run_id = cleanup_result.get("run_id")
+    
     print("\n" + "=" * 80)
     print("DATA INGESTION TROUBLESHOOTING DEMO")
     print("=" * 80)
@@ -279,7 +430,7 @@ def run_full_demo():
     # Step 1: Run the ingestion flow
     # If a generated pipeline exists, it will succeed
     # Otherwise, the original will fail and we'll generate a fix
-    used_generated, succeeded = run_ingestion_flow()
+    used_generated, succeeded = run_ingestion_flow(run_id=run_id)
     
     # If we used a generated pipeline and it succeeded, show success
     if used_generated and succeeded:
@@ -401,7 +552,6 @@ def run_full_demo():
     # Load .env and check for API key
     from dotenv import load_dotenv
     load_dotenv()
-    import os
     has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
     
     # Check if a generated pipeline already exists

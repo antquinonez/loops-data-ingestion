@@ -236,9 +236,9 @@ if __name__ == "__main__":
     # (To use Prefect orchestration, call clean_and_load_pipeline() instead)
     import os
     
-    # Disable Prefect cloud connection
-    os.environ["PREFECT_API_URL"] = "http://localhost:4200"
-    os.environ["PREFECT_API_KEY"] = "test-key"
+    # Use local Prefect mode (no cloud/server required)
+    os.environ["PREFECT_API_URL"] = ""
+    os.environ.pop("PREFECT_API_KEY", None)
     
     # For local testing without a server, just call the tasks directly
     print("Running cleaning pipeline...")

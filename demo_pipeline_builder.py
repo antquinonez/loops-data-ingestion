@@ -42,7 +42,6 @@ def test_tools():
     all_pipelines = {}
     
     for i, (source_path, schema_path, output_table, source_table) in enumerate(file_schema_mappings, 1):
-        import os
         if not os.path.exists(source_path):
             print(f"\n{i}. Skipping {source_path} (file not found)")
             continue

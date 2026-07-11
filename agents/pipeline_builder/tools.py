@@ -584,10 +584,27 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
         
         # Handle string length constraints
         if ideal_type == "string":
+            # First, ensure NULLs are filled for string columns with constraints
+            if default is not None and ("min_length" in constraints or "max_length" in constraints):
+                transformations.append(
+                    f"# Fill NULLs for {col_name} before applying constraints"
+                )
+                if isinstance(default, str):
+                    transformations.append(
+                        f"df['{col_name}'] = df['{col_name}'].fillna('{default}')"
+                    )
+                else:
+                    transformations.append(
+                        f"df['{col_name}'] = df['{col_name}'].fillna({default})"
+                    )
+            
             if "min_length" in constraints:
                 min_len = constraints["min_length"]
                 transformations.append(
                     f"# Enforce min_length for {col_name}"
+                )
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].apply(lambda x: str(x) if pd.isna(x) else x)"
                 )
                 transformations.append(
                     f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if len(str(x)) >= {min_len} else x.ljust({min_len}))"
