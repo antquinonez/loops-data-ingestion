@@ -18,9 +18,21 @@ SCHEMAS_DIR = PROJECT_ROOT / "schemas"
 PIPELINES_DIR = PROJECT_ROOT / "pipelines"
 
 
-def load_ideal_schema() -> Dict[str, Any]:
-    """Load the ideal schema definition."""
-    schema_path = SCHEMAS_DIR / "ideal_schema.yaml"
+def load_ideal_schema(schema_path: Optional[str] = None) -> Dict[str, Any]:
+    """Load the ideal schema definition.
+    
+    Args:
+        schema_path: Optional path to schema file. If not provided, uses the default
+                    path (SCHEMAS_DIR / "ideal_schema.yaml").
+    
+    Returns:
+        Dictionary with schema definition, or dict with "error" key on failure.
+    """
+    if schema_path is None:
+        schema_path = SCHEMAS_DIR / "ideal_schema.yaml"
+    else:
+        schema_path = Path(schema_path)
+    
     if not schema_path.exists():
         return {"error": f"Ideal schema not found: {schema_path}"}
     
@@ -436,10 +448,11 @@ def _generate_validation_queries(table: str, ideal_by_name: Dict) -> List[str]:
     
     # Range checks
     for col_name, col_def in ideal_by_name.items():
-        if "min" in col_def:
-            queries.append(f"SELECT COUNT(*) FROM {table} WHERE {col_name} < {col_def['min']}")
-        if "max" in col_def:
-            queries.append(f"SELECT COUNT(*) FROM {table} WHERE {col_name} > {col_def['max']}")
+        constraints = col_def.get("constraints", {})
+        if "min" in constraints:
+            queries.append(f"SELECT COUNT(*) FROM {table} WHERE {col_name} < {constraints['min']}")
+        if "max" in constraints:
+            queries.append(f"SELECT COUNT(*) FROM {table} WHERE {col_name} > {constraints['max']}")
     
     # Enum checks
     for col_name, col_def in ideal_by_name.items():
