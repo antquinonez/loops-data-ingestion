@@ -797,11 +797,22 @@ def process_pipeline_with_limits(
         try:
             from agents.validation_agent import validate_pipeline_output
             print(f"\n--- Validating {pipeline_name} pipeline output ---")
+            
+            # Get source row count from the CSV file for pipeline awareness
+            source_row_count = None
+            try:
+                import pandas as pd
+                source_row_count = len(pd.read_csv(source_path))
+            except Exception as e:
+                print(f"⚠️  Could not get source row count: {e}")
+            
             validation_report = validate_pipeline_output(
                 pipeline_name=pipeline_name,
                 output_table=output_table,
                 schema_path=ideal_path,
-                db_path=str(paths.database)
+                db_path=str(paths.database),
+                source_path=source_path,
+                source_row_count=source_row_count
             )
             
             # Print summary

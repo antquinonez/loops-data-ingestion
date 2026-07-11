@@ -15,6 +15,115 @@ This document serves as the **entry point** and **index** for all specialized sk
 - **Automatic caching**: Generated checks are saved to `pipelines/validation/{output_table}_validation_checks.json` for future use
 - **Type flexibility**: Type checks now match DuckDB's typeof() values (INTEGER, FLOAT, TIMESTAMP)
 
+## Pipeline-Aware Validation
+
+The validation system is now **pipeline-aware**, meaning it receives metadata about the pipeline execution to provide better context in validation reports.
+
+### What Pipeline Metadata is Available
+
+When calling `validate_pipeline_output()`, you can now provide:
+
+```python
+validate_pipeline_output(
+    pipeline_name="orders",
+    output_table="orders_clean",
+    schema_path="schemas/orders_schema.yaml",
+    db_path="data/ingestion.db",
+    source_path="data/orders.csv",           # NEW: Path to source CSV
+    source_row_count=10,                    # NEW: Row count from source
+    checks_path="pipelines/validation/orders_clean_validation_checks.json"
+)
+```
+
+### Pipeline Metadata Fields
+
+| Field | Type | Purpose | How to Obtain |
+|-------|------|---------|---------------|
+| `pipeline_name` | str | Identifies the pipeline | From pipeline configuration |
+| `output_table` | str | The cleaned output table | From pipeline configuration |
+| `schema_path` | str | Path to ideal schema YAML | From pipeline configuration |
+| `source_path` | str | Path to source CSV file | Passed from pipeline execution |
+| `source_row_count` | int | Rows in source file | `len(pd.read_csv(source_path))` |
+| `db_path` | str | Path to DuckDB database | From paths configuration |
+| `checks_path` | str | Path to cached checks | Optional, auto-generated if not provided |
+
+### How Pipeline-Aware Validation Works
+
+1. **Pipeline Generation**: Creates cleaning code and saves to `pipelines/generated/`
+2. **Pipeline Execution**: Runs pipeline, which:
+   - Reads from `source_path` (CSV)
+   - Cleans data using pandas
+   - Saves to `output_table` in DuckDB
+   - Returns execution result with `source_rows`, `cleaned_rows`, `saved_rows`
+3. **Validation**: Receives pipeline metadata and:
+   - Uses `source_row_count` for report comparison (no DB lookup needed)
+   - Uses `output_table` for all validation checks
+   - Generates checks on-demand if not cached
+   - Returns report with both source and output row counts
+
+### Validation Report with Pipeline Awareness
+
+```python
+report = validate_pipeline_output(...)
+
+# Now includes pipeline context:
+print(f"Source: {report.source_row_count} rows from {source_path}")
+print(f"Output: {report.output_row_count} rows in {output_table}")
+print(f"Status: {report.overall_status}")
+```
+
+### Best Practices for Validation Agents
+
+1. **Always pass source_path**: This tells validation where the data came from
+2. **Always pass source_row_count**: This eliminates the need to query non-existent raw_ tables
+3. **Use actual output_table names**: Don't assume table names match schema names
+4. **Don't pre-generate checks**: Let `validate_pipeline_output()` handle it
+5. **Use the pipeline execution result**: The pipeline returns source_rows, use it
+
+### Example: Complete Validation Flow
+
+```python
+# 1. Generate pipeline
+pipeline = generate_cleaning_pipeline(
+    source_path='data/orders.csv',
+    ideal_path='schemas/orders_schema.yaml',
+    output_table='orders_clean',
+    source_table='raw_orders'
+)
+
+# 2. Save and execute
+save_pipeline(pipeline, 'pipelines/generated/clean_orders_pipeline.py')
+result = execute_pipeline('pipelines/generated/clean_orders_pipeline.py')
+
+# 3. Validate with pipeline awareness
+report = validate_pipeline_output(
+    pipeline_name='orders',
+    output_table='orders_clean',
+    schema_path='schemas/orders_schema.yaml',
+    db_path='data/ingestion.db',
+    source_path='data/orders.csv',
+    source_row_count=result['source_rows']  # From pipeline execution
+)
+
+# Report now includes full pipeline context
+report.print_summary()
+```
+
+### Migration from Old Approach
+
+**Before** (trying to discover source tables):
+```python
+# Validation would try: raw_users, raw_orders_clean, orders, raw_orders
+# This failed because these tables don't exist
+```
+
+**After** (pipeline-aware):
+```python
+# Validation receives source_path and source_row_count directly
+# No need to query database for source row count
+# Cleaner, faster, more reliable
+```
+
 ## Overview
 
 The Loops project implements a **3-stage autonomous workflow** for troubleshooting and fixing data ingestion failures using a **consistent Prefect pipeline architecture**:
