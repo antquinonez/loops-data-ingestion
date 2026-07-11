@@ -25,3 +25,5 @@ sessions/
 data/ingestion.db
 pipelines/generated/
 *.bak
+pipelines/validation/*.json
+agents/pipeline_builder/__pycache__/*.pyc
