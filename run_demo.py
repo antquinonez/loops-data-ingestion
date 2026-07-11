@@ -405,7 +405,12 @@ async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] 
     
     # Trigger investigation - NOW WITH PIPELINE BUILDER TOOLS
     print("\nTriggering investigation with message:")
-    message = """Investigate the failed data ingestion. Use: infer_source_schema, load_ideal_schema, compare_schemas, generate_cleaning_pipeline. Save pipeline to pipelines/generated/clean_users_pipeline.py using write_file."""
+    message = f"""Investigate the failed data ingestion. 
+Source data: {paths.source_data}
+Ideal schema: {paths.users_schema}
+
+Use tools: infer_source_schema, load_ideal_schema, compare_schemas, generate_cleaning_pipeline.
+Save pipeline to pipelines/generated/clean_users_pipeline.py using write_file."""
     print(message)
     print("\nThis may take a moment... (agent is thinking and using tools)")
     
