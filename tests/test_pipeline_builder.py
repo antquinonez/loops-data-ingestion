@@ -297,8 +297,8 @@ class TestPipelineGeneration:
         assert "validation_queries" in result
         assert "comparison" in result
     
-    def test_generate_cleaning_pipeline_contains_prefect_imports(self, sample_csv_path, sample_schema_path):
-        """Test that generated pipeline contains Prefect imports."""
+    def test_generate_cleaning_pipeline_contains_python_imports(self, sample_csv_path, sample_schema_path):
+        """Test that generated pipeline contains Python imports."""
         from agents.pipeline_builder.tools import generate_cleaning_pipeline
         
         result = generate_cleaning_pipeline(
@@ -307,9 +307,9 @@ class TestPipelineGeneration:
             output_table="test_clean"
         )
         pipeline_code = result["pipeline_code"]
-        assert "from prefect import flow, task" in pipeline_code
-        assert "@task" in pipeline_code
-        assert "@flow" in pipeline_code
+        assert "import pandas as pd" in pipeline_code
+        assert "import duckdb" in pipeline_code
+        assert "import yaml" in pipeline_code
     
     def test_generate_cleaning_pipeline_contains_cleaning_logic(self, sample_csv_path, sample_schema_path):
         """Test that generated pipeline contains cleaning logic."""
@@ -472,8 +472,8 @@ class TestIntegration:
             output_table="test_clean"
         )
         assert "pipeline_code" in pipeline
-        assert "@flow" in pipeline["pipeline_code"]
-        assert "@task" in pipeline["pipeline_code"]
+        assert "def clean_and_load_pipeline" in pipeline["pipeline_code"]
+        assert "def clean_data" in pipeline["pipeline_code"]
         
         # Step 4: Verify the generated code is valid Python
         # (We can't import it because it has placeholders, but we can check syntax)
