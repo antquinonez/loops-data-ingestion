@@ -8,6 +8,7 @@ import duckdb
 import csv
 import os
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -17,45 +18,29 @@ import logging
 # Import path configuration
 try:
     from utils.paths import paths
+    from utils.logging_config import setup_logging, get_logger
 except ImportError:
-    import sys
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from utils.paths import paths
+    from utils.logging_config import setup_logging, get_logger
 
 # Get run ID from environment for unique log files
 RUN_ID = os.environ.get('RUN_ID', datetime.now().strftime('%Y%m%d_%H%M%S'))
 
-# Create a dedicated logger for ingestion
-ingestion_logger = logging.getLogger('ingestion')
-ingestion_logger.setLevel(logging.DEBUG)
+# Setup unified logging that captures both custom and Prefect logs
+logging_config = setup_logging(run_id=RUN_ID, log_name="ingestion")
+logger = get_logger("ingestion")
 
-# File handler for ingestion log - use timestamped filename
-log_filename = f"ingestion_{RUN_ID}.log" if RUN_ID else "ingestion.log"
-log_path = paths.logs_dir / log_filename
-file_handler = logging.FileHandler(str(log_path))
-file_handler.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(file_formatter)
-
-# Console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(console_formatter)
-
-# Add handlers to ingestion logger
-ingestion_logger.addHandler(file_handler)
-ingestion_logger.addHandler(console_handler)
+# Ensure Prefect uses our logging configuration
+# This makes get_run_logger() use the same handlers
+prefect_logger = get_logger("prefect")
 
 # Also configure root logger for Prefect
 logging.basicConfig(
-    level=logging.WARNING,  # Reduce Prefect noise
+    level=logging.WARNING,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[console_handler]
+    force=True
 )
-
-# Use the ingestion logger for our tasks
-logger = ingestion_logger
 
 DATA_DIR = paths.data_dir
 DB_PATH = str(paths.database)

@@ -158,6 +158,49 @@ def cleanup_and_initialize(archive_logs: bool = False) -> dict:
     return {**result, "run_id": run_id}
 
 
+def run_and_log_subprocess(cmd: list, cwd: Path, env: dict, run_id: Optional[str] = None) -> subprocess.CompletedProcess:
+    """Run a subprocess and log its output to a file.
+    
+    Args:
+        cmd: Command to run as list
+        cwd: Working directory
+        env: Environment variables
+        run_id: Optional run ID for log file naming
+    
+    Returns:
+        CompletedProcess with stdout/stderr captured
+    """
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+        env=env
+    )
+    
+    # Log the output to a file
+    if run_id:
+        try:
+            logs_dir = paths.logs_dir
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            
+            # stdout log
+            stdout_log = logs_dir / f"subprocess_{run_id}_stdout.log"
+            if result.stdout:
+                with open(stdout_log, 'w') as f:
+                    f.write(result.stdout)
+            
+            # stderr log
+            stderr_log = logs_dir / f"subprocess_{run_id}_stderr.log"
+            if result.stderr:
+                with open(stderr_log, 'w') as f:
+                    f.write(result.stderr)
+        except Exception as e:
+            print(f"Warning: Failed to write subprocess logs: {e}")
+    
+    return result
+
+
 def run_ingestion_flow(run_id: Optional[str] = None):
     """Run the data ingestion flow. Uses generated pipeline if available, otherwise runs the original (which will fail).
     
@@ -191,13 +234,12 @@ def run_ingestion_flow(run_id: Optional[str] = None):
     if run_id:
         run_env["RUN_ID"] = run_id
     
-    # Run the flow
-    result = subprocess.run(
+    # Run the flow and capture output to log files
+    result = run_and_log_subprocess(
         [sys.executable, str(flow_path)],
-        capture_output=True,
-        text=True,
         cwd=PROJECT_ROOT,
-        env=run_env
+        env=run_env,
+        run_id=run_id
     )
     
     print("\n--- FLOW OUTPUT ---")
@@ -574,19 +616,24 @@ def run_full_demo(archive_logs: bool = False):
         else:
             print("\n⚠️  Nanobot did not create a pipeline file.")
             print("  Running pipeline builder demo as fallback...")
-            run_pipeline_builder_demo()
+            run_pipeline_builder_demo(run_id=run_id)
     else:
         print("\n⚠️  No OpenAI API key detected.")
         print("To run a live investigation with Nanobot:")
         print("  1. Create .env file with OPENAI_API_KEY")
         print("  2. Or set it: export OPENAI_API_KEY='your-key'")
         print("\nFor now, running pipeline builder demo...")
-        run_pipeline_builder_demo()
+        run_pipeline_builder_demo(run_id=run_id)
 
 
-def run_pipeline_builder_demo():
+def run_pipeline_builder_demo(run_id: Optional[str] = None):
     """Demonstrate the pipeline builder auto-generating cleaning code."""
     print("\nPipeline Builder: Analyzing source data and generating cleaning pipeline...")
+    
+    # Build environment with run_id for unique log files
+    base_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    if run_id:
+        base_env["RUN_ID"] = run_id
     
     from agents.pipeline_builder.tools import (
         load_ideal_schema,
@@ -623,12 +670,11 @@ def run_pipeline_builder_demo():
             
             # Execute the pipeline
             print("\n--- Executing generated pipeline ---")
-            result = subprocess.run(
+            result = run_and_log_subprocess(
                 [sys.executable, "pipelines/generated/clean_users_pipeline.py"],
-                capture_output=True,
-                text=True,
                 cwd=PROJECT_ROOT,
-                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+                env=base_env,
+                run_id=run_id
             )
             
             if result.returncode == 0:
@@ -660,12 +706,11 @@ def run_pipeline_builder_demo():
             
             # Execute the pipeline
             print("--- Executing transactions pipeline ---")
-            result = subprocess.run(
+            result = run_and_log_subprocess(
                 [sys.executable, "pipelines/generated/clean_transactions_pipeline.py"],
-                capture_output=True,
-                text=True,
                 cwd=PROJECT_ROOT,
-                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+                env=base_env,
+                run_id=run_id
             )
             
             if result.returncode == 0:
@@ -697,12 +742,11 @@ def run_pipeline_builder_demo():
             
             # Execute the pipeline
             print("--- Executing orders pipeline ---")
-            result = subprocess.run(
+            result = run_and_log_subprocess(
                 [sys.executable, "pipelines/generated/clean_orders_pipeline.py"],
-                capture_output=True,
-                text=True,
                 cwd=PROJECT_ROOT,
-                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+                env=base_env,
+                run_id=run_id
             )
             
             if result.returncode == 0:
