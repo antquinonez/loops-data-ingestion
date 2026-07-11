@@ -187,7 +187,7 @@ class CompareSchemasTool(Tool):
                 "ideal_path": {
                     "type": "string",
                     "default": None,
-                    "description": "Path to the ideal schema YAML file (optional, defaults to ideal_schema.yaml)"
+                    "description": "Path to the ideal schema YAML file (optional, defaults to users_schema.yaml)"
                 }
             },
             "required": ["source_path"]

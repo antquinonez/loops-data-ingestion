@@ -23,13 +23,13 @@ def load_ideal_schema(schema_path: Optional[str] = None) -> Dict[str, Any]:
     
     Args:
         schema_path: Optional path to schema file. If not provided, uses the default
-                    path (SCHEMAS_DIR / "ideal_schema.yaml").
+                    path (SCHEMAS_DIR / "users_schema.yaml").
     
     Returns:
         Dictionary with schema definition, or dict with "error" key on failure.
     """
     if schema_path is None:
-        schema_path = SCHEMAS_DIR / "ideal_schema.yaml"
+        schema_path = SCHEMAS_DIR / "users_schema.yaml"
     else:
         schema_path = Path(schema_path)
     
