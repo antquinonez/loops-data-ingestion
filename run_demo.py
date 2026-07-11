@@ -12,39 +12,27 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-# Check if we're running with venv Python
-venv_python = str(Path("/home/aq/Documents/Source/loops") / "venv" / "bin" / "python")
-if sys.executable != venv_python and not sys.executable.endswith("venv/bin/python"):
-    # Try to find venv python
-    venv_candidates = [
-        Path("/home/aq/Documents/Source/loops") / "venv" / "bin" / "python",
-        Path("venv") / "bin" / "python",
-        Path(sys.executable).parent.parent / "venv" / "bin" / "python",
-    ]
-    for candidate in venv_candidates:
-        if candidate.exists():
-            print(f"ERROR: Not using venv Python.")
-            print(f"Please run with: {candidate}")
-            print(f"Current Python: {sys.executable}")
-            sys.exit(1)
-    
-    # If no venv found, warn but continue
-    print(f"Warning: No venv Python found. Running with system Python: {sys.executable}")
+PROJECT_ROOT = Path(__file__).resolve().parent
 
-# Import path configuration
-try:
-    from utils.paths import paths, get_project_root
-except ImportError:
-    # Fallback - use hardcoded path
-    PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+# Ensure project root and configuration utilities are importable
+if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-    os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
-    from utils.paths import paths, get_project_root
-    PROJECT_ROOT = get_project_root()
+
+from utils.paths import paths, get_project_root
+PROJECT_ROOT = get_project_root()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+os.environ.setdefault("PYTHONPATH", str(PROJECT_ROOT))
+
+VENV_PYTHON = PROJECT_ROOT / "venv" / "bin" / "python"
+if VENV_PYTHON.exists():
+    if Path(sys.executable).resolve() != VENV_PYTHON.resolve():
+        print("ERROR: Not using venv Python.")
+        print(f"Please run with: {VENV_PYTHON}")
+        print(f"Current Python: {sys.executable}")
+        sys.exit(1)
 else:
-    PROJECT_ROOT = get_project_root()
-    sys.path.insert(0, str(PROJECT_ROOT))
-    os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
+    print(f"Warning: No venv detected at {VENV_PYTHON}. Running with: {sys.executable}")
 
 # Load .env file at startup
 from dotenv import load_dotenv
@@ -83,87 +71,8 @@ def cleanup_and_initialize(archive_logs: bool = False) -> dict:
     print(f"Run ID: {run_id}")
     print("Prefect configured for LOCAL MODE (no cloud connection)")
     
-    try:
-        from utils.cleanup import cleanup_all, clean_database, clean_generated_pipelines, clean_logs, archive_logs
-    except ImportError:
-        # Fallback: do manual cleanup
-        print("\nCleanup module not available, performing manual cleanup...")
-        result = {
-            "logs_cleaned": [],
-            "logs_archived": [],
-            "db_cleaned": [],
-            "pipelines_cleaned": [],
-            "errors": []
-        }
-        
-        # Clean database files
-        for db_file in [paths.database, paths.nanobot_db]:
-            if db_file.exists():
-                try:
-                    db_file.unlink()
-                    result["db_cleaned"].append(str(db_file.name))
-                except Exception as e:
-                    result["errors"].append(f"Failed to delete {db_file.name}: {e}")
-        
-        # Clean generated pipelines
-        generated_dir = paths.pipelines_dir / "generated"
-        if generated_dir.exists():
-            for pipe_file in generated_dir.glob("*.py"):
-                try:
-                    pipe_file.unlink()
-                    result["pipelines_cleaned"].append(str(pipe_file.name))
-                except Exception as e:
-                    result["errors"].append(f"Failed to delete {pipe_file.name}: {e}")
-        
-        # Clean logs
-        if archive_logs:
-            logs_dir = paths.logs_dir
-            if logs_dir.exists():
-                import shutil
-                from datetime import datetime
-                archive_dir = logs_dir / "archive"
-                archive_dir.mkdir(parents=True, exist_ok=True)
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                timestamped_dir = archive_dir / f"run_{timestamp}"
-                timestamped_dir.mkdir(exist_ok=True)
-                
-                for log_file in logs_dir.glob("*.log"):
-                    try:
-                        dest = timestamped_dir / log_file.name
-                        shutil.copy2(log_file, dest)
-                        log_file.unlink()
-                        result["logs_archived"].append(str(log_file.name))
-                    except Exception as e:
-                        result["errors"].append(f"Failed to archive {log_file.name}: {e}")
-                
-                for log_file in logs_dir.glob("*.md"):
-                    try:
-                        dest = timestamped_dir / log_file.name
-                        shutil.copy2(log_file, dest)
-                        log_file.unlink()
-                        result["logs_archived"].append(str(log_file.name))
-                    except Exception as e:
-                        result["errors"].append(f"Failed to archive {log_file.name}: {e}")
-        else:
-            logs_dir = paths.logs_dir
-            if logs_dir.exists():
-                for log_file in logs_dir.glob("*.log"):
-                    try:
-                        log_file.unlink()
-                        result["logs_cleaned"].append(str(log_file.name))
-                    except Exception as e:
-                        result["errors"].append(f"Failed to delete {log_file.name}: {e}")
-                
-                for log_file in logs_dir.glob("*.md"):
-                    try:
-                        log_file.unlink()
-                        result["logs_cleaned"].append(str(log_file.name))
-                    except Exception as e:
-                        result["errors"].append(f"Failed to delete {log_file.name}: {e}")
-        
-        return result
-    
-    # Use the cleanup module
+    from utils.cleanup import cleanup_all
+
     result = cleanup_all(archive_logs=archive_logs)
     
     # Print summary
@@ -257,18 +166,13 @@ def run_ingestion_flow(run_id: Optional[str] = None):
         flow_path = generated_pipeline
         used_generated = True
     else:
-        print("\n⚠️  No generated pipeline found - using original (will fail due to data errors)")
-        # Use simple version that doesn't require Prefect server
-        simple_flow = paths.get_abs("project_root") / "flows" / "ingestion_flow_simple.py"
-        if simple_flow.exists():
-            flow_path = simple_flow
-        else:
-            flow_path = paths.get_abs("project_root") / "flows" / "ingestion_flow.py"
+        print("\n⚠️  No generated pipeline found - using original Prefect flow (expected to fail due to data errors)")
+        flow_path = paths.get_abs("project_root") / "flows" / "ingestion_flow.py"
         used_generated = False
     
     # Build environment with run_id for unique log files
     run_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
-    # Ensure Prefect uses local mode
+    # Ensure Prefect uses local mode and no external services
     run_env["PREFECT_API_URL"] = ""
     run_env["PREFECT_CLOUD_API_URL"] = ""
     run_env["PREFECT_MODE"] = "local"
