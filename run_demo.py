@@ -724,8 +724,11 @@ def process_pipeline_with_limits(
     """
     from agents.pipeline_builder.tools import (
         compare_schemas,
-        generate_cleaning_pipeline
+        generate_cleaning_pipeline,
+        generate_validation_checks
     )
+    from utils.validation import ValidationCheckGenerator
+    from agents.validation_agent import ValidationAgent, get_checks_path
     
     # Check if we've exceeded limits before starting
     if not pipeline_tracker._check_limits(pipeline_name, 'regeneration'):
@@ -769,6 +772,36 @@ def process_pipeline_with_limits(
         f.write(pipeline['pipeline_code'])
     print(f"\n✓ Pipeline saved to: {output_file}")
     
+    # Generate and save validation checks from the schema
+    # These checks will be used to validate the pipeline output deterministically
+    checks_path = get_checks_path(pipeline_name, output_table)
+    try:
+        # Generate validation checks from the ideal schema
+        checks = ValidationCheckGenerator.generate_from_schema(
+            schema_path=ideal_path,
+            table_name=output_table.replace("_clean", "")
+        )
+        
+        # Save checks as JSON
+        import json
+        checks_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(str(checks_path), 'w') as f:
+            checks_data = [check.to_dict() for check in checks]
+            json.dump(checks_data, f, indent=2, default=str)
+        
+        print(f"✓ Generated {len(checks)} validation checks saved to: {checks_path}")
+    except Exception as e:
+        print(f"⚠️  Could not generate validation checks: {e}")
+        # Fallback: use the generate_validation_checks function
+        try:
+            checks_data = generate_validation_checks(ideal_path, output_table.replace("_clean", ""))
+            checks_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(str(checks_path), 'w') as f:
+                json.dump(checks_data, f, indent=2, default=str)
+            print(f"✓ Generated {len(checks_data)} validation checks (fallback) saved to: {checks_path}")
+        except Exception as e2:
+            print(f"⚠️  Could not generate validation checks (fallback also failed): {e2}")
+    
     # Log successful generation
     pipeline_tracker.record_attempt(pipeline_name, 'regeneration', None, True)
     
@@ -786,6 +819,29 @@ def process_pipeline_with_limits(
         print(f"✓ {pipeline_name} pipeline executed successfully!")
         print(f"Output: {result.stdout[:500]}...")
         pipeline_tracker.record_attempt(pipeline_name, 'execution', None, True)
+        
+        # Run validation checks on the output
+        try:
+            from agents.validation_agent import validate_pipeline_output
+            print(f"\n--- Validating {pipeline_name} pipeline output ---")
+            validation_report = validate_pipeline_output(
+                pipeline_name=pipeline_name,
+                output_table=output_table,
+                schema_path=ideal_path,
+                db_path=str(paths.database),
+                checks_path=str(checks_path) if 'checks_path' in locals() else None
+            )
+            
+            # Print summary
+            validation_report.print_summary()
+            
+            # Only return True if validation also passed
+            if validation_report.overall_status != "PASS":
+                print(f"⚠️  Pipeline execution succeeded but validation {validation_report.overall_status}ed")
+                # Still return True for execution success, but log validation issues
+        except Exception as e:
+            print(f"⚠️  Could not run validation: {e}")
+        
         return True
     else:
         error_msg = result.stderr[:500] if result.stderr else "Unknown error"

@@ -470,6 +470,40 @@ def _generate_validation_queries(table: str, ideal_by_name: Dict) -> List[str]:
     return queries
 
 
+def generate_validation_checks(
+    schema_path: Optional[str] = None,
+    table_name: str = "users"
+) -> List[Dict[str, Any]]:
+    """
+    Generate validation checks from an ideal schema.
+    
+    This function uses ValidationCheckGenerator to create deterministic
+    validation checks that can be stored with a pipeline and executed
+    after each pipeline run.
+    
+    Args:
+        schema_path: Path to the ideal schema YAML file.
+                    If None, uses the default users_schema.yaml.
+        table_name: Name of the table in the schema to generate checks for.
+    
+    Returns:
+        List of validation check dictionaries (can be converted to ValidationCheck objects)
+    """
+    from utils.validation import ValidationCheckGenerator
+    
+    if schema_path is None:
+        schema_path = str(paths.users_schema)
+    
+    # Use ValidationCheckGenerator to create checks
+    checks = ValidationCheckGenerator.generate_from_schema(
+        schema_path=schema_path,
+        table_name=table_name
+    )
+    
+    # Convert to dictionaries for JSON serialization
+    return [check.to_dict() for check in checks]
+
+
 # Export all tools
 PIPELINE_TOOLS = {
     "load_ideal_schema": {
@@ -487,6 +521,10 @@ PIPELINE_TOOLS = {
     "generate_cleaning_pipeline": {
         "description": "Generate complete cleaning pipeline (SQL + Python)",
         "function": generate_cleaning_pipeline,
+    },
+    "generate_validation_checks": {
+        "description": "Generate validation checks from ideal schema for pipeline validation",
+        "function": generate_validation_checks,
     },
 }
 
@@ -760,5 +798,9 @@ PIPELINE_TOOLS = {
     "generate_cleaning_pipeline": {
         "description": "Generate complete cleaning pipeline (SQL + Python)",
         "function": generate_cleaning_pipeline,
+    },
+    "generate_validation_checks": {
+        "description": "Generate validation checks from ideal schema for pipeline validation",
+        "function": generate_validation_checks,
     },
 }

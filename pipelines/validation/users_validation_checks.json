@@ -1,0 +1,251 @@
+[
+  {
+    "id": "users_row_count",
+    "description": "Verify users has data",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users",
+    "expected": "> 0",
+    "severity": "medium",
+    "table": "users"
+  },
+  {
+    "id": "users_id_not_null",
+    "description": "Verify id has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE id IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "id",
+    "table": "users"
+  },
+  {
+    "id": "users_id_type_check",
+    "description": "Verify id has correct type (integer)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(id) != 'BIGINT'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "id",
+    "table": "users"
+  },
+  {
+    "id": "users_name_not_null",
+    "description": "Verify name has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE name IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "name",
+    "table": "users"
+  },
+  {
+    "id": "users_name_type_check",
+    "description": "Verify name has correct type (string)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(name) != 'VARCHAR'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "name",
+    "table": "users"
+  },
+  {
+    "id": "users_name_min_length",
+    "description": "Verify name length >= 1",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE LENGTH(name) < 1",
+    "expected": 0,
+    "severity": "medium",
+    "column": "name",
+    "table": "users"
+  },
+  {
+    "id": "users_name_max_length",
+    "description": "Verify name length <= 255",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE LENGTH(name) > 255",
+    "expected": 0,
+    "severity": "medium",
+    "column": "name",
+    "table": "users"
+  },
+  {
+    "id": "users_email_not_null",
+    "description": "Verify email has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE email IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "email",
+    "table": "users"
+  },
+  {
+    "id": "users_email_type_check",
+    "description": "Verify email has correct type (string)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(email) != 'VARCHAR'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "email",
+    "table": "users"
+  },
+  {
+    "id": "users_email_email_format",
+    "description": "Verify email has valid email format",
+    "check_type": "sql",
+    "query": "\n                        SELECT COUNT(*) FROM users \n                        WHERE email IS NOT NULL \n                        AND email NOT LIKE '%_@_%._%'\n                    ",
+    "expected": 0,
+    "severity": "medium",
+    "column": "email",
+    "table": "users"
+  },
+  {
+    "id": "users_email_max_length",
+    "description": "Verify email length <= 255",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE LENGTH(email) > 255",
+    "expected": 0,
+    "severity": "medium",
+    "column": "email",
+    "table": "users"
+  },
+  {
+    "id": "users_age_not_null",
+    "description": "Verify age has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE age IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "age",
+    "table": "users"
+  },
+  {
+    "id": "users_age_type_check",
+    "description": "Verify age has correct type (integer)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(age) != 'BIGINT'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "age",
+    "table": "users"
+  },
+  {
+    "id": "users_age_min",
+    "description": "Verify age >= 0",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE age < 0",
+    "expected": 0,
+    "severity": "high",
+    "column": "age",
+    "table": "users"
+  },
+  {
+    "id": "users_age_max",
+    "description": "Verify age <= 150",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE age > 150",
+    "expected": 0,
+    "severity": "high",
+    "column": "age",
+    "table": "users"
+  },
+  {
+    "id": "users_join_date_not_null",
+    "description": "Verify join_date has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE join_date IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "join_date",
+    "table": "users"
+  },
+  {
+    "id": "users_join_date_type_check",
+    "description": "Verify join_date has correct type (date)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(join_date) != 'DATE'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "join_date",
+    "table": "users"
+  },
+  {
+    "id": "users_join_date_date_valid",
+    "description": "Verify join_date contains valid dates",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE join_date IS NOT NULL AND NOT isdate(join_date)",
+    "expected": 0,
+    "severity": "high",
+    "column": "join_date",
+    "table": "users"
+  },
+  {
+    "id": "users_status_not_null",
+    "description": "Verify status has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE status IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "status",
+    "table": "users"
+  },
+  {
+    "id": "users_status_type_check",
+    "description": "Verify status has correct type (string)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(status) != 'VARCHAR'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "status",
+    "table": "users"
+  },
+  {
+    "id": "users_status_enum",
+    "description": "Verify status is in valid enum values",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE status NOT IN ('active', 'inactive', 'pending', 'suspended')",
+    "expected": 0,
+    "severity": "high",
+    "column": "status",
+    "table": "users"
+  },
+  {
+    "id": "users_score_not_null",
+    "description": "Verify score has no NULL values (NOT NULL constraint)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE score IS NULL",
+    "expected": 0,
+    "severity": "critical",
+    "column": "score",
+    "table": "users"
+  },
+  {
+    "id": "users_score_type_check",
+    "description": "Verify score has correct type (float)",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE typeof(score) != 'DOUBLE'",
+    "expected": 0,
+    "severity": "critical",
+    "column": "score",
+    "table": "users"
+  },
+  {
+    "id": "users_score_min",
+    "description": "Verify score >= 0.0",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE score < 0.0",
+    "expected": 0,
+    "severity": "high",
+    "column": "score",
+    "table": "users"
+  },
+  {
+    "id": "users_score_max",
+    "description": "Verify score <= 100.0",
+    "check_type": "sql",
+    "query": "SELECT COUNT(*) FROM users WHERE score > 100.0",
+    "expected": 0,
+    "severity": "high",
+    "column": "score",
+    "table": "users"
+  }
+]
