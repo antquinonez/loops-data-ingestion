@@ -1,0 +1,80 @@
+# Ideal Schema for transactions table
+version: 1
+
+tables:
+  transactions:
+    description: "Clean transactions data table"
+    
+    columns:
+      - name: transaction_id
+        type: integer
+        nullable: false
+        primary_key: true
+        description: "Unique transaction identifier"
+        
+      - name: customer_id
+        type: integer
+        nullable: false
+        description: "Customer identifier"
+        
+      - name: amount
+        type: float
+        nullable: false
+        description: "Transaction amount"
+        constraints:
+          min: 0.0
+          max: 10000.0
+        default: 0.0
+        
+      - name: date
+        type: date
+        nullable: false
+        description: "Transaction date"
+        default: "1970-01-01"
+        
+      - name: category
+        type: string
+        nullable: false
+        description: "Transaction category"
+        default: "unknown"
+        constraints:
+          min_length: 1
+          max_length: 50
+          
+      - name: status
+        type: string
+        nullable: false
+        description: "Transaction status"
+        default: "pending"
+        enum: ["completed", "pending", "cancelled", "refunded"]
+
+# Data quality rules
+quality_rules:
+  amount:
+    empty_handling: "default"
+    default_value: 0.0
+    type_mismatch_handling: "coerce_or_default"
+    out_of_range_handling: "clamp"
+  
+  date:
+    empty_handling: "default"
+    default_value: "1970-01-01"
+    invalid_format_handling: "default"
+  
+  category:
+    empty_handling: "default"
+    default_value: "unknown"
+  
+  status:
+    empty_handling: "default"
+    default_value: "pending"
+    invalid_value_handling: "default"
+
+# Transformation priorities
+transformation_order:
+  - "null_handling"
+  - "type_conversion"
+  - "format_validation"
+  - "range_validation"
+  - "enum_validation"
+  - "custom_validation"

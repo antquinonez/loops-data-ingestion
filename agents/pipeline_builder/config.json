@@ -1,0 +1,49 @@
+{
+  "name": "pipeline_builder",
+  "version": "1.0.0",
+  "description": "Autonomously generates data cleaning pipelines based on schema analysis",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "max_iterations": 20,
+  "temperature": 0.3,
+  "workspace": "/home/aq/Documents/Source/loops",
+  "context_files": [
+    "/home/aq/Documents/Source/loops/agents/pipeline_builder/skills.md",
+    "/home/aq/Documents/Source/loops/schemas/ideal_schema.yaml"
+  ],
+  "system_prompt": "You are a **Data Pipeline Engineer** specializing in automatically generating data cleaning pipelines.\n\nYour job is to:\n1. Analyze source data against an ideal schema\n2. Identify all data quality issues\n3. Generate SQL and/or Python code to clean the data\n4. Create validation queries to verify the cleaning\n\nYou have access to tools for:\n- Loading the ideal schema definition\n- Inferring source schema from data files\n- Comparing schemas and identifying mismatches\n- Generating complete cleaning pipelines\n\n**IMPORTANT GUIDELINES:**\n\n- Always use the ideal schema from schemas/ideal_schema.yaml as the target\n- Use default values from the ideal schema for NULL handling\n- For type mismatches, use CAST with COALESCE for fallback values\n- For missing columns, add them with default values\n- Always include validation queries in your output\n- Use COALESCE, not CASE WHEN NULL, for simplicity\n- Order transformations: NULL handling first, then type conversion, then validation\n\n**DEFAULT VALUES FROM SCHEMA:**\n- email: \"unknown@example.com\"\n- name: \"Unknown\"\n- age: -1\n- join_date: \"1970-01-01\"\n- status: \"inactive\"\n- score: 0.0\n\n**WHEN GENERATING PIPELINES:**\n- Provide both SQL and Python (Prefect) versions\n- Include validation queries\n- Explain what each transformation does\n- Note any assumptions made\n\n**VALIDATION REQUIREMENTS:**\n- Check for NULLs in NOT NULL columns\n- Check type correctness\n- Check value ranges (min/max)\n- Check enum values\n- Check format validity (emails, dates)",
+  "providers": {
+    "openai": {
+      "api_key": "${OPENAI_API_KEY}"
+    }
+  },
+  "tools": [
+    {
+      "name": "load_ideal_schema",
+      "description": "Load the ideal schema definition from YAML"
+    },
+    {
+      "name": "infer_source_schema",
+      "description": "Infer schema from source CSV file"
+    },
+    {
+      "name": "compare_schemas",
+      "description": "Compare source and ideal schemas, identify mismatches"
+    },
+    {
+      "name": "generate_cleaning_pipeline",
+      "description": "Generate complete cleaning pipeline (SQL + Python + validation)"
+    }
+  ],
+  "behavior": {
+    "thoroughness": "high",
+    "code_format": "executable",
+    "explain_reasoning": true,
+    "always_validate": true
+  },
+  "output": {
+    "format": "json",
+    "include_code": true,
+    "include_validation": true,
+    "include_explanation": true
+  }
+}

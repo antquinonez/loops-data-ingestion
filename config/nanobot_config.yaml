@@ -1,0 +1,189 @@
+# Nanobot Configuration for Data Ingestion Troubleshooting
+# https://github.com/HKUDS/nanobot
+
+# Global settings
+name: "ingestion_troubleshooter"
+version: "0.1.0"
+
+debug: true
+log_level: "DEBUG"
+log_config: "/home/aq/Documents/Source/loops/config/nanobot_logging.yaml"
+
+# Database for session memory (optional)
+database:
+  enabled: true
+  path: "/home/aq/Documents/Source/loops/data/nanobot.db"
+
+# Server configuration
+server:
+  host: "127.0.0.1"
+  port: 8080
+
+# Agent configuration
+agents:
+  - name: "data_ingestion_investigator"
+    description: "Autonomous agent for troubleshooting data ingestion failures"
+    model: "gpt-4o-mini"  # Can be changed to any OpenAI-compatible model
+    max_iterations: 20  # Prevent infinite loops
+    temperature: 0.3  # Lower for more deterministic troubleshooting
+    
+    # System prompt that includes SKILLS.md context
+    system_prompt: |
+      You are an autonomous data ingestion troubleshooting agent. 
+      Your job is to thoroughly investigate and diagnose data ingestion failures.
+      
+      ## YOUR ROLE
+      - You are a senior data engineer
+      - You must be thorough and methodical
+      - Do not stop investigating until you have identified the root cause
+      - Use the SKILLS.md guidance provided in the context
+      
+      ## INVESTIGATION PROTOCOL
+      1. Start by checking the ingestion logs for error messages
+      2. Examine the source data file
+      3. Query the database to understand the current state
+      4. Validate the data against the expected schema
+      5. Identify all data quality issues
+      6. Provide a complete analysis with root cause and recommendations
+      
+      ## IMPORTANT GUIDELINES
+      - Always start with the most recent ingestion log
+      - Check for NULL constraint violations
+      - Check for type mismatches
+      - Check for schema validation errors
+      - Be exhaustive in your investigation
+      - When you identify the root cause, use send_slack_alert to notify the team
+      
+      ## SKILLS CONTEXT
+      {skills_context}
+      
+      ## CURRENT TASK
+      Investigate the most recent data ingestion failure and provide a complete analysis.
+    
+    # Context files to load (SKILLS.md will be loaded here)
+    context_files:
+      - "/home/aq/Documents/Source/loops/SKILLS.md"
+    
+    # Tools available to this agent
+    tools:
+      - read_logs
+      - query_duckdb
+      - inspect_file
+      - check_schema
+      - send_slack_alert
+      - get_ingestion_status
+
+# Tool definitions (references the Python functions in nanobot_tools.py)
+tools:
+  read_logs:
+    description: "Read application logs to find error details"
+    python_function: "nanobot_tools.read_logs"
+    parameters:
+      path:
+        type: str
+        required: true
+        description: "Path to the log file"
+      tail_n:
+        type: int
+        default: 100
+        description: "Number of lines to return from the end"
+
+  query_duckdb:
+    description: "Query the DuckDB database for investigation"
+    python_function: "nanobot_tools.query_duckdb"
+    parameters:
+      query:
+        type: str
+        required: true
+        description: "SQL query to execute"
+
+  inspect_file:
+    description: "Inspect source data files"
+    python_function: "nanobot_tools.inspect_file"
+    parameters:
+      path:
+        type: str
+        required: true
+        description: "Path to the file"
+      sample_size:
+        type: int
+        default: 10
+        description: "Number of sample rows"
+
+  check_schema:
+    description: "Validate data against expected schema"
+    python_function: "nanobot_tools.check_schema"
+    parameters:
+      path:
+        type: str
+        required: true
+        description: "Path to the data file"
+      schema:
+        type: dict
+        required: false
+        description: "Expected schema (optional)"
+
+  send_slack_alert:
+    description: "Send investigation results to Slack"
+    python_function: "nanobot_tools.send_slack_alert"
+    parameters:
+      message:
+        type: str
+        required: true
+        description: "Alert message with full analysis"
+      severity:
+        type: str
+        default: "medium"
+        enum: ["low", "medium", "high", "critical"]
+        description: "Severity level"
+
+  get_ingestion_status:
+    description: "Get current status of the ingestion pipeline"
+    python_function: "nanobot_tools.get_ingestion_status"
+    parameters: {}
+
+# Skills (can also be loaded from SKILLS.md)
+skills:
+  - name: "troubleshoot_ingestion"
+    description: "Investigate data ingestion failures"
+    instructions: |
+      When a data ingestion job fails:
+      1. Read the ingestion log to understand the error
+      2. Inspect the source data file
+      3. Query the database for current state
+      4. Check schema validation
+      5. Identify root cause
+      6. Send alert with analysis
+
+# Subagents (for complex investigations)
+subagents:
+  log_analyzer:
+    description: "Specialized in analyzing log files"
+    model: "gpt-4o-mini"
+    system_prompt: "You are a log analysis expert. Extract error messages, timestamps, and context from logs."
+    max_iterations: 10
+    
+  data_validator:
+    description: "Specialized in data validation"
+    model: "gpt-4o-mini"
+    system_prompt: "You are a data validation expert. Identify schema issues, type mismatches, and data quality problems."
+    max_iterations: 15
+
+# Cron jobs for automated investigation
+cron:
+  - name: "daily_ingestion_check"
+    schedule: "0 9 * * *"  # 9 AM daily
+    agent: "data_ingestion_investigator"
+    message: "Check for any failed ingestion jobs in the last 24 hours and investigate them."
+    
+  - name: "hourly_health_check"
+    schedule: "0 * * * *"  # Every hour
+    agent: "data_ingestion_investigator" 
+    message: "Quick health check: verify recent ingestion jobs completed successfully."
+
+# Webhook endpoints for triggering investigations
+webhooks:
+  - path: "/trigger-investigation"
+    agent: "data_ingestion_investigator"
+    method: "POST"
+    description: "Trigger a new ingestion failure investigation"

@@ -1,0 +1,1927 @@
+2026-07-10 14:16:19,311 - INFO - ================================================================================
+2026-07-10 14:16:19,319 - INFO - Starting data ingestion pipeline
+2026-07-10 14:16:19,320 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:16:19,320 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:16:19,321 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:16:19,777 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:16:19,779 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:16:19,787 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:16:19,788 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:16:20,207 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:16:20,260 - INFO - Target table created successfully
+2026-07-10 14:16:20,263 - INFO - Raw staging table created
+2026-07-10 14:16:20,279 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:16:20,280 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:16:20,594 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:16:20,639 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:16:20,664 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:16:20,665 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:16:20,666 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:16:21,110 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:16:21,137 - INFO - Checking raw data quality...
+2026-07-10 14:16:21,140 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:16:21,142 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:16:21,143 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:16:21,145 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:16:21,146 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:16:21,146 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:16:21,147 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:16:21,148 - ERROR - Timestamp: 2026-07-10T14:16:21.148122
+2026-07-10 14:16:21,150 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:27:03,893 - INFO - ================================================================================
+2026-07-10 14:27:03,901 - INFO - Starting data ingestion pipeline
+2026-07-10 14:27:03,902 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:03,902 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:03,903 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:27:04,397 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:04,398 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:27:04,403 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:27:04,404 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:27:04,890 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:04,931 - INFO - Target table created successfully
+2026-07-10 14:27:04,935 - INFO - Raw staging table created
+2026-07-10 14:27:04,950 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:27:04,950 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:27:05,434 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:27:05,483 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:27:05,506 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:27:05,507 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:27:05,507 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:27:05,853 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:27:05,888 - INFO - Checking raw data quality...
+2026-07-10 14:27:05,890 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:27:05,894 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:27:05,895 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:27:05,898 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:27:05,900 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:27:05,901 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:05,903 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:05,905 - ERROR - Timestamp: 2026-07-10T14:27:05.905726
+2026-07-10 14:27:05,909 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:27:05,931 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:27:43,074 - INFO - ================================================================================
+2026-07-10 14:27:43,082 - INFO - Starting data ingestion pipeline
+2026-07-10 14:27:43,083 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:43,083 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:43,084 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:27:43,472 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:43,473 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:27:43,478 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:27:43,479 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:27:43,877 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:43,912 - INFO - Target table created successfully
+2026-07-10 14:27:43,915 - INFO - Raw staging table created
+2026-07-10 14:27:43,930 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:27:43,931 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:27:44,407 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:27:44,454 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:27:44,477 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:27:44,478 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:27:44,478 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:27:44,760 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:27:44,788 - INFO - Checking raw data quality...
+2026-07-10 14:27:44,791 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:27:44,794 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:27:44,794 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:27:44,797 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:27:44,798 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:27:44,799 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:44,800 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:44,800 - ERROR - Timestamp: 2026-07-10T14:27:44.800847
+2026-07-10 14:27:44,803 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:27:44,818 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:27:54,184 - INFO - ================================================================================
+2026-07-10 14:27:54,192 - INFO - Starting data ingestion pipeline
+2026-07-10 14:27:54,193 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:54,193 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:54,194 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:27:54,547 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:54,547 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:27:54,552 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:27:54,553 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:27:54,997 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:55,040 - INFO - Target table created successfully
+2026-07-10 14:27:55,043 - INFO - Raw staging table created
+2026-07-10 14:27:55,057 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:27:55,058 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:27:55,370 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:27:55,414 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:27:55,438 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:27:55,439 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:27:55,439 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:27:55,861 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:27:55,891 - INFO - Checking raw data quality...
+2026-07-10 14:27:55,895 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:27:55,897 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:27:55,897 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:27:55,900 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:27:55,901 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:27:55,901 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:27:55,902 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:27:55,902 - ERROR - Timestamp: 2026-07-10T14:27:55.902755
+2026-07-10 14:27:55,904 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:27:55,921 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:28:08,681 - INFO - ================================================================================
+2026-07-10 14:28:08,689 - INFO - Starting data ingestion pipeline
+2026-07-10 14:28:08,690 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:28:08,690 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:28:08,691 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:28:09,153 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:28:09,154 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:28:09,160 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:28:09,161 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:28:09,490 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:28:09,536 - INFO - Target table created successfully
+2026-07-10 14:28:09,539 - INFO - Raw staging table created
+2026-07-10 14:28:09,554 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:28:09,554 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:28:09,989 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:28:10,035 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:28:10,056 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:28:10,057 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:28:10,058 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:28:10,446 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:28:10,473 - INFO - Checking raw data quality...
+2026-07-10 14:28:10,477 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:28:10,479 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:28:10,480 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:28:10,482 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:28:10,483 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:28:10,483 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:28:10,484 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:28:10,485 - ERROR - Timestamp: 2026-07-10T14:28:10.485114
+2026-07-10 14:28:10,487 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:28:10,503 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:28:20,867 - INFO - ================================================================================
+2026-07-10 14:28:20,875 - INFO - Starting data ingestion pipeline
+2026-07-10 14:28:20,876 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:28:20,876 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:28:20,877 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:28:21,245 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:28:21,246 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:28:21,251 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:28:21,251 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:28:21,542 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:28:21,580 - INFO - Target table created successfully
+2026-07-10 14:28:21,583 - INFO - Raw staging table created
+2026-07-10 14:28:21,597 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:28:21,598 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:28:21,903 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:28:21,958 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:28:21,981 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:28:21,981 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:28:21,982 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:28:22,342 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:28:22,396 - INFO - Checking raw data quality...
+2026-07-10 14:28:22,399 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:28:22,401 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:28:22,401 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:28:22,404 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:28:22,405 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:28:22,405 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:28:22,406 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:28:22,407 - ERROR - Timestamp: 2026-07-10T14:28:22.407034
+2026-07-10 14:28:22,410 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:28:22,426 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:33:53,942 - INFO - ================================================================================
+2026-07-10 14:33:53,950 - INFO - Starting data ingestion pipeline
+2026-07-10 14:33:53,951 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:33:53,951 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:33:53,952 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:33:54,454 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:33:54,455 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:33:54,459 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:33:54,460 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:33:54,909 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:33:54,944 - INFO - Target table created successfully
+2026-07-10 14:33:54,947 - INFO - Raw staging table created
+2026-07-10 14:33:54,965 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:33:54,966 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:33:55,543 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:33:55,588 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:33:55,614 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:33:55,614 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:33:55,615 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:33:56,034 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:33:56,063 - INFO - Checking raw data quality...
+2026-07-10 14:33:56,066 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:33:56,069 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:33:56,069 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:33:56,071 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:33:56,072 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:33:56,073 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:33:56,073 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:33:56,074 - ERROR - Timestamp: 2026-07-10T14:33:56.074511
+2026-07-10 14:33:56,076 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:33:56,091 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:38:06,535 - INFO - ================================================================================
+2026-07-10 14:38:06,543 - INFO - Starting data ingestion pipeline
+2026-07-10 14:38:06,544 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:38:06,545 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:38:06,545 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:38:06,943 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:38:06,943 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:38:06,947 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:38:06,948 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:38:07,247 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:38:07,281 - INFO - Target table created successfully
+2026-07-10 14:38:07,285 - INFO - Raw staging table created
+2026-07-10 14:38:07,299 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:38:07,300 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:38:07,611 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:38:07,660 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:38:07,687 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:38:07,690 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:38:07,691 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:38:08,024 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:38:08,057 - INFO - Checking raw data quality...
+2026-07-10 14:38:08,060 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:38:08,062 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:38:08,062 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:38:08,065 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:38:08,066 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:38:08,067 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:38:08,067 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:38:08,068 - ERROR - Timestamp: 2026-07-10T14:38:08.068287
+2026-07-10 14:38:08,070 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:38:08,086 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:38:41,562 - INFO - ================================================================================
+2026-07-10 14:38:41,568 - INFO - Starting data ingestion pipeline
+2026-07-10 14:38:41,569 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:38:41,570 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:38:41,570 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:38:42,060 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:38:42,061 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:38:42,064 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:38:42,065 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:38:42,449 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:38:42,486 - INFO - Target table created successfully
+2026-07-10 14:38:42,489 - INFO - Raw staging table created
+2026-07-10 14:38:42,501 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:38:42,501 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:38:42,791 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:38:42,836 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:38:42,861 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:38:42,862 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:38:42,862 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:38:43,179 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:38:43,207 - INFO - Checking raw data quality...
+2026-07-10 14:38:43,210 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:38:43,212 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:38:43,212 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:38:43,215 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:38:43,216 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:38:43,216 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:38:43,217 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:38:43,218 - ERROR - Timestamp: 2026-07-10T14:38:43.218204
+2026-07-10 14:38:43,220 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:38:43,237 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:39:38,947 - INFO - ================================================================================
+2026-07-10 14:39:38,953 - INFO - Starting data ingestion pipeline
+2026-07-10 14:39:38,953 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:39:38,954 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:39:38,954 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:39:39,598 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:39:39,599 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:39:39,602 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:39:39,602 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:39:40,037 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:39:40,075 - INFO - Target table created successfully
+2026-07-10 14:39:40,078 - INFO - Raw staging table created
+2026-07-10 14:39:40,090 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:39:40,090 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:39:40,562 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:39:40,600 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:39:40,620 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:39:40,621 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:39:40,622 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:39:40,980 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:39:41,008 - INFO - Checking raw data quality...
+2026-07-10 14:39:41,012 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:39:41,013 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:39:41,014 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:39:41,016 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:39:41,017 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:39:41,018 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:39:41,019 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:39:41,019 - ERROR - Timestamp: 2026-07-10T14:39:41.019844
+2026-07-10 14:39:41,022 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:39:41,037 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:40:03,573 - INFO - ================================================================================
+2026-07-10 14:40:03,580 - INFO - Starting data ingestion pipeline
+2026-07-10 14:40:03,580 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:40:03,581 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:40:03,581 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:40:04,034 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:40:04,035 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:40:04,039 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:40:04,040 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:40:04,355 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:40:04,381 - INFO - Target table created successfully
+2026-07-10 14:40:04,385 - INFO - Raw staging table created
+2026-07-10 14:40:04,399 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:40:04,399 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:40:04,733 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:40:04,789 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:40:04,812 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:40:04,813 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:40:04,813 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:40:05,248 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:40:05,276 - INFO - Checking raw data quality...
+2026-07-10 14:40:05,279 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:40:05,280 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:40:05,281 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:40:05,283 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:40:05,284 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:40:05,285 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:40:05,285 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:40:05,286 - ERROR - Timestamp: 2026-07-10T14:40:05.286463
+2026-07-10 14:40:05,288 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:40:05,304 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:40:24,959 - INFO - ================================================================================
+2026-07-10 14:40:24,965 - INFO - Starting data ingestion pipeline
+2026-07-10 14:40:24,966 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:40:24,966 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:40:24,967 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:40:25,321 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:40:25,322 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:40:25,328 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:40:25,328 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:40:25,690 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:40:25,736 - INFO - Target table created successfully
+2026-07-10 14:40:25,740 - INFO - Raw staging table created
+2026-07-10 14:40:25,753 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:40:25,753 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:40:26,052 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:40:26,100 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:40:26,119 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:40:26,119 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:40:26,120 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:40:26,445 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:40:26,484 - INFO - Checking raw data quality...
+2026-07-10 14:40:26,487 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:40:26,488 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:40:26,489 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:40:26,491 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:40:26,492 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:40:26,492 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:40:26,493 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:40:26,493 - ERROR - Timestamp: 2026-07-10T14:40:26.493709
+2026-07-10 14:40:26,495 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:40:26,508 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:42:25,602 - INFO - ================================================================================
+2026-07-10 14:42:25,608 - INFO - Starting data ingestion pipeline
+2026-07-10 14:42:25,609 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:42:25,610 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:42:25,610 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:42:26,069 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:42:26,070 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:42:26,073 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:42:26,074 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:42:26,371 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:42:26,407 - INFO - Target table created successfully
+2026-07-10 14:42:26,410 - INFO - Raw staging table created
+2026-07-10 14:42:26,423 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:42:26,424 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:42:26,779 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:42:26,813 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:42:26,832 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:42:26,832 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:42:26,833 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:42:27,146 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:42:27,169 - INFO - Checking raw data quality...
+2026-07-10 14:42:27,171 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:42:27,172 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:42:27,173 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:42:27,175 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:42:27,175 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:42:27,176 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:42:27,176 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:42:27,177 - ERROR - Timestamp: 2026-07-10T14:42:27.177264
+2026-07-10 14:42:27,178 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:42:27,190 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:42:55,601 - INFO - ================================================================================
+2026-07-10 14:42:55,607 - INFO - Starting data ingestion pipeline
+2026-07-10 14:42:55,608 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:42:55,608 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:42:55,609 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:42:55,960 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:42:55,961 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:42:55,965 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:42:55,965 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:42:56,296 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:42:56,324 - INFO - Target table created successfully
+2026-07-10 14:42:56,328 - INFO - Raw staging table created
+2026-07-10 14:42:56,341 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 14:42:56,342 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 14:42:56,664 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 14:42:56,704 - INFO - Loaded 13 rows into raw_users
+2026-07-10 14:42:56,723 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 14:42:56,724 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 14:42:56,724 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 14:42:57,041 - INFO - Starting transformation from raw_users to users
+2026-07-10 14:42:57,069 - INFO - Checking raw data quality...
+2026-07-10 14:42:57,072 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 14:42:57,073 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 14:42:57,074 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 14:42:57,076 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:42:57,077 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 14:42:57,077 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:42:57,078 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:42:57,078 - ERROR - Timestamp: 2026-07-10T14:42:57.078783
+2026-07-10 14:42:57,081 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 14:42:57,093 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 14:52:55,998 - INFO - ================================================================================
+2026-07-10 14:52:56,006 - INFO - Starting data ingestion pipeline
+2026-07-10 14:52:56,007 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:52:56,007 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:52:56,008 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:52:56,664 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:52:56,665 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:52:56,669 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:52:56,670 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:52:57,160 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:52:57,223 - ERROR - 
+Pipeline failed with error: IOException: IO Error: Could not set lock on file "/home/aq/Documents/Source/loops/data/ingestion.db": Conflicting lock is held in /usr/lib/jvm/java-21-openjdk/bin/java (PID 135387) by user aq. See also https://duckdb.org/docs/stable/connect/concurrency
+2026-07-10 14:58:53,592 - INFO - ================================================================================
+2026-07-10 14:58:53,600 - INFO - Starting data ingestion pipeline
+2026-07-10 14:58:53,600 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:58:53,601 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:58:53,601 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 14:58:54,129 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 14:58:54,130 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 14:58:54,134 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 14:58:54,134 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 14:58:54,703 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 14:58:54,752 - ERROR - 
+Pipeline failed with error: IOException: IO Error: Could not set lock on file "/home/aq/Documents/Source/loops/data/ingestion.db": Conflicting lock is held in /usr/lib/jvm/java-21-openjdk/bin/java (PID 135387) by user aq. See also https://duckdb.org/docs/stable/connect/concurrency
+2026-07-10 15:00:31,185 - INFO - ================================================================================
+2026-07-10 15:00:31,193 - INFO - Starting data ingestion pipeline
+2026-07-10 15:00:31,194 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:00:31,194 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:00:31,195 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:00:31,754 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:00:31,755 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:00:31,759 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:00:31,760 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:00:32,085 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:00:32,125 - INFO - Target table created successfully
+2026-07-10 15:00:32,129 - INFO - Raw staging table created
+2026-07-10 15:00:32,144 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:00:32,144 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:00:32,527 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:00:32,576 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:00:32,600 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:00:32,600 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:00:32,601 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:00:33,031 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:00:33,082 - INFO - Checking raw data quality...
+2026-07-10 15:00:33,086 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:00:33,088 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:00:33,089 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:00:33,093 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:00:33,094 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:00:33,095 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:00:33,095 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:00:33,096 - ERROR - Timestamp: 2026-07-10T15:00:33.096281
+2026-07-10 15:00:33,098 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:00:33,113 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:02:36,293 - INFO - ================================================================================
+2026-07-10 15:02:36,299 - INFO - Starting data ingestion pipeline
+2026-07-10 15:02:36,300 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:02:36,300 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:02:36,301 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:02:36,814 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:02:36,815 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:02:36,818 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:02:36,819 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:02:37,140 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:02:37,167 - INFO - Target table created successfully
+2026-07-10 15:02:37,170 - INFO - Raw staging table created
+2026-07-10 15:02:37,182 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:02:37,182 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:02:37,720 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:02:37,768 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:02:37,790 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:02:37,791 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:02:37,791 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:02:38,184 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:02:38,211 - INFO - Checking raw data quality...
+2026-07-10 15:02:38,215 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:02:38,217 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:02:38,217 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:02:38,220 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:02:38,221 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:02:38,222 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:02:38,223 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:02:38,224 - ERROR - Timestamp: 2026-07-10T15:02:38.223981
+2026-07-10 15:02:38,226 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:02:38,242 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:03:48,381 - INFO - ================================================================================
+2026-07-10 15:03:48,387 - INFO - Starting data ingestion pipeline
+2026-07-10 15:03:48,388 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:03:48,388 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:03:48,389 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:03:48,768 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:03:48,769 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:03:48,772 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:03:48,772 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:03:49,125 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:03:49,154 - INFO - Target table created successfully
+2026-07-10 15:03:49,158 - INFO - Raw staging table created
+2026-07-10 15:03:49,172 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:03:49,172 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:03:49,494 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:03:49,532 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:03:49,551 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:03:49,552 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:03:49,552 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:03:49,862 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:03:49,892 - INFO - Checking raw data quality...
+2026-07-10 15:03:49,894 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:03:49,896 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:03:49,896 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:03:49,898 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:03:49,899 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:03:49,899 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:03:49,900 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:03:49,900 - ERROR - Timestamp: 2026-07-10T15:03:49.900534
+2026-07-10 15:03:49,902 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:03:49,913 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:07:38,342 - INFO - ================================================================================
+2026-07-10 15:07:38,350 - INFO - Starting data ingestion pipeline
+2026-07-10 15:07:38,351 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:07:38,351 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:07:38,352 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:07:38,870 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:07:38,871 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:07:38,876 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:07:38,877 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:07:39,216 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:07:39,264 - INFO - Target table created successfully
+2026-07-10 15:07:39,269 - INFO - Raw staging table created
+2026-07-10 15:07:39,285 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:07:39,285 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:07:39,779 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:07:39,846 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:07:39,875 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:07:39,876 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:07:39,877 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:07:40,234 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:07:40,277 - INFO - Checking raw data quality...
+2026-07-10 15:07:40,280 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:07:40,283 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:07:40,284 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:07:40,287 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:07:40,288 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:07:40,289 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:07:40,290 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:07:40,291 - ERROR - Timestamp: 2026-07-10T15:07:40.291252
+2026-07-10 15:07:40,294 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:07:40,337 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:10:31,674 - INFO - ================================================================================
+2026-07-10 15:10:31,680 - INFO - Starting data ingestion pipeline
+2026-07-10 15:10:31,681 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:10:31,681 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:10:31,682 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:10:32,218 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:10:32,219 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:10:32,222 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:10:32,223 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:10:32,566 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:10:32,598 - INFO - Target table created successfully
+2026-07-10 15:10:32,602 - INFO - Raw staging table created
+2026-07-10 15:10:32,618 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:10:32,618 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:10:33,045 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:10:33,080 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:10:33,101 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:10:33,102 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:10:33,102 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:10:33,590 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:10:33,611 - INFO - Checking raw data quality...
+2026-07-10 15:10:33,614 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:10:33,616 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:10:33,616 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:10:33,618 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:10:33,619 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:10:33,619 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:10:33,620 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:10:33,620 - ERROR - Timestamp: 2026-07-10T15:10:33.620811
+2026-07-10 15:10:33,622 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:10:33,634 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:14:13,604 - INFO - ================================================================================
+2026-07-10 15:14:13,610 - INFO - Starting data ingestion pipeline
+2026-07-10 15:14:13,611 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:14:13,611 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:14:13,612 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:14:14,171 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:14:14,172 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:14:14,175 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:14:14,175 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:14:14,702 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:14:14,733 - INFO - Target table created successfully
+2026-07-10 15:14:14,736 - INFO - Raw staging table created
+2026-07-10 15:14:14,751 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:14:14,752 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:14:15,194 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:14:15,239 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:14:15,263 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:14:15,263 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:14:15,264 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:14:15,840 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:14:15,861 - INFO - Checking raw data quality...
+2026-07-10 15:14:15,864 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:14:15,865 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:14:15,866 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:14:15,868 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:14:15,868 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:14:15,869 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:14:15,869 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:14:15,870 - ERROR - Timestamp: 2026-07-10T15:14:15.870201
+2026-07-10 15:14:15,871 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:14:15,884 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:24:06,293 - INFO - ================================================================================
+2026-07-10 15:24:06,299 - INFO - Starting data ingestion pipeline
+2026-07-10 15:24:06,300 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:24:06,300 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:24:06,301 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 15:24:06,784 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:24:06,784 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 15:24:06,788 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 15:24:06,788 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 15:24:07,283 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:24:07,311 - INFO - Target table created successfully
+2026-07-10 15:24:07,315 - INFO - Raw staging table created
+2026-07-10 15:24:07,327 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 15:24:07,328 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 15:24:07,841 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 15:24:07,906 - INFO - Loaded 13 rows into raw_users
+2026-07-10 15:24:07,934 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 15:24:07,935 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 15:24:07,935 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 15:24:08,414 - INFO - Starting transformation from raw_users to users
+2026-07-10 15:24:08,451 - INFO - Checking raw data quality...
+2026-07-10 15:24:08,454 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 15:24:08,455 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 15:24:08,456 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 15:24:08,458 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 15:24:08,459 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 15:24:08,460 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 15:24:08,460 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 15:24:08,461 - ERROR - Timestamp: 2026-07-10T15:24:08.461440
+2026-07-10 15:24:08,463 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 15:24:08,479 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:00:26,275 - INFO - ================================================================================
+2026-07-10 16:00:26,282 - INFO - Starting data ingestion pipeline
+2026-07-10 16:00:26,282 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:00:26,283 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:00:26,283 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:00:26,752 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:00:26,753 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:00:26,758 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:00:26,759 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:00:27,092 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:00:27,142 - ERROR - 
+Pipeline failed with error: IOException: IO Error: Could not set lock on file "/home/aq/Documents/Source/loops/data/ingestion.db": Conflicting lock is held in /usr/lib/jvm/java-21-openjdk/bin/java (PID 169931) by user aq. See also https://duckdb.org/docs/stable/connect/concurrency
+2026-07-10 16:14:41,504 - INFO - ================================================================================
+2026-07-10 16:14:41,510 - INFO - Starting data ingestion pipeline
+2026-07-10 16:14:41,511 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:14:41,511 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:14:41,512 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:14:41,950 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:14:41,951 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:14:41,956 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:14:41,956 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:14:42,493 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:14:42,541 - INFO - Target table created successfully
+2026-07-10 16:14:42,545 - INFO - Raw staging table created
+2026-07-10 16:14:42,560 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:14:42,561 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:14:43,012 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:14:43,081 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:14:43,116 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:14:43,117 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:14:43,118 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:14:43,577 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:14:43,623 - INFO - Checking raw data quality...
+2026-07-10 16:14:43,627 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:14:43,629 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:14:43,630 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:14:43,634 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:14:43,635 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:14:43,636 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:14:43,637 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:14:43,638 - ERROR - Timestamp: 2026-07-10T16:14:43.638135
+2026-07-10 16:14:43,641 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:14:43,658 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:19:35,659 - INFO - ================================================================================
+2026-07-10 16:19:35,666 - INFO - Starting data ingestion pipeline
+2026-07-10 16:19:35,666 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:19:35,667 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:19:35,667 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:19:36,092 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:19:36,093 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:19:36,097 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:19:36,098 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:19:36,421 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:19:36,450 - INFO - Target table created successfully
+2026-07-10 16:19:36,453 - INFO - Raw staging table created
+2026-07-10 16:19:36,469 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:19:36,469 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:19:36,892 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:19:36,969 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:19:36,995 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:19:36,996 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:19:36,997 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:19:37,464 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:19:37,502 - INFO - Checking raw data quality...
+2026-07-10 16:19:37,504 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:19:37,506 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:19:37,506 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:19:37,509 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:19:37,510 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:19:37,512 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:19:37,513 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:19:37,513 - ERROR - Timestamp: 2026-07-10T16:19:37.513613
+2026-07-10 16:19:37,515 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:19:37,531 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:19:57,162 - INFO - ================================================================================
+2026-07-10 16:19:57,169 - INFO - Starting data ingestion pipeline
+2026-07-10 16:19:57,169 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:19:57,170 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:19:57,170 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:19:57,648 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:19:57,648 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:19:57,651 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:19:57,652 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:19:57,957 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:19:57,983 - INFO - Target table created successfully
+2026-07-10 16:19:57,986 - INFO - Raw staging table created
+2026-07-10 16:19:58,001 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:19:58,002 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:19:58,572 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:19:58,605 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:19:58,627 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:19:58,628 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:19:58,629 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:19:59,155 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:19:59,177 - INFO - Checking raw data quality...
+2026-07-10 16:19:59,180 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:19:59,181 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:19:59,181 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:19:59,183 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:19:59,184 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:19:59,185 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:19:59,185 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:19:59,185 - ERROR - Timestamp: 2026-07-10T16:19:59.185957
+2026-07-10 16:19:59,187 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:19:59,200 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:21:29,952 - INFO - ================================================================================
+2026-07-10 16:21:29,958 - INFO - Starting data ingestion pipeline
+2026-07-10 16:21:29,959 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:21:29,959 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:21:29,960 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:21:30,391 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:21:30,392 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:21:30,397 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:21:30,397 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:21:30,845 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:21:30,883 - INFO - Target table created successfully
+2026-07-10 16:21:30,887 - INFO - Raw staging table created
+2026-07-10 16:21:30,908 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:21:30,909 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:21:31,213 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:21:31,277 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:21:31,308 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:21:31,309 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:21:31,310 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:21:31,609 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:21:31,652 - INFO - Checking raw data quality...
+2026-07-10 16:21:31,657 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:21:31,661 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:21:31,662 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:21:31,665 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:21:31,666 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:21:31,667 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:21:31,668 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:21:31,669 - ERROR - Timestamp: 2026-07-10T16:21:31.669034
+2026-07-10 16:21:31,671 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:21:31,691 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:22:58,848 - INFO - ================================================================================
+2026-07-10 16:22:58,855 - INFO - Starting data ingestion pipeline
+2026-07-10 16:22:58,855 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:22:58,856 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:22:58,856 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:22:59,337 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:22:59,338 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:22:59,341 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:22:59,342 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:22:59,815 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:22:59,847 - INFO - Target table created successfully
+2026-07-10 16:22:59,852 - INFO - Raw staging table created
+2026-07-10 16:22:59,869 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:22:59,870 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:23:00,488 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:23:00,553 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:23:00,586 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:23:00,587 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:23:00,588 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:23:00,975 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:23:01,019 - INFO - Checking raw data quality...
+2026-07-10 16:23:01,022 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:23:01,025 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:23:01,026 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:23:01,029 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:23:01,030 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:23:01,031 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:23:01,032 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:23:01,033 - ERROR - Timestamp: 2026-07-10T16:23:01.033097
+2026-07-10 16:23:01,036 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:23:01,055 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:39:47,241 - INFO - ================================================================================
+2026-07-10 16:39:47,247 - INFO - Starting data ingestion pipeline
+2026-07-10 16:39:47,248 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:39:47,248 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:39:47,249 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:39:47,766 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:39:47,767 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:39:47,770 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:39:47,771 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:39:48,242 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:39:48,270 - INFO - Target table created successfully
+2026-07-10 16:39:48,275 - INFO - Raw staging table created
+2026-07-10 16:39:48,287 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:39:48,288 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:39:48,758 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:39:48,809 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:39:48,831 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:39:48,832 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:39:48,833 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:39:49,411 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:39:49,439 - INFO - Checking raw data quality...
+2026-07-10 16:39:49,442 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:39:49,444 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:39:49,444 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:39:49,447 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:39:49,448 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:39:49,448 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:39:49,449 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:39:49,449 - ERROR - Timestamp: 2026-07-10T16:39:49.449838
+2026-07-10 16:39:49,451 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:39:49,467 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:52:45,751 - INFO - ================================================================================
+2026-07-10 16:52:45,757 - INFO - Starting data ingestion pipeline
+2026-07-10 16:52:45,758 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:52:45,758 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:52:45,759 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 16:52:46,252 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:52:46,253 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 16:52:46,258 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 16:52:46,259 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 16:52:46,719 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:52:46,772 - INFO - Target table created successfully
+2026-07-10 16:52:46,777 - INFO - Raw staging table created
+2026-07-10 16:52:46,797 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 16:52:46,798 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 16:52:47,207 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 16:52:47,275 - INFO - Loaded 13 rows into raw_users
+2026-07-10 16:52:47,303 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 16:52:47,303 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 16:52:47,304 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 16:52:47,793 - INFO - Starting transformation from raw_users to users
+2026-07-10 16:52:47,838 - INFO - Checking raw data quality...
+2026-07-10 16:52:47,842 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 16:52:47,845 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 16:52:47,846 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 16:52:47,850 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 16:52:47,851 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 16:52:47,852 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 16:52:47,853 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 16:52:47,854 - ERROR - Timestamp: 2026-07-10T16:52:47.854048
+2026-07-10 16:52:47,856 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 16:52:47,875 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:41:38,918 - INFO - ================================================================================
+2026-07-10 17:41:38,924 - INFO - Starting data ingestion pipeline
+2026-07-10 17:41:38,925 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:41:38,925 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:41:38,925 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:41:39,411 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:41:39,412 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:41:39,415 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:41:39,416 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:41:39,862 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:41:39,892 - INFO - Target table created successfully
+2026-07-10 17:41:39,895 - INFO - Raw staging table created
+2026-07-10 17:41:39,909 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:41:39,909 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:41:40,430 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:41:40,476 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:41:40,498 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:41:40,498 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:41:40,499 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:41:40,817 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:41:40,844 - INFO - Checking raw data quality...
+2026-07-10 17:41:40,847 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:41:40,849 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:41:40,849 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:41:40,852 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:41:40,853 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:41:40,853 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:41:40,854 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:41:40,855 - ERROR - Timestamp: 2026-07-10T17:41:40.855007
+2026-07-10 17:41:40,857 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:41:40,871 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:42:26,899 - INFO - ================================================================================
+2026-07-10 17:42:26,906 - INFO - Starting data ingestion pipeline
+2026-07-10 17:42:26,906 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:42:26,907 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:42:26,907 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:42:27,547 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:42:27,548 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:42:27,552 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:42:27,552 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:42:27,864 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:42:27,894 - INFO - Target table created successfully
+2026-07-10 17:42:27,897 - INFO - Raw staging table created
+2026-07-10 17:42:27,912 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:42:27,912 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:42:28,335 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:42:28,380 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:42:28,404 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:42:28,405 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:42:28,405 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:42:28,730 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:42:28,758 - INFO - Checking raw data quality...
+2026-07-10 17:42:28,761 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:42:28,762 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:42:28,763 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:42:28,765 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:42:28,766 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:42:28,767 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:42:28,767 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:42:28,768 - ERROR - Timestamp: 2026-07-10T17:42:28.768447
+2026-07-10 17:42:28,771 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:42:28,787 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:42:48,845 - INFO - ================================================================================
+2026-07-10 17:42:48,851 - INFO - Starting data ingestion pipeline
+2026-07-10 17:42:48,852 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:42:48,852 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:42:48,853 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:42:49,209 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:42:49,209 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:42:49,212 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:42:49,213 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:42:49,728 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:42:49,758 - INFO - Target table created successfully
+2026-07-10 17:42:49,762 - INFO - Raw staging table created
+2026-07-10 17:42:49,777 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:42:49,777 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:42:50,087 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:42:50,134 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:42:50,157 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:42:50,158 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:42:50,158 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:42:50,469 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:42:50,497 - INFO - Checking raw data quality...
+2026-07-10 17:42:50,500 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:42:50,501 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:42:50,502 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:42:50,505 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:42:50,505 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:42:50,506 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:42:50,507 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:42:50,507 - ERROR - Timestamp: 2026-07-10T17:42:50.507628
+2026-07-10 17:42:50,509 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:42:50,524 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:47:20,913 - INFO - ================================================================================
+2026-07-10 17:47:20,920 - INFO - Starting data ingestion pipeline
+2026-07-10 17:47:20,920 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:47:20,921 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:47:20,921 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:47:21,536 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:47:21,537 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:47:21,540 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:47:21,541 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:47:22,047 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:47:22,076 - INFO - Target table created successfully
+2026-07-10 17:47:22,079 - INFO - Raw staging table created
+2026-07-10 17:47:22,091 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:47:22,092 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:47:22,488 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:47:22,526 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:47:22,544 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:47:22,545 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:47:22,545 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:47:22,952 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:47:22,974 - INFO - Checking raw data quality...
+2026-07-10 17:47:22,977 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:47:22,978 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:47:22,979 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:47:22,981 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:47:22,982 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:47:22,982 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:47:22,982 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:47:22,983 - ERROR - Timestamp: 2026-07-10T17:47:22.983437
+2026-07-10 17:47:22,985 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:47:22,997 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:54:03,312 - INFO - ================================================================================
+2026-07-10 17:54:03,319 - INFO - Starting data ingestion pipeline
+2026-07-10 17:54:03,319 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:03,320 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:03,321 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:54:03,800 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:03,801 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:54:03,804 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:54:03,804 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:54:04,228 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:04,258 - INFO - Target table created successfully
+2026-07-10 17:54:04,261 - INFO - Raw staging table created
+2026-07-10 17:54:04,274 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:54:04,274 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:54:04,794 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:54:04,831 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:54:04,850 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:54:04,851 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:54:04,851 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:54:05,258 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:54:05,279 - INFO - Checking raw data quality...
+2026-07-10 17:54:05,282 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:54:05,283 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:54:05,284 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:54:05,286 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:54:05,287 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:54:05,287 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:05,288 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:05,288 - ERROR - Timestamp: 2026-07-10T17:54:05.288604
+2026-07-10 17:54:05,291 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:54:05,303 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:54:28,840 - INFO - ================================================================================
+2026-07-10 17:54:28,846 - INFO - Starting data ingestion pipeline
+2026-07-10 17:54:28,847 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:28,847 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:28,848 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:54:29,194 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:29,195 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:54:29,198 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:54:29,199 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:54:29,539 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:29,567 - INFO - Target table created successfully
+2026-07-10 17:54:29,571 - INFO - Raw staging table created
+2026-07-10 17:54:29,584 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:54:29,584 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:54:30,011 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:54:30,054 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:54:30,072 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:54:30,072 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:54:30,073 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:54:30,640 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:54:30,678 - INFO - Checking raw data quality...
+2026-07-10 17:54:30,682 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:54:30,684 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:54:30,684 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:54:30,687 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:54:30,688 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:54:30,689 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:30,690 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:30,691 - ERROR - Timestamp: 2026-07-10T17:54:30.691129
+2026-07-10 17:54:30,694 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:54:30,706 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:54:56,268 - INFO - ================================================================================
+2026-07-10 17:54:56,275 - INFO - Starting data ingestion pipeline
+2026-07-10 17:54:56,275 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:56,276 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:56,276 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:54:56,619 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:56,620 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:54:56,623 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:54:56,623 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:54:56,945 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:56,974 - INFO - Target table created successfully
+2026-07-10 17:54:56,978 - INFO - Raw staging table created
+2026-07-10 17:54:56,990 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:54:56,991 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:54:57,310 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:54:57,346 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:54:57,366 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:54:57,366 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:54:57,367 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:54:57,676 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:54:57,698 - INFO - Checking raw data quality...
+2026-07-10 17:54:57,700 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:54:57,702 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:54:57,702 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:54:57,705 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:54:57,705 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:54:57,706 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:54:57,706 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:54:57,707 - ERROR - Timestamp: 2026-07-10T17:54:57.707281
+2026-07-10 17:54:57,709 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:54:57,721 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:56:08,081 - INFO - ================================================================================
+2026-07-10 17:56:08,087 - INFO - Starting data ingestion pipeline
+2026-07-10 17:56:08,088 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:08,088 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:08,089 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:56:08,554 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:08,555 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:56:08,559 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:56:08,560 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:56:08,857 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:08,885 - INFO - Target table created successfully
+2026-07-10 17:56:08,888 - INFO - Raw staging table created
+2026-07-10 17:56:08,900 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:56:08,901 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:56:09,236 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:56:09,273 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:56:09,292 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:56:09,293 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:56:09,294 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:56:09,617 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:56:09,639 - INFO - Checking raw data quality...
+2026-07-10 17:56:09,643 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:56:09,644 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:56:09,645 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:56:09,647 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:56:09,648 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:56:09,648 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:09,649 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:09,649 - ERROR - Timestamp: 2026-07-10T17:56:09.649650
+2026-07-10 17:56:09,652 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:56:09,664 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:56:19,342 - INFO - ================================================================================
+2026-07-10 17:56:19,348 - INFO - Starting data ingestion pipeline
+2026-07-10 17:56:19,349 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:19,349 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:19,350 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:56:19,719 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:19,719 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:56:19,723 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:56:19,723 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:56:20,032 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:20,060 - INFO - Target table created successfully
+2026-07-10 17:56:20,063 - INFO - Raw staging table created
+2026-07-10 17:56:20,075 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:56:20,076 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:56:20,455 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:56:20,492 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:56:20,511 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:56:20,512 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:56:20,513 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:56:20,821 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:56:20,842 - INFO - Checking raw data quality...
+2026-07-10 17:56:20,845 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:56:20,846 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:56:20,847 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:56:20,849 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:56:20,849 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:56:20,850 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:20,850 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:20,851 - ERROR - Timestamp: 2026-07-10T17:56:20.851161
+2026-07-10 17:56:20,854 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:56:20,866 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:56:50,596 - INFO - ================================================================================
+2026-07-10 17:56:50,602 - INFO - Starting data ingestion pipeline
+2026-07-10 17:56:50,603 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:50,603 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:50,604 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 17:56:50,961 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:50,962 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 17:56:50,966 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 17:56:50,966 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 17:56:51,470 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:51,499 - INFO - Target table created successfully
+2026-07-10 17:56:51,503 - INFO - Raw staging table created
+2026-07-10 17:56:51,515 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 17:56:51,516 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 17:56:51,951 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 17:56:51,988 - INFO - Loaded 13 rows into raw_users
+2026-07-10 17:56:52,007 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 17:56:52,008 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 17:56:52,008 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 17:56:52,334 - INFO - Starting transformation from raw_users to users
+2026-07-10 17:56:52,355 - INFO - Checking raw data quality...
+2026-07-10 17:56:52,358 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 17:56:52,360 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 17:56:52,360 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 17:56:52,362 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 17:56:52,363 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 17:56:52,363 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 17:56:52,364 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 17:56:52,364 - ERROR - Timestamp: 2026-07-10T17:56:52.364698
+2026-07-10 17:56:52,367 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 17:56:52,379 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:06:40,245 - INFO - ================================================================================
+2026-07-10 18:06:40,252 - INFO - Starting data ingestion pipeline
+2026-07-10 18:06:40,252 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:06:40,253 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:06:40,253 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:06:40,724 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:06:40,725 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:06:40,729 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:06:40,729 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:06:41,218 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:06:41,246 - INFO - Target table created successfully
+2026-07-10 18:06:41,250 - INFO - Raw staging table created
+2026-07-10 18:06:41,263 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:06:41,263 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:06:41,861 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:06:41,896 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:06:41,916 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:06:41,917 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:06:41,917 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:06:42,441 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:06:42,469 - INFO - Checking raw data quality...
+2026-07-10 18:06:42,472 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:06:42,474 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:06:42,474 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:06:42,477 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:06:42,478 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:06:42,478 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:06:42,479 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:06:42,480 - ERROR - Timestamp: 2026-07-10T18:06:42.479997
+2026-07-10 18:06:42,482 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:06:42,497 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:07:26,063 - INFO - ================================================================================
+2026-07-10 18:07:26,069 - INFO - Starting data ingestion pipeline
+2026-07-10 18:07:26,070 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:07:26,070 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:07:26,071 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:07:26,418 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:07:26,419 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:07:26,423 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:07:26,423 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:07:26,863 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:07:26,893 - INFO - Target table created successfully
+2026-07-10 18:07:26,896 - INFO - Raw staging table created
+2026-07-10 18:07:26,911 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:07:26,911 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:07:27,229 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:07:27,271 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:07:27,290 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:07:27,291 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:07:27,291 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:07:27,759 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:07:27,781 - INFO - Checking raw data quality...
+2026-07-10 18:07:27,784 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:07:27,785 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:07:27,786 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:07:27,788 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:07:27,789 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:07:27,789 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:07:27,790 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:07:27,790 - ERROR - Timestamp: 2026-07-10T18:07:27.790627
+2026-07-10 18:07:27,792 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:07:27,804 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:08:11,370 - INFO - ================================================================================
+2026-07-10 18:08:11,376 - INFO - Starting data ingestion pipeline
+2026-07-10 18:08:11,376 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:08:11,377 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:08:11,377 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:08:11,704 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:08:11,704 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:08:11,707 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:08:11,708 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:08:12,123 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:08:12,152 - INFO - Target table created successfully
+2026-07-10 18:08:12,156 - INFO - Raw staging table created
+2026-07-10 18:08:12,169 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:08:12,169 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:08:12,546 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:08:12,586 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:08:12,607 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:08:12,607 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:08:12,608 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:08:13,057 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:08:13,108 - INFO - Checking raw data quality...
+2026-07-10 18:08:13,112 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:08:13,115 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:08:13,116 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:08:13,118 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:08:13,119 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:08:13,120 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:08:13,120 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:08:13,121 - ERROR - Timestamp: 2026-07-10T18:08:13.121380
+2026-07-10 18:08:13,124 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:08:13,138 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:08:53,444 - INFO - ================================================================================
+2026-07-10 18:08:53,450 - INFO - Starting data ingestion pipeline
+2026-07-10 18:08:53,451 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:08:53,452 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:08:53,452 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:08:53,808 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:08:53,809 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:08:53,812 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:08:53,812 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:08:54,116 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:08:54,144 - INFO - Target table created successfully
+2026-07-10 18:08:54,147 - INFO - Raw staging table created
+2026-07-10 18:08:54,160 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:08:54,161 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:08:54,467 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:08:54,504 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:08:54,523 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:08:54,524 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:08:54,524 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:08:54,846 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:08:54,869 - INFO - Checking raw data quality...
+2026-07-10 18:08:54,871 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:08:54,872 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:08:54,873 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:08:54,875 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:08:54,876 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:08:54,876 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:08:54,877 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:08:54,877 - ERROR - Timestamp: 2026-07-10T18:08:54.877599
+2026-07-10 18:08:54,880 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:08:54,893 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:12:21,814 - INFO - ================================================================================
+2026-07-10 18:12:21,820 - INFO - Starting data ingestion pipeline
+2026-07-10 18:12:21,820 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:12:21,821 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:12:21,821 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:12:22,220 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:12:22,221 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:12:22,224 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:12:22,225 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:12:22,726 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:12:22,774 - INFO - Target table created successfully
+2026-07-10 18:12:22,778 - INFO - Raw staging table created
+2026-07-10 18:12:22,790 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:12:22,791 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:12:23,099 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:12:23,140 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:12:23,160 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:12:23,161 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:12:23,162 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:12:23,674 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:12:23,714 - INFO - Checking raw data quality...
+2026-07-10 18:12:23,717 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:12:23,720 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:12:23,720 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:12:23,724 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:12:23,725 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:12:23,725 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:12:23,726 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:12:23,727 - ERROR - Timestamp: 2026-07-10T18:12:23.727321
+2026-07-10 18:12:23,730 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:12:23,743 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:12:53,192 - INFO - ================================================================================
+2026-07-10 18:12:53,198 - INFO - Starting data ingestion pipeline
+2026-07-10 18:12:53,199 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:12:53,199 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:12:53,200 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:12:53,544 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:12:53,545 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:12:53,549 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:12:53,549 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:12:53,924 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:12:53,954 - INFO - Target table created successfully
+2026-07-10 18:12:53,958 - INFO - Raw staging table created
+2026-07-10 18:12:53,970 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:12:53,971 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:12:54,526 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:12:54,564 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:12:54,583 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:12:54,584 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:12:54,584 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:12:55,068 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:12:55,091 - INFO - Checking raw data quality...
+2026-07-10 18:12:55,093 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:12:55,095 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:12:55,095 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:12:55,097 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:12:55,098 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:12:55,099 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:12:55,099 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:12:55,100 - ERROR - Timestamp: 2026-07-10T18:12:55.100003
+2026-07-10 18:12:55,102 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:12:55,115 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:17:40,930 - INFO - ================================================================================
+2026-07-10 18:17:40,937 - INFO - Starting data ingestion pipeline
+2026-07-10 18:17:40,937 - INFO - Source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:17:40,938 - INFO - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:17:40,938 - INFO - 
+--- Step 1: Validating source file ---
+2026-07-10 18:17:41,450 - INFO - Validating source file: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:17:41,451 - INFO - Source file validated: /home/aq/Documents/Source/loops/data/source_data.csv (778 bytes)
+2026-07-10 18:17:41,454 - INFO - Validation result: {'file_path': '/home/aq/Documents/Source/loops/data/source_data.csv', 'file_size': 778, 'status': 'valid'}
+2026-07-10 18:17:41,455 - INFO - 
+--- Step 2: Creating target tables ---
+2026-07-10 18:17:41,764 - INFO - Creating target table in DuckDB at /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:17:41,789 - INFO - Target table created successfully
+2026-07-10 18:17:41,793 - INFO - Raw staging table created
+2026-07-10 18:17:41,806 - INFO - Tables created: {'status': 'created', 'tables': ['users', 'raw_users']}
+2026-07-10 18:17:41,807 - INFO - 
+--- Step 3: Loading to raw staging table ---
+2026-07-10 18:17:42,219 - INFO - Loading /home/aq/Documents/Source/loops/data/source_data.csv into raw_users table
+2026-07-10 18:17:42,257 - INFO - Loaded 13 rows into raw_users
+2026-07-10 18:17:42,276 - INFO - Raw load result: {'rows_loaded': 13, 'status': 'success'}
+2026-07-10 18:17:42,277 - INFO - 
+--- Step 4: Transforming and loading to users table ---
+2026-07-10 18:17:42,277 - WARNING - This step is expected to FAIL due to data quality issues!
+2026-07-10 18:17:42,617 - INFO - Starting transformation from raw_users to users
+2026-07-10 18:17:42,640 - INFO - Checking raw data quality...
+2026-07-10 18:17:42,642 - WARNING - Found 1 rows with NULL/empty email
+2026-07-10 18:17:42,643 - WARNING - Found 13 rows with non-numeric age
+2026-07-10 18:17:42,644 - INFO - Attempting to insert into users table (this will fail)...
+2026-07-10 18:17:42,646 - ERROR - Transformation failed: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^
+2026-07-10 18:17:42,647 - ERROR - --- ERROR CONTEXT ---
+2026-07-10 18:17:42,647 - ERROR - Database: /home/aq/Documents/Source/loops/data/ingestion.db
+2026-07-10 18:17:42,647 - ERROR - Source: /home/aq/Documents/Source/loops/data/source_data.csv
+2026-07-10 18:17:42,648 - ERROR - Timestamp: 2026-07-10T18:17:42.648470
+2026-07-10 18:17:42,651 - ERROR - Sample bad rows: [('1', 'Alice Smith', 'alice@example.com', '30', '2024-01-15', 'active', '95.5'), ('2', 'Bob Johnson', 'bob@example.com', '25', '2024-02-20', 'active', '87.3'), ('3', 'Charlie Brown', 'charlie@example.com', '35', '2024-03-10', 'inactive', '72.1'), ('4', 'David Wilson', 'david@example.com', '28', '2024-04-05', 'active', '91.8'), ('5', 'Eve Davis', 'eve@example.com', '42', '2024-05-12', 'active', '88.6')]
+2026-07-10 18:17:42,675 - ERROR - 
+Pipeline failed with error: ConversionException: Conversion Error: Could not convert string 'N/A' to INT32 when casting from source column age
+
+LINE 7:             CAST(age AS INTEGER),  -- This will fail on 'N/A'
+                    ^

@@ -1,0 +1,558 @@
+#!/usr/bin/env python3
+"""
+Main demo script to:
+1. Run the Prefect ingestion flow (which will fail)
+2. Trigger the nanobot investigation
+3. Show how the autonomous agent troubleshoots the failure
+"""
+
+import sys
+import os
+import subprocess
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# Set environment
+os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
+
+# Load .env file at startup
+from dotenv import load_dotenv
+load_dotenv(PROJECT_ROOT / ".env")
+
+# Ensure OPENAI_API_KEY is in environment
+if not os.environ.get("OPENAI_API_KEY"):
+    # Try to load from .env in current directory
+    load_dotenv()
+
+
+def run_ingestion_flow():
+    """Run the data ingestion flow. Uses generated pipeline if available, otherwise runs the original (which will fail).
+    
+    Returns:
+        tuple: (used_generated, succeeded) where:
+        - used_generated: True if we ran the generated pipeline
+        - succeeded: True if the flow succeeded
+    """
+    print("=" * 80)
+    print("STEP 1: Running data ingestion flow")
+    print("=" * 80)
+    
+    # Check if we have a generated pipeline
+    generated_pipeline = PROJECT_ROOT / "pipelines" / "generated" / "clean_users_pipeline.py"
+    
+    if generated_pipeline.exists():
+        print("\n✓ Using GENERATED cleaning pipeline (from previous pipeline builder run)")
+        print(f"  Pipeline: {generated_pipeline}")
+        flow_path = generated_pipeline
+        used_generated = True
+    else:
+        print("\n⚠️  No generated pipeline found - using original (will fail due to data errors)")
+        flow_path = PROJECT_ROOT / "flows" / "ingestion_flow.py"
+        used_generated = False
+    
+    # Run the flow
+    result = subprocess.run(
+        [sys.executable, str(flow_path)],
+        capture_output=True,
+        text=True,
+        cwd=PROJECT_ROOT,
+        env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    )
+    
+    print("\n--- FLOW OUTPUT ---")
+    print("STDOUT:")
+    print(result.stdout)
+    if result.stderr:
+        print("\nSTDERR:")
+        print(result.stderr)
+    print(f"\nReturn code: {result.returncode}")
+    
+    succeeded = (result.returncode == 0)
+    
+    if used_generated:
+        if succeeded:
+            print("\n✓ Cleaned ingestion flow succeeded!")
+        else:
+            print("\n⚠️  Generated pipeline failed - check the output above")
+    else:
+        if not succeeded:
+            print("\n✓ Ingestion flow failed as expected (due to data quality issues)")
+        else:
+            print("\n✗ Ingestion flow succeeded unexpectedly")
+    
+    return (used_generated, succeeded)
+
+
+def start_nanobot_server():
+    """Start the nanobot server in the background."""
+    print("\n" + "=" * 80)
+    print("STEP 2: Starting nanobot server")
+    print("=" * 80)
+    
+    config_path = str(PROJECT_ROOT / "config" / "nanobot_config.yaml")
+    
+    # Start nanobot server
+    nanobot_cmd = [
+        sys.executable, "-m", "nanobot.server",
+        "--config", config_path,
+        "--log-level", "DEBUG"
+    ]
+    
+    print(f"\nRunning: {' '.join(nanobot_cmd)}")
+    print("\nStarting nanobot server (press Ctrl+C to stop)...")
+    print("Server will be available at: http://127.0.0.1:8080")
+    
+    # Run in foreground so we can see output
+    result = subprocess.run(
+        nanobot_cmd,
+        cwd=PROJECT_ROOT,
+        env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    )
+    
+    return result.returncode
+
+
+def setup_environment():
+    """Setup environment for nanobot to access duckdb CLI and other tools."""
+    import os
+    
+    # Add venv/bin to PATH so duckdb CLI is accessible
+    venv_bin = str(PROJECT_ROOT / "venv" / "bin")
+    if os.path.exists(venv_bin) and venv_bin not in os.environ["PATH"]:
+        os.environ["PATH"] = f"{venv_bin}:{os.environ.get('PATH', '')}"
+        print(f"✓ Added venv/bin to PATH: {venv_bin}")
+    
+    # Verify duckdb CLI is accessible
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["duckdb", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if result.returncode == 0:
+            print(f"✓ duckdb CLI accessible: {result.stdout.strip()}")
+        else:
+            print(f"⚠️  duckdb CLI not accessible: {result.stderr}")
+    except Exception as e:
+        print(f"⚠️  duckdb CLI check failed: {e}")
+    
+    return True
+
+
+def start_mcp_server():
+    """Start the MCP server in the background (currently disabled - MCP API compatibility issue)."""
+    print("\n⚠️  MCP server disabled - API compatibility issue with mcp library")
+    print("   Nanobot will use built-in tools (read_file, exec, etc.) instead")
+    return None
+
+
+async def trigger_nanobot_investigation(mcp_process=None):
+    """Trigger nanobot to investigate the failure."""
+    print("\n" + "=" * 80)
+    print("STEP 3: Triggering nanobot investigation")
+    print("=" * 80)
+    
+    # Setup environment (PATH, etc.)
+    setup_environment()
+    
+    # Use nanobot programmatically
+    from nanobot import Nanobot, RunResult
+    from nanobot.agent.tools.registry import ToolRegistry
+    from flows.nanobot_tools import NANOBOT_TOOLS
+    from agents.pipeline_builder.nanobot_tools import PIPELINE_TOOL_CLASSES
+    import json
+    import os
+    import asyncio
+    
+    # Verify API key
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("\n⚠️  No OPENAI_API_KEY found in environment")
+        print("Make sure .env file exists and contains OPENAI_API_KEY")
+        return
+    
+    print(f"\n✓ OpenAI API key loaded, using model: {os.environ.get('OPENAI_MODEL', 'gpt-4o-mini')}")
+    
+    # Load SKILLS.md as context
+    skills_path = PROJECT_ROOT / "SKILLS.md"
+    with open(skills_path, 'r') as f:
+        skills_context = f.read()
+    
+    # Register custom tools with nanobot's ToolRegistry
+    print("\nRegistering custom tools with Nanobot...")
+    registry = ToolRegistry()
+    
+    # Register nanobot_tools (simple function-based tools)
+    print("  Loading NANOBOT_TOOLS...")
+    for tool_name, tool_config in NANOBOT_TOOLS.items():
+        # For now, skip these - they need to be converted to Tool classes
+        # We'll focus on the pipeline tools
+        print(f"    - {tool_name}: {tool_config['description'][:50]}...")
+    
+    # Register pipeline builder Tool classes
+    print("  Loading PIPELINE_TOOL_CLASSES...")
+    for tool_class in PIPELINE_TOOL_CLASSES:
+        tool_instance = tool_class()
+        registry.register(tool_instance)
+        print(f"    ✓ Registered: {tool_instance.name} - {tool_instance.description[:50]}...")
+    
+    print(f"  Total custom tools registered: {len(PIPELINE_TOOL_CLASSES)}")
+    
+    # Create the bot with explicit config
+    config_path = str(PROJECT_ROOT / "config" / "nanobot_config_minimal.json")
+    
+    print("\nInitializing Nanobot...")
+    print(f"  Config: {config_path}")
+    print(f"  Model: {os.environ.get('OPENAI_MODEL', 'gpt-4.1-mini-2025-04-14')}")
+    
+    # Load config from file
+    import yaml
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Create bot
+    bot = Nanobot.from_config(
+        config_path=config_path,
+        model=os.environ.get("OPENAI_MODEL", "gpt-4.1-mini-2025-04-14")
+    )
+    
+    # Register our custom tools with the bot's internal tool registry
+    print("\n  Registering pipeline tools with Nanobot's tool registry...")
+    for tool_class in PIPELINE_TOOL_CLASSES:
+        tool_instance = tool_class()
+        bot._loop.tools.register(tool_instance)
+        print(f"    ✓ Registered: {tool_instance.name}")
+    
+    print(f"\n  Total tools available: {len(bot._loop.tools.get_definitions())}")
+    
+    # Trigger investigation - NOW WITH PIPELINE BUILDER TOOLS
+    print("\nTriggering investigation with message:")
+    message = """Investigate the failed data ingestion. Use: infer_source_schema, load_ideal_schema, compare_schemas, generate_cleaning_pipeline. Save pipeline to pipelines/generated/clean_users_pipeline.py using write_file."""
+    print(message)
+    print("\nThis may take a moment... (agent is thinking and using tools)")
+    
+    try:
+        # Run the bot
+        result: RunResult = await bot.run(
+            message,
+            model=os.environ.get("OPENAI_MODEL", "gpt-4.1-mini-2025-04-14")
+        )
+        
+        print("\n" + "=" * 80)
+        print("NANOBOT INVESTIGATION RESULTS")
+        print("=" * 80)
+        print(result.content if hasattr(result, 'content') else str(result))
+        
+        # Also save to file
+        with open("logs/nanobot_investigation_result.md", "w") as f:
+            f.write("# Nanobot Investigation Results\n\n")
+            f.write(result.content if hasattr(result, 'content') else str(result))
+        print("\n✓ Results saved to logs/nanobot_investigation_result.md")
+        
+    except Exception as e:
+        print(f"\n❌ Error running nanobot: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def run_full_demo():
+    """Run the complete demo."""
+    print("\n" + "=" * 80)
+    print("DATA INGESTION TROUBLESHOOTING DEMO")
+    print("=" * 80)
+    
+    # Step 1: Run the ingestion flow
+    # If a generated pipeline exists, it will succeed
+    # Otherwise, the original will fail and we'll generate a fix
+    used_generated, succeeded = run_ingestion_flow()
+    
+    # If we used a generated pipeline and it succeeded, show success
+    if used_generated and succeeded:
+        print("\n✓ Cleaned ingestion completed successfully using generated pipeline!")
+        
+        # Show the cleaned data
+        print("\n" + "=" * 80)
+        print("CLEANED DATA RESULTS")
+        print("=" * 80)
+        
+        import duckdb
+        db_path = str(PROJECT_ROOT / "data" / "ingestion.db")
+        try:
+            conn = duckdb.connect(database=db_path, read_only=True)
+            tables = conn.execute("SHOW TABLES").fetchall()
+            
+            for table in tables:
+                table_name = table[0]
+                if 'clean' in table_name or 'users' in table_name:
+                    count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+                    print(f"\n{table_name}: {count} rows")
+                    
+                    # Show sample
+                    sample = conn.execute(f"SELECT * FROM {table_name} LIMIT 5").fetchall()
+                    for row in sample:
+                        print(f"  {row}")
+            
+            conn.close()
+        except Exception as e:
+            print(f"Error showing results: {e}")
+        
+        return
+    
+    # If the generated pipeline failed, or we used the original which failed
+    # Continue with investigation and pipeline builder
+    
+    # Step 2: Show what logs were created
+    print("\n" + "=" * 80)
+    print("LOGS CREATED")
+    print("=" * 80)
+    
+    log_files = [
+        PROJECT_ROOT / "logs" / "ingestion.log",
+        PROJECT_ROOT / "logs" / "prefect.log",
+    ]
+    
+    for log_file in log_files:
+        if log_file.exists():
+            print(f"\n✓ {log_file}")
+            with open(log_file, 'r') as f:
+                lines = f.readlines()
+                print(f"  Lines: {len(lines)}")
+                print(f"  Last 5 lines:")
+                for line in lines[-5:]:
+                    print(f"    {line.rstrip()}")
+        else:
+            print(f"\n✗ {log_file} not found")
+    
+    # Step 3: Show the database state
+    print("\n" + "=" * 80)
+    print("DATABASE STATE")
+    print("=" * 80)
+    
+    import duckdb
+    db_path = str(PROJECT_ROOT / "data" / "ingestion.db")
+    
+    try:
+        conn = duckdb.connect(database=db_path, read_only=True)
+        
+        # Show tables
+        tables = conn.execute("SHOW TABLES").fetchall()
+        print(f"\nTables: {[t[0] for t in tables]}")
+        
+        # Show raw_users content
+        if tables and any('raw_users' in t[0] for t in tables):
+            print("\nraw_users table content:")
+            result = conn.execute("SELECT * FROM raw_users LIMIT 10").fetchall()
+            for row in result:
+                print(f"  {row}")
+        
+        # Check users table
+        if tables and any('users' in t[0] for t in tables):
+            count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+            print(f"\nusers table: {count} rows")
+        
+        conn.close()
+    except Exception as e:
+        print(f"Error checking database: {e}")
+    
+    # Step 4: Test the tools directly
+    print("\n" + "=" * 80)
+    print("TESTING NANOBOT TOOLS")
+    print("=" * 80)
+    
+    from flows.nanobot_tools import (
+        inspect_file,
+        check_schema,
+        get_ingestion_status
+    )
+    
+    # Test inspect_file
+    print("\n1. Inspecting source file:")
+    source_file = str(PROJECT_ROOT / "data" / "source_data.csv")
+    print(inspect_file(source_file, sample_size=5))
+    
+    # Test check_schema
+    print("\n2. Checking schema validation:")
+    print(check_schema(source_file))
+    
+    # Test get_ingestion_status
+    print("\n3. Getting ingestion status:")
+    print(get_ingestion_status())
+    
+    # Step 5: Now trigger nanobot
+    print("\n" + "=" * 80)
+    print("TRIGGERING NANOBOT INVESTIGATION")
+    print("=" * 80)
+    
+    # Load .env and check for API key
+    from dotenv import load_dotenv
+    load_dotenv()
+    import os
+    has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
+    
+    # Check if a generated pipeline already exists
+    generated_pipeline = PROJECT_ROOT / "pipelines" / "generated" / "clean_users_pipeline.py"
+    
+    if has_api_key:
+        print(f"\n✓ OpenAI API key detected, using model: {os.environ.get('OPENAI_MODEL', 'unknown')}")
+        print("Running live investigation with Nanobot...")
+        
+        # Setup environment for duckdb CLI access
+        setup_environment()
+        
+        import asyncio
+        asyncio.run(trigger_nanobot_investigation())
+        
+        # After nanobot runs, check if it created a pipeline
+        if generated_pipeline.exists():
+            print("\n✓ Nanobot successfully created a cleaning pipeline!")
+            print(f"  Pipeline saved to: {generated_pipeline}")
+        else:
+            print("\n⚠️  Nanobot did not create a pipeline file.")
+            print("  Running pipeline builder demo as fallback...")
+            run_pipeline_builder_demo()
+    else:
+        print("\n⚠️  No OpenAI API key detected.")
+        print("To run a live investigation with Nanobot:")
+        print("  1. Create .env file with OPENAI_API_KEY")
+        print("  2. Or set it: export OPENAI_API_KEY='your-key'")
+        print("\nFor now, running pipeline builder demo...")
+        run_pipeline_builder_demo()
+
+
+def run_pipeline_builder_demo():
+    """Demonstrate the pipeline builder auto-generating cleaning code."""
+    print("\nPipeline Builder: Analyzing source data and generating cleaning pipeline...")
+    
+    from agents.pipeline_builder.tools import (
+        load_ideal_schema,
+        infer_source_schema,
+        compare_schemas,
+        generate_cleaning_pipeline
+    )
+    
+    # Test with users data
+    print("\n--- Processing users data ---")
+    comparison = compare_schemas("data/source_data.csv")
+    
+    if 'error' in comparison:
+        print(f"Error: {comparison['error']}")
+    else:
+        print(f"Found {len(comparison.get('mismatches', []))} schema mismatches")
+        
+        pipeline = generate_cleaning_pipeline(
+            source_path="data/source_data.csv",
+            ideal_path="schemas/ideal_schema.yaml",
+            output_table="users_clean"
+        )
+        
+        if 'error' not in pipeline:
+            print("\n✓ Pipeline generated successfully!")
+            print("\nGenerated SQL:")
+            print(pipeline['cleaning_sql'])
+            
+            # Save the pipeline
+            import os
+            os.makedirs("pipelines/generated", exist_ok=True)
+            with open("pipelines/generated/clean_users_pipeline.py", "w") as f:
+                f.write(pipeline['pipeline_code'])
+            print(f"\n✓ Pipeline saved to: pipelines/generated/clean_users_pipeline.py")
+            
+            # Execute the pipeline
+            print("\n--- Executing generated pipeline ---")
+            result = subprocess.run(
+                [sys.executable, "pipelines/generated/clean_users_pipeline.py"],
+                capture_output=True,
+                text=True,
+                cwd=PROJECT_ROOT,
+                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+            )
+            
+            if result.returncode == 0:
+                print("✓ Pipeline executed successfully!")
+                print(f"Output: {result.stdout[:500]}...")
+            else:
+                print(f"⚠️  Pipeline execution issue: {result.stderr[:200]}")
+        else:
+            print(f"Error generating pipeline: {pipeline.get('error')}")
+    
+    # Check if we have additional files
+    transactions_csv = PROJECT_ROOT / "data" / "transactions.csv"
+    if transactions_csv.exists():
+        print("\n--- Processing transactions data ---")
+        pipeline = generate_cleaning_pipeline(
+            source_path=str(transactions_csv),
+            ideal_path="schemas/transactions_schema.yaml",
+            output_table="transactions_clean"
+        )
+        
+        if 'error' not in pipeline:
+            print("✓ Transactions pipeline generated successfully!")
+            
+            # Save the pipeline
+            os.makedirs("pipelines/generated", exist_ok=True)
+            with open("pipelines/generated/clean_transactions_pipeline.py", "w") as f:
+                f.write(pipeline['pipeline_code'])
+            print(f"✓ Pipeline saved to: pipelines/generated/clean_transactions_pipeline.py")
+            
+            # Execute the pipeline
+            print("--- Executing transactions pipeline ---")
+            result = subprocess.run(
+                [sys.executable, "pipelines/generated/clean_transactions_pipeline.py"],
+                capture_output=True,
+                text=True,
+                cwd=PROJECT_ROOT,
+                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+            )
+            
+            if result.returncode == 0:
+                print("✓ Transactions pipeline executed successfully!")
+                print(f"Output: {result.stdout[:200]}...")
+            else:
+                print(f"⚠️  Pipeline execution issue: {result.stderr[:200]}")
+        else:
+            print(f"Error generating transactions pipeline: {pipeline.get('error')}")
+    
+    # Check if we have orders data
+    orders_csv = PROJECT_ROOT / "data" / "orders.csv"
+    if orders_csv.exists():
+        print("\n--- Processing orders data ---")
+        pipeline = generate_cleaning_pipeline(
+            source_path=str(orders_csv),
+            ideal_path="schemas/orders_schema.yaml",
+            output_table="orders_clean"
+        )
+        
+        if 'error' not in pipeline:
+            print("✓ Orders pipeline generated successfully!")
+            
+            # Save the pipeline
+            os.makedirs("pipelines/generated", exist_ok=True)
+            with open("pipelines/generated/clean_orders_pipeline.py", "w") as f:
+                f.write(pipeline['pipeline_code'])
+            print(f"✓ Pipeline saved to: pipelines/generated/clean_orders_pipeline.py")
+            
+            # Execute the pipeline
+            print("--- Executing orders pipeline ---")
+            result = subprocess.run(
+                [sys.executable, "pipelines/generated/clean_orders_pipeline.py"],
+                capture_output=True,
+                text=True,
+                cwd=PROJECT_ROOT,
+                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+            )
+            
+            if result.returncode == 0:
+                print("✓ Orders pipeline executed successfully!")
+                print(f"Output: {result.stdout[:200]}...")
+            else:
+                print(f"⚠️  Pipeline execution issue: {result.stderr[:200]}")
+        else:
+            print(f"Error generating orders pipeline: {pipeline.get('error')}")
+
+
+if __name__ == "__main__":
+    run_full_demo()

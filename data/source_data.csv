@@ -1,0 +1,14 @@
+id,name,email,age,join_date,status,score
+1,Alice Smith,alice@example.com,30,2024-01-15,active,95.5
+2,Bob Johnson,bob@example.com,25,2024-02-20,active,87.3
+3,Charlie Brown,charlie@example.com,35,2024-03-10,inactive,72.1
+4,David Wilson,david@example.com,28,2024-04-05,active,91.8
+5,Eve Davis,eve@example.com,42,2024-05-12,active,88.6
+6,Frank Miller,,45,2024-06-18,active,76.2
+7,Grace Lee,grace@example.com,N/A,2024-07-22,pending,65.4
+8,Henry Taylor,henry@example.com,22,2024-08-30,active,93.9
+9,Irene Clark,irene@example.com,31,2024-09-14,inactive,82.5
+10,Jack Lewis,jack@example.com,55,2024-10-01,active,79.3
+11,Karen Walker,karen@example,29,2024-11-08,active,85.7
+12,Liam Hall,liam@example.com,33,2024-12-15,suspended,68.2
+13,Mia Young,mia@example.com,27,2025-01-20,active,90.4

@@ -1,0 +1,82 @@
+import pandas as pd
+import duckdb
+from pathlib import Path
+
+
+def load_source_data(source_path: str) -> pd.DataFrame:
+    """Load source CSV into DataFrame."""
+    return pd.read_csv(source_path)
+
+
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean data according to ideal schema."""
+    # Make a copy to avoid modifying original
+    df = df.copy()
+    
+    # Apply transformations
+    {transformations}
+    
+    return df
+
+
+def validate_cleaned_data(df: pd.DataFrame) -> dict:
+    """Validate cleaned data against ideal schema."""
+    validation = {
+        "row_count": len(df),
+        "columns": list(df.columns),
+        "null_counts": df.isnull().sum().to_dict(),
+        "dtypes": df.dtypes.to_dict()
+    }
+    
+    # Check for remaining issues
+    issues = []
+    for col in df.columns:
+        if df[col].isnull().any():
+            issues.append(col + " still has null values")
+    
+    validation["issues"] = issues
+    return validation
+
+
+def save_to_duckdb(df: pd.DataFrame, table_name: str) -> int:
+    """Save cleaned data to DuckDB."""
+    conn = duckdb.connect(database="data/ingestion.db")
+    df.to_sql(table_name, conn, if_exists="replace", index=False)
+    row_count = len(df)
+    conn.close()
+    return row_count
+
+
+def clean_and_load_pipeline(source_path: str = "__SOURCE_PATH__"):
+    """Complete cleaning and loading pipeline."""
+    
+    # Step 1: Load source data
+    df = load_source_data(source_path)
+    print(f"Loaded {len(df)} rows from {source_path}")
+    
+    # Step 2: Clean data
+    cleaned_df = clean_data(df)
+    print(f"Cleaned data: {len(cleaned_df)} rows, columns: {list(cleaned_df.columns)}")
+    
+    # Step 3: Validate
+    validation = validate_cleaned_data(cleaned_df)
+    print(f"Validation: {validation}")
+    
+    if validation.get("issues"):
+        print(f'WARNING: Cleaning issues remain: {validation["issues"]}')
+    
+    # Step 4: Save to DuckDB
+    rows_saved = save_to_duckdb(cleaned_df, "__OUTPUT_TABLE__")
+    print(f"Saved {rows_saved} rows to __OUTPUT_TABLE__")
+    
+    return {
+        "source_rows": len(df),
+        "cleaned_rows": len(cleaned_df),
+        "saved_rows": rows_saved,
+        "validation": validation
+    }
+
+
+if __name__ == "__main__":
+    result = clean_and_load_pipeline()
+    print(f"Pipeline result: {result}")
