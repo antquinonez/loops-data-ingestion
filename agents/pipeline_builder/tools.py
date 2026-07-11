@@ -344,6 +344,10 @@ def generate_cleaning_pipeline(source_path: str, ideal_path: Optional[str] = Non
         - sql_transformations: SQL transformations to apply
         - validation_queries: queries to validate the cleaning
     """
+    # Convert source_path to absolute path
+    source_path_abs = Path(source_path).resolve()
+    source_path = str(source_path_abs)
+    
     # Compare schemas
     comparison = compare_schemas(source_path, ideal_path)
     
@@ -725,8 +729,8 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
     
     transformation_code = "\n".join(indented_transformations)
     
-    # Load template and replace placeholders
-    template_path = paths.get_abs("project_root") / "agents" / "pipeline_builder" / "flow_template_prefect.txt"
+    # Use simple template without Prefect for local execution
+    template_path = paths.get_abs("project_root") / "agents" / "pipeline_builder" / "flow_template_simple.txt"
     with open(template_path, 'r') as f:
         template = f.read()
     
@@ -743,13 +747,6 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
         # Default to users schema
         schema_filename = "users_schema.yaml"
     flow_code = flow_code.replace("__SCHEMA_FILE__", schema_filename)
-    
-    # Extract table name for flow name
-    if schema_file:
-        table_name_for_flow = os.path.basename(schema_file).replace('_schema.yaml', '').replace('.yaml', '')
-    else:
-        table_name_for_flow = output_table
-    flow_code = flow_code.replace("__table_name__", table_name_for_flow)
     
     return flow_code
 
