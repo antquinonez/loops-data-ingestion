@@ -270,10 +270,45 @@ def setup_environment():
 
 
 def start_mcp_server():
-    """Start the MCP server in the background (currently disabled - MCP API compatibility issue)."""
-    print("\n⚠️  MCP server disabled - API compatibility issue with mcp library")
-    print("   Nanobot will use built-in tools (read_file, exec, etc.) instead")
-    return None
+    """Start the MCP server in the background.
+    
+    Returns:
+        subprocess.Popen: The MCP server process, or None if failed to start
+    """
+    print("\n" + "=" * 80)
+    print("Starting MCP server")
+    print("=" * 80)
+    
+    server_path = paths.get_abs("flows_dir") / "mcp_server.py"
+    if not server_path.exists():
+        print(f"⚠️  MCP server script not found: {server_path}")
+        print("   MCP server will not be available (this is optional)")
+        return None
+    
+    env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    env.setdefault("PREFECT_API_URL", "")
+    env.setdefault("PREFECT_CLOUD_API_URL", "")
+    env.setdefault("PREFECT_MODE", "local")
+    env.pop("PREFECT_API_KEY", None)
+    env.pop("PREFECT_CLOUD_API_KEY", None)
+    
+    try:
+        process = subprocess.Popen(
+            [sys.executable, str(server_path)],
+            cwd=PROJECT_ROOT,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        print(f"✓ MCP server started with PID {process.pid}")
+        print("   Server runs on: http://127.0.0.1:8081")
+        return process
+    except Exception as e:
+        print(f"⚠️  Failed to start MCP server: {e}")
+        print("   MCP server will not be available (this is optional)")
+        print("   To enable MCP server, ensure the 'mcp' package is installed:")
+        print("   pip install mcp")
+        return None
 
 
 async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] = None):
@@ -311,12 +346,12 @@ async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] 
     registry = ToolRegistry()
     
     # Register nanobot_tools (simple function-based tools)
+    # These are skipped for now as they need to be converted to Tool classes
+    # The pipeline builder tools are registered below
     print("  Loading NANOBOT_TOOLS...")
     for tool_name, tool_config in NANOBOT_TOOLS.items():
-        # For now, skip these - they need to be converted to Tool classes
-        # We'll focus on the pipeline tools
         print(f"    - {tool_name}: {tool_config['description'][:50]}...")
-    
+
     # Register pipeline builder Tool classes
     print("  Loading PIPELINE_TOOL_CLASSES...")
     for tool_class in PIPELINE_TOOL_CLASSES:
@@ -324,7 +359,7 @@ async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] 
         registry.register(tool_instance)
         print(f"    ✓ Registered: {tool_instance.name} - {tool_instance.description[:50]}...")
     
-    print(f"  Total custom tools registered: {len(PIPELINE_TOOL_CLASSES)}")
+    print(f"  Total custom tools registered: {len(registry.get_definitions())}")
     
     # Create the bot with explicit config
     config_path = str(paths.nanobot_config_minimal)
@@ -536,7 +571,14 @@ def run_full_demo(archive_logs: bool = False):
     print("\n3. Getting ingestion status:")
     print(get_ingestion_status())
     
-    # Step 5: Now trigger nanobot
+    # Step 5: Start MCP server for enhanced capabilities
+    print("\n" + "=" * 80)
+    print("STEP 5: Starting MCP server")
+    print("=" * 80)
+    
+    mcp_process = start_mcp_server()
+    
+    # Step 6: Now trigger nanobot
     print("\n" + "=" * 80)
     print("TRIGGERING NANOBOT INVESTIGATION")
     print("=" * 80)
@@ -556,8 +598,6 @@ def run_full_demo(archive_logs: bool = False):
         # Setup environment for duckdb CLI access
         setup_environment()
         
-        import asyncio
-        
         # Setup Nanobot logging to file (in addition to console)
         nanobot_log_path = paths.logs_dir / f"nanobot_{run_id}.log"
         
@@ -573,6 +613,8 @@ def run_full_demo(archive_logs: bool = False):
                 for f in self.files:
                     f.flush()
         
+        import asyncio
+        
         try:
             with open(nanobot_log_path, 'w') as nanobot_log_file:
                 # Tee stdout to both console and file
@@ -583,7 +625,7 @@ def run_full_demo(archive_logs: bool = False):
                 sys.stderr = Tee(original_stderr, nanobot_log_file)
                 
                 try:
-                    asyncio.run(trigger_nanobot_investigation(run_id=run_id))
+                    asyncio.run(trigger_nanobot_investigation(mcp_process=mcp_process, run_id=run_id))
                 finally:
                     # Restore original stdout/stderr
                     sys.stdout = original_stdout
@@ -591,7 +633,7 @@ def run_full_demo(archive_logs: bool = False):
         except Exception as e:
             print(f"Error capturing Nanobot output: {e}")
             # Fallback: run without capture
-            asyncio.run(trigger_nanobot_investigation(run_id=run_id))
+            asyncio.run(trigger_nanobot_investigation(mcp_process=mcp_process, run_id=run_id))
         
         # After nanobot runs, check if it created a pipeline
         if generated_pipeline.exists():

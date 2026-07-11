@@ -13,11 +13,19 @@ Resources exposed:
 To use: Start this server and configure your AI client to connect to it.
 """
 
+import sys
 import asyncio
 import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+# Ensure project root is in Python path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+os.environ.setdefault("PYTHONPATH", str(PROJECT_ROOT))
+
 from mcp.server import Server
 from mcp.types import (
     TextContent,
