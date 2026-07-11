@@ -549,6 +549,87 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
                     transformations.append(
                         f"df['{col_name}'] = df['{col_name}'].clip(upper={max_val})"
                     )
+        
+        # Handle enum constraints - enforce valid values
+        if "enum" in col_def:
+            valid_values = col_def["enum"]
+            default_value = col_def.get("default")
+            if default_value is None:
+                default_value = valid_values[0] if valid_values else None
+            # Create a set for fast lookup
+            transformations.append(
+                f"# Enforce enum constraint for {col_name}"
+            )
+            transformations.append(
+                f"valid_{col_name} = set({valid_values})"
+            )
+            if isinstance(default_value, str):
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if x in valid_{col_name} else '{default_value}')"
+                )
+            else:
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if x in valid_{col_name} else {default_value})"
+                )
+        
+        # Handle string length constraints
+        if ideal_type == "string":
+            if "min_length" in constraints:
+                min_len = constraints["min_length"]
+                transformations.append(
+                    f"# Enforce min_length for {col_name}"
+                )
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if len(str(x)) >= {min_len} else x.ljust({min_len}))"
+                )
+            if "max_length" in constraints:
+                max_len = constraints["max_length"]
+                transformations.append(
+                    f"# Enforce max_length for {col_name}"
+                )
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].str[:{max_len}]"
+                )
+        
+        # Handle pattern constraints (email, etc.)
+        if "pattern" in col_def:
+            pattern = col_def["pattern"]
+            default_value = col_def.get("default", "")
+            transformations.append(
+                f"# Enforce pattern for {col_name}"
+            )
+            transformations.append(
+                f"import re"
+            )
+            transformations.append(
+                f"pattern_{col_name} = re.compile(r'{pattern}')"
+            )
+            if isinstance(default_value, str):
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if pattern_{col_name}.match(str(x)) else '{default_value}')"
+                )
+            else:
+                transformations.append(
+                    f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if pattern_{col_name}.match(str(x)) else {default_value})"
+                )
+        
+        # Handle format constraints (email)
+        if col_def.get("format") == "email":
+            default_email = col_def.get("default", "unknown@example.com")
+            transformations.append(
+                f"# Enforce email format for {col_name}"
+            )
+            transformations.append(
+                f"import re"
+            )
+            # Use a comprehensive email regex
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            transformations.append(
+                f"email_pattern = re.compile(r'{email_pattern}')"
+            )
+            transformations.append(
+                f"df['{col_name}'] = df['{col_name}'].apply(lambda x: x if email_pattern.match(str(x)) else '{default_email}')"
+            )
     
     # Then handle mismatches specifically
     for mismatch in comparison.get("mismatches", []):
@@ -633,7 +714,7 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
         schema_filename = os.path.basename(schema_file)
     else:
         # Default to users schema
-        schema_filename = "ideal_schema.yaml"
+        schema_filename = "users_schema.yaml"
     flow_code = flow_code.replace("__SCHEMA_FILE__", schema_filename)
     
     # Extract table name for flow name

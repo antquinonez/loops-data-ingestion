@@ -249,13 +249,13 @@ class LoadIdealSchemaTool(Tool):
         Load ideal schema from YAML.
         
         Args:
-            schema_path: Optional path to schema file. Defaults to schemas/ideal_schema.yaml
+            schema_path: Optional path to schema file. Defaults to schemas/users_schema.yaml
         
         Returns:
             Dictionary with schema definition or error
         """
         if schema_path is None:
-            schema_path = str(PROJECT_ROOT / "schemas" / "ideal_schema.yaml")
+            schema_path = str(PROJECT_ROOT / "schemas" / "users_schema.yaml")
         
         try:
             with open(schema_path, 'r') as f:
@@ -313,7 +313,7 @@ loops/
 | Functions | snake_case | `load_ideal_schema()` |
 | Variables | snake_case | `project_root` |
 | Constants | UPPER_SNAKE_CASE | `PROJECT_ROOT` |
-| YAML/JSON files | snake_case | `ideal_schema.yaml` |
+| YAML/JSON files | snake_case | `users_schema.yaml` |
 | Configuration files | snake_case | `nanobot_config.yaml` |
 
 ### Path Handling
@@ -326,11 +326,11 @@ from pathlib import Path
 PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
 
 # Good
-schema_path = PROJECT_ROOT / "schemas" / "ideal_schema.yaml"
+schema_path = PROJECT_ROOT / "schemas" / "users_schema.yaml"
 data_path = PROJECT_ROOT / "data" / "source_data.csv"
 
 # Bad (relative paths)
-schema_path = "schemas/ideal_schema.yaml"
+schema_path = "schemas/users_schema.yaml"
 data_path = "../data/source_data.csv"
 ```
 

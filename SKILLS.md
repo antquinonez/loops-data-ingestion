@@ -182,7 +182,7 @@ All agents have access to:
 **Key Paths**:
 - `data/source_data.csv` - Source CSV with intentional errors
 - `data/ingestion.db` - DuckDB database
-- `schemas/ideal_schema.yaml` - Target schema
+- `schemas/users_schema.yaml` - Target schema
 - `logs/ingestion.log` - Main ingestion log (from Prefect flow)
 - `pipelines/generated/` - **Plain Python** cleaning pipelines (auto-generated)
 - `config/nanobot_config.yaml` - Agent configuration
@@ -328,7 +328,7 @@ Identified Issues:
 
 Action: Generate PLAIN PYTHON cleaning pipeline for data/source_data.csv
 Target: users_clean table
-Schema: schemas/ideal_schema.yaml
+Schema: schemas/users_schema.yaml
 Tools: load_ideal_schema, infer_source_schema, compare_schemas, generate_cleaning_pipeline
 Save to: pipelines/generated/clean_users_pipeline.py
 
@@ -349,7 +349,7 @@ Pipeline Type: PLAIN PYTHON (not Prefect flow)
 
 Source: data/source_data.csv
 Target: users_clean
-Schema: schemas/ideal_schema.yaml
+Schema: schemas/users_schema.yaml
 
 Issues Addressed:
   ✓ NULL emails → df['email'].fillna('unknown@example.com')

@@ -34,7 +34,7 @@ def test_tools():
     
     # Define file-schema mappings
     file_schema_mappings = [
-        ("data/source_data.csv", "schemas/ideal_schema.yaml", "users_clean", "raw_users"),
+        ("data/source_data.csv", "schemas/users_schema.yaml", "users_clean", "raw_users"),
         ("data/orders.csv", "schemas/orders_schema.yaml", "orders_clean", "raw_orders"),
         ("data/transactions.csv", "schemas/transactions_schema.yaml", "transactions_clean", "raw_transactions"),
     ]
@@ -148,7 +148,7 @@ def run_pipeline_builder_agent():
     Create a data cleaning pipeline for data/source_data.csv.
     
     Requirements:
-    1. Load the ideal schema from schemas/ideal_schema.yaml
+    1. Load the ideal schema from schemas/users_schema.yaml
     2. Compare it with the source data
     3. Identify all data quality issues
     4. Generate SQL transformations to fix each issue

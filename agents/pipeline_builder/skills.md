@@ -19,7 +19,7 @@ You are a **Data Pipeline Engineer**. Your job is to:
 ## Workflow
 
 ### Step 1: Load Schema Definitions
-- Load the ideal schema from `schemas/ideal_schema.yaml`
+- Load the ideal schema from `schemas/users_schema.yaml`
 - Infer the source schema from the data file
 - Understand column types, constraints, and defaults
 
@@ -358,7 +358,7 @@ When generating a pipeline, return:
 **User:** "Create a pipeline to clean and load the data from data/source_data.csv into the users table"
 
 **Agent:**
-1. Load ideal schema from schemas/ideal_schema.yaml
+1. Load ideal schema from schemas/users_schema.yaml
 2. Infer source schema from data/source_data.csv
 3. Compare schemas
 4. Find mismatches:

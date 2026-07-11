@@ -41,7 +41,7 @@ class LoadIdealSchemaTool(Tool):
     
     async def execute(self, **kwargs: Any) -> Any:
         """Load ideal schema."""
-        schema_path = SCHEMAS_DIR / "ideal_schema.yaml"
+        schema_path = SCHEMAS_DIR / "users_schema.yaml"
         if not schema_path.exists():
             return ToolResult.error(f"Ideal schema not found: {schema_path}")
         

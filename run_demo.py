@@ -445,7 +445,7 @@ def run_pipeline_builder_demo():
         
         pipeline = generate_cleaning_pipeline(
             source_path="data/source_data.csv",
-            ideal_path="schemas/ideal_schema.yaml",
+            ideal_path="schemas/users_schema.yaml",
             output_table="users_clean"
         )
         

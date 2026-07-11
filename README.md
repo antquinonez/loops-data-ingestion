@@ -149,7 +149,7 @@ loops/
 │       ├── clean_transactions_pipeline.py
 │       └── clean_orders_pipeline.py
 ├── schemas/
-│   ├── ideal_schema.yaml     # Ideal schema for users data
+│   ├── users_schema.yaml     # Ideal schema for users data
 │   ├── orders_schema.yaml    # Schema for orders data
 │   └── transactions_schema.yaml  # Schema for transactions data
 ├── skills/

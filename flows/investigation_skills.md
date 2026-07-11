@@ -205,7 +205,7 @@ get_ingestion_status()
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Schema definition**: See `schemas/ideal_schema.yaml` for target schema.
+**Schema definition**: See `schemas/users_schema.yaml` for target schema.
 
 ---
 
