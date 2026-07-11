@@ -588,14 +588,24 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
     # Each line needs 4 spaces to be inside the clean_data function
     indented_transformations = []
     for t in transformations:
-        # Replace newlines with indented newlines (4 spaces for continuation)
-        indented = t.replace("\n", "\n    ")
-        indented_transformations.append(indented)
+        # Split by newlines and indent each line properly
+        lines = t.split("\n")
+        indented_lines = []
+        for i, line in enumerate(lines):
+            if i == 0:
+                # First line gets 4 spaces
+                if line.strip():
+                    indented_lines.append(f"    {line}")
+            else:
+                # Continuation lines get 4 spaces
+                if line.strip():
+                    indented_lines.append(f"    {line}")
+        indented_transformations.append("\n".join(indented_lines))
     
-    transformation_code = "\n    ".join(indented_transformations)
+    transformation_code = "\n".join(indented_transformations)
     
     # Load template and replace placeholders
-    template_path = PROJECT_ROOT / "agents" / "pipeline_builder" / "flow_template.txt"
+    template_path = PROJECT_ROOT / "agents" / "pipeline_builder" / "flow_template_prefect.txt"
     with open(template_path, 'r') as f:
         template = f.read()
     
@@ -612,6 +622,13 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
         # Default to users schema
         schema_filename = "ideal_schema.yaml"
     flow_code = flow_code.replace("__SCHEMA_FILE__", schema_filename)
+    
+    # Extract table name for flow name
+    if schema_file:
+        table_name_for_flow = os.path.basename(schema_file).replace('_schema.yaml', '').replace('.yaml', '')
+    else:
+        table_name_for_flow = output_table
+    flow_code = flow_code.replace("__table_name__", table_name_for_flow)
     
     return flow_code
 

@@ -1,0 +1,268 @@
+from prefect import flow, task, get_run_logger
+import pandas as pd
+import duckdb
+from pathlib import Path
+import json
+import yaml
+
+PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+DB_PATH = str(PROJECT_ROOT / "data" / "ingestion.db")
+
+
+@task(name="load_source_data")
+def load_source_data(source_path: str) -> pd.DataFrame:
+    """Load source CSV into DataFrame."""
+    logger = get_run_logger()
+    logger.info(f"Loading source data from: {source_path}")
+    df = pd.read_csv(source_path)
+    logger.info(f"Loaded {len(df)} rows with columns: {list(df.columns)}")
+    return df
+
+
+@task(name="clean_data")
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean data according to ideal schema."""
+    logger = get_run_logger()
+    logger.info("Cleaning data...")
+    
+    # Make a copy to avoid modifying original
+    df = df.copy()
+    
+    # Apply transformations
+{transformations}
+    
+    logger.info(f"Cleaned data: {len(df)} rows, columns: {list(df.columns)}")
+    return df
+
+
+@task(name="load_ideal_schema")
+def load_ideal_schema(schema_path: str) -> dict:
+    """Load ideal schema from YAML file."""
+    logger = get_run_logger()
+    logger.info(f"Loading ideal schema from: {schema_path}")
+    with open(schema_path, 'r') as f:
+        schema = yaml.safe_load(f)
+    logger.info(f"Loaded schema with {len(schema.get('tables', {}))} table definitions")
+    return schema
+
+
+@task(name="validate_cleaned_data")
+def validate_cleaned_data(df: pd.DataFrame, ideal_schema: dict, table_name: str) -> dict:
+    """Validate cleaned data against ideal schema."""
+    logger = get_run_logger()
+    logger.info("Validating cleaned data...")
+    
+    validation = {
+        "row_count": len(df),
+        "columns": list(df.columns),
+        "null_counts": df.isnull().sum().to_dict(),
+        "dtypes": df.dtypes.to_dict(),
+        "column_validations": {},
+        "issues": []
+    }
+    
+    # Get the table schema from ideal schema
+    tables = ideal_schema.get("tables", {})
+    table_schema = tables.get(table_name, {})
+    columns_def = table_schema.get("columns", [])
+    ideal_by_name = {col["name"]: col for col in columns_def}
+    
+    # Validate each column
+    for col_name, col_def in ideal_by_name.items():
+        if col_name not in df.columns:
+            validation["issues"].append(f"Column '{col_name}' missing from cleaned data")
+            continue
+        
+        col_validations = {
+            "column": col_name,
+            "ideal_type": col_def.get("type", "string"),
+            "actual_type": str(df[col_name].dtype),
+            "null_count": int(df[col_name].isnull().sum()),
+            "issues": []
+        }
+        
+        # Check nullability
+        ideal_nullable = col_def.get("nullable", True)
+        null_count = col_validations["null_count"]
+        if null_count > 0 and not ideal_nullable:
+            col_validations["issues"].append({
+                "type": "null_values",
+                "count": null_count,
+                "severity": "high",
+                "message": f"Column has {null_count} null values but is defined as NOT NULL"
+            })
+        
+        # Check type
+        ideal_type = col_def.get("type", "string").lower()
+        actual_dtype = str(df[col_name].dtype)
+        
+        dtype_mapping = {
+            "int64": "integer", "int32": "integer", "Int64": "integer", "Int32": "integer",
+            "float64": "float", "float32": "float", "Float64": "float", "Float32": "float",
+            "object": "string", "string": "string", "str": "string",
+            "datetime64[ns]": "date", "datetime64": "date",
+            "datetime64[us]": "date", "<M8[us]": "date", "<M8[ns]": "date"
+        }
+        
+        if actual_dtype.startswith("<StringDtype"):
+            mapped_dtype = "string"
+        elif actual_dtype.startswith("<Int"):
+            mapped_dtype = "integer"
+        elif actual_dtype.startswith("<Float"):
+            mapped_dtype = "float"
+        elif actual_dtype.startswith("<M8"):
+            mapped_dtype = "date"
+        else:
+            mapped_dtype = dtype_mapping.get(actual_dtype, "unknown")
+        
+        if mapped_dtype != ideal_type:
+            col_validations["issues"].append({
+                "type": "type_mismatch",
+                "expected": ideal_type,
+                "actual": mapped_dtype,
+                "severity": "high",
+                "message": f"Expected type '{ideal_type}', got '{mapped_dtype}'"
+            })
+        
+        # Check constraints
+        constraints = col_def.get("constraints", {})
+        if ideal_type in ["integer", "float"] and not df[col_name].isnull().all():
+            non_null = df[col_name].dropna()
+            if not non_null.empty:
+                if "min" in constraints:
+                    min_val = constraints["min"]
+                    below_min = (non_null < min_val).sum()
+                    if below_min > 0:
+                        col_validations["issues"].append({
+                            "type": "below_min",
+                            "count": int(below_min),
+                            "min": min_val,
+                            "severity": "high",
+                            "message": f"{below_min} values below minimum {min_val}"
+                        })
+                if "max" in constraints:
+                    max_val = constraints["max"]
+                    above_max = (non_null > max_val).sum()
+                    if above_max > 0:
+                        col_validations["issues"].append({
+                            "type": "above_max",
+                            "count": int(above_max),
+                            "max": max_val,
+                            "severity": "high",
+                            "message": f"{above_max} values above maximum {max_val}"
+                        })
+        
+        validation["column_validations"][col_name] = col_validations
+        for issue in col_validations["issues"]:
+            validation["issues"].append(f"[{col_name}] {issue['message']}")
+    
+    validation["is_valid"] = len(validation["issues"]) == 0
+    
+    logger.info(f"Validation complete: {len(validation['issues'])} issues found")
+    return validation
+
+
+@task(name="save_to_duckdb")
+def save_to_duckdb(df: pd.DataFrame, table_name: str) -> int:
+    """Save cleaned data to DuckDB."""
+    logger = get_run_logger()
+    logger.info(f"Saving {len(df)} rows to {table_name}...")
+    
+    conn = duckdb.connect(database=DB_PATH, read_only=False)
+    df.to_sql(table_name, conn, if_exists="replace", index=False)
+    row_count = len(df)
+    conn.close()
+    
+    logger.info(f"Successfully saved {row_count} rows to {table_name}")
+    return row_count
+
+
+@flow(name="clean_and_load__{table_name}")
+def clean_and_load_pipeline(source_path: str = "__SOURCE_PATH__"):
+    """Complete Prefect flow for cleaning and loading data."""
+    logger = get_run_logger()
+    
+    # Step 1: Load source data
+    logger.info("--- Step 1: Loading source data ---")
+    df = load_source_data(source_path)
+    
+    # Step 2: Clean data
+    logger.info("--- Step 2: Cleaning data ---")
+    cleaned_df = clean_data(df)
+    
+    # Step 3: Load ideal schema
+    logger.info("--- Step 3: Loading ideal schema ---")
+    schema_path = Path(source_path).parent.parent / "schemas" / "__SCHEMA_FILE__"
+    try:
+        ideal_schema = load_ideal_schema(str(schema_path))
+    except Exception as e:
+        logger.warning(f"Could not load ideal schema: {e}")
+        ideal_schema = {}
+    
+    # Step 4: Validate
+    logger.info("--- Step 4: Validating cleaned data ---")
+    validation = validate_cleaned_data(cleaned_df, ideal_schema, "__OUTPUT_TABLE__")
+    
+    if validation.get("issues"):
+        logger.warning(f"Validation issues found: {len(validation['issues'])}")
+        for issue in validation["issues"]:
+            logger.warning(f"  - {issue}")
+    else:
+        logger.info("All validations passed!")
+    
+    # Step 5: Save to DuckDB
+    logger.info("--- Step 5: Saving to DuckDB ---")
+    rows_saved = save_to_duckdb(cleaned_df, "__OUTPUT_TABLE__")
+    
+    return {
+        "source_rows": len(df),
+        "cleaned_rows": len(cleaned_df),
+        "saved_rows": rows_saved,
+        "validation": validation
+    }
+
+
+if __name__ == "__main__":
+    # Run the pipeline directly without Prefect orchestration
+    # (To use Prefect orchestration, call clean_and_load_pipeline() instead)
+    import os
+    
+    # Disable Prefect cloud connection
+    os.environ["PREFECT_API_URL"] = "http://localhost:4200"
+    os.environ["PREFECT_API_KEY"] = "test-key"
+    
+    # For local testing without a server, just call the tasks directly
+    print("Running cleaning pipeline...")
+    
+    source_path = "__SOURCE_PATH__"
+    
+    # Call tasks directly
+    df = load_source_data(source_path)
+    print(f"Loaded {len(df)} rows")
+    
+    cleaned_df = clean_data(df)
+    print(f"Cleaned {len(cleaned_df)} rows")
+    
+    # Load schema if available
+    try:
+        schema_path = Path(source_path).parent.parent / "schemas" / "__SCHEMA_FILE__"
+        ideal_schema = load_ideal_schema(str(schema_path))
+    except Exception as e:
+        print(f"Warning: Could not load schema: {e}")
+        ideal_schema = {}
+    
+    # Validate
+    validation = validate_cleaned_data(cleaned_df, ideal_schema, "__OUTPUT_TABLE__")
+    print(f"Validation: {validation.get('is_valid', False)}")
+    
+    # Save
+    rows_saved = save_to_duckdb(cleaned_df, "__OUTPUT_TABLE__")
+    print(f"Saved {rows_saved} rows to __OUTPUT_TABLE__")
+    
+    result = {
+        "source_rows": len(df),
+        "cleaned_rows": len(cleaned_df),
+        "saved_rows": rows_saved,
+        "validation": validation
+    }
+    print(f"\nPipeline result: {result}")
