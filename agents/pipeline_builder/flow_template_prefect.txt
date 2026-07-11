@@ -5,8 +5,17 @@ from pathlib import Path
 import json
 import yaml
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-DB_PATH = str(PROJECT_ROOT / "data" / "ingestion.db")
+# Import path configuration
+try:
+    from utils.paths import paths
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from utils.paths import paths
+
+# Use paths from configuration
+PROJECT_ROOT = paths.get_abs("project_root")
+DB_PATH = str(paths.database)
 
 
 @task(name="load_source_data")
