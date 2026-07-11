@@ -1,14 +1,14 @@
 # Data Ingestion Troubleshooting with Nanobot
 
-An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues in a Prefect-based ETL pipeline.
+An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues using a **hybrid pipeline architecture**.
 
 ## Overview
 
 This project showcases:
 
-1. **Intentional Data Errors**: A Prefect ingestion flow that fails due to data quality issues (NULL values, type mismatches, malformed data)
+1. **Intentional Data Errors**: A **Prefect** ingestion flow that fails due to data quality issues (NULL values, type mismatches, malformed data)
 2. **Autonomous Investigation**: A Nanobot agent that automatically troubleshoots failures using custom tools
-3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates cleaning code to fix data issues
+3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **plain Python cleaning scripts** to fix data issues
 4. **Schema Validation**: Automatic comparison of source data against ideal schemas
 5. **Self-Healing**: The system can generate and execute cleaning pipelines to resolve ingestion failures
 
@@ -16,9 +16,105 @@ This project showcases:
 
 - **Nanobot**: Autonomous AI agent framework with tool integration
 - **DuckDB**: Embedded analytical database for data processing
-- **Prefect**: Workflow orchestration (intentionally configured to fail for demo purposes)
+- **Prefect**: Workflow orchestration (used only for the **failing** demo pipeline)
+- **Pandas**: Data manipulation library (used for **cleaning** pipelines)
 - **OpenAI API**: LLM-powered investigation and code generation
 - **MCP Server**: Model Context Protocol for enhanced agent capabilities (optional)
+
+---
+
+## Architecture: Hybrid Pipeline Model
+
+This project uses a **two-tier pipeline architecture**:
+
+### Tier 1: Prefect Orchestration Flow (DEMO ONLY)
+- **File**: `flows/ingestion_flow.py`
+- **Purpose**: Demonstrates the **failure** - intentionally has strict schema that causes errors
+- **Type**: Full Prefect flow with `@flow` and `@task` decorators
+- **Status**: Will fail due to data quality issues
+
+### Tier 2: Plain Python Cleaning Pipelines (AUTO-GENERATED)
+- **Files**: `pipelines/generated/clean_*.py`
+- **Purpose**: **Fixes** the data quality issues
+- **Type**: Standalone Python scripts using pandas + DuckDB
+- **Status**: Succeeds by applying type conversions and NULL handling
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HYBRID PIPELINE ARCHITECTURE                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  TIER 1: Prefect (Orchestration)                             │
+│  ─────────────────────────────────                           │
+│  flows/ingestion_flow.py                                      │
+│  ┌─────────────────────────────────┐                         │
+│  │ @flow                                       │                         │
+│  │ def data_ingestion_pipeline():            │                         │
+│  │   @task                                     │                         │
+│  │   def validate_source_file():           ✓ PASS              │         │
+│  │   @task                                     │                         │
+│  │   def create_target_table():              ✓ PASS              │         │
+│  │   @task                                     │                         │
+│  │   def load_to_raw():                       ✓ PASS              │         │
+│  │   @task                                     │                         │
+│  │   def transform_and_load():              ✗ FAIL (intentionally) │
+│  │                                              │                 │
+│  │  - NOT NULL constraint violations          │                 │
+│  │  - Type conversion errors (N/A → INT)      │                 │
+│  │  - Invalid data formats                     │                 │
+│  └─────────────────────────────────┘                         │
+│                                                             │
+│         ↓ FAILS → Triggers Investigation                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│  TIER 2: Plain Python (Cleaning)                              │
+│  ─────────────────────────────────                           │
+│  pipelines/generated/clean_users_pipeline.py                 │
+│                                                             │
+│  def load_source_data(path):                                │
+│      return pd.read_csv(path)                               │
+│                                                             │
+│  def clean_data(df):                                        │
+│      # Type conversions with COALESCE fallback              │
+│      df['age'] = pd.to_numeric(df['age'], errors='coerce')   │
+│                   .fillna(0).astype(int)                       │
+│      # NULL handling                                         │
+│      df['email'] = df['email'].fillna('unknown@example.com') │
+│      # Date conversion                                        │
+│      df['join_date'] = pd.to_datetime(df['join_date'])       │
+│                                                             │
+│  def save_to_duckdb(df, table):                              │
+│      conn = duckdb.connect(...)                              │
+│      conn.register('df', df)                                 │
+│      conn.execute(f"CREATE TABLE {table} AS SELECT * FROM df")│
+│                                                             │
+│  if __name__ == "__main__":                                  │
+│      df = load_source_data("data/source_data.csv")          │
+│      df = clean_data(df)                                     │
+│      save_to_duckdb(df, "users_clean")                      │
+│                                                             │
+│                    ✓ ALL CHECKS PASS                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why Two Different Pipeline Types?
+
+| Aspect | Prefect Flow | Plain Python Cleaning |
+|--------|--------------|----------------------|
+| **Purpose** | Demonstration (show failure) | Solution (fix data) |
+| **Complexity** | Orchestration overhead | Simple & fast |
+| **Dependencies** | Prefect library | pandas + DuckDB only |
+| **Error Handling** | Built-in retry, logging | Direct, explicit |
+| **Use Case** | Multi-step workflows | Single-step transformations |
+
+The **Prefect flow** is used **only for the demo** to show what happens when data quality issues occur. The **generated cleaning pipelines** are **standalone Python scripts** because:
+1. They perform a single, focused operation (clean → load)
+2. They don't need orchestration (no dependencies between steps)
+3. They're simpler and faster without Prefect overhead
+4. They're easier to debug and modify
 
 ---
 
@@ -31,7 +127,7 @@ loops/
 │       ├── tools.py           # Schema analysis & pipeline generation tools
 │       ├── nanobot_tools.py   # Nanobot-compatible tool classes
 │       ├── config.json        # Pipeline builder configuration
-│       └── skills.md          # Pipeline builder specific skills
+│       └── skills.md          # Pipeline builder specific skills (Stage 2)
 ├── config/
 │   ├── nanobot_config.yaml    # Full Nanobot server configuration
 │   ├── nanobot_config_minimal.json  # Minimal config for demo
@@ -42,11 +138,13 @@ loops/
 │   ├── transactions.csv      # Transactions data (optional)
 │   └── ingestion.db          # DuckDB database (created on first run)
 ├── flows/
-│   ├── ingestion_flow.py     # Prefect flow that fails on bad data
+│   ├── ingestion_flow.py     # PREFECT flow that fails on bad data (Tier 1)
 │   ├── nanobot_tools.py      # Investigation tools for Nanobot
-│   └── mcp_server.py         # MCP server for enhanced capabilities
+│   ├── mcp_server.py         # MCP server for enhanced capabilities
+│   ├── investigation_skills.md # Stage 1: Investigation agent skills
+│   └── validation_skills.md   # Stage 3: Validation agent skills
 ├── pipelines/
-│   └── generated/            # Auto-generated cleaning pipelines
+│   └── generated/            # Auto-generated PLAIN PYTHON cleaning pipelines (Tier 2)
 │       ├── clean_users_pipeline.py
 │       ├── clean_transactions_pipeline.py
 │       └── clean_orders_pipeline.py
@@ -54,18 +152,18 @@ loops/
 │   ├── ideal_schema.yaml     # Ideal schema for users data
 │   ├── orders_schema.yaml    # Schema for orders data
 │   └── transactions_schema.yaml  # Schema for transactions data
+├── skills/
+│   ├── __init__.py           # SkillLoader class for loading skills
+│   └── utils.py              # Utility functions for agent context
 ├── logs/
 │   ├── ingestion.log         # Ingestion pipeline logs
 │   ├── prefect.log           # Prefect flow logs
 │   └── nanobot.log           # Nanobot investigation logs
-├── agents/
-│   └── pipeline_builder/
-│       ├── tools.py          # Pipeline generation logic
-│       ├── nanobot_tools.py  # Nanobot tool registrations
-│       └── skills.md         # Pipeline builder skills
-├── run_demo.py               # Main demo entry point
+├── sessions/
+│   └── *.jsonl              # Session files
+├── run_demo.py               # Main demo entry point (orchestrates all stages)
 ├── demo_pipeline_builder.py # Standalone pipeline builder demo
-├── SKILLS.md                # General troubleshooting guide for agents
+├── SKILLS.md                # Master skills index for all stages
 ├── AGENTS.md               # Instructions for AI agents working with this repo
 ├── README.md                # This file
 └── .env                    # Environment variables (OPENAI_API_KEY)
@@ -75,7 +173,7 @@ loops/
 
 ## Intentional Errors in Source Data
 
-The `data/source_data.csv` file contains several intentional data quality issues that cause the ingestion to fail:
+The `data/source_data.csv` file contains several intentional data quality issues that cause the **Prefect** ingestion flow to fail:
 
 | Row | Column | Issue | Error Type |
 |-----|--------|-------|------------|
@@ -83,9 +181,14 @@ The `data/source_data.csv` file contains several intentional data quality issues
 | 7 | age | "N/A" | Type conversion error (STRING to INTEGER) |
 | 11 | email | "karen@example" | Invalid format (missing TLD) |
 
-These issues cause:
+These issues cause the **Prefect flow** to fail with:
 - `ConversionException: Could not convert string 'N/A' to INT32`
 - `NOT NULL constraint failed: users.email`
+
+The **plain Python cleaning pipelines** handle these issues by:
+- Using `pd.to_numeric(..., errors='coerce').fillna(default)` for type conversions
+- Using `df['column'].fillna(default)` for NULL values
+- Using proper validation before loading
 
 ---
 
@@ -109,7 +212,7 @@ source venv/bin/activate  # Linux/Mac
 # OR: venv\Scripts\activate  # Windows
 
 # Install dependencies
-pip install -q nanobot duckdb prefect python-dateutil mcp python-dotenv
+pip install -q nanobot duckdb prefect python-dateutil mcp python-dotenv pandas
 
 # Set your OpenAI API key (required)
 export OPENAI_API_KEY="your-api-key-here"
@@ -122,30 +225,30 @@ export OPENAI_MODEL="gpt-4o-mini"
 
 ```bash
 # Run the full demo - this will:
-# 1. Run the failing ingestion flow
+# 1. Run the PREFECT ingestion flow (it will fail)
 # 2. Test investigation tools
 # 3. Trigger Nanobot to analyze and fix the issues
-# 4. Generate cleaning pipelines
-# 5. Execute the generated pipelines to verify the fix
+# 4. Generate PLAIN PYTHON cleaning pipelines (not Prefect)
+# 5. Execute the generated plain Python pipelines to verify the fix
 python run_demo.py
 ```
 
 The demo will:
-1. First run fails (expected) due to data errors
+1. **Prefect flow fails** (expected) due to data errors
 2. Nanobot investigates using the tools in `flows/nanobot_tools.py`
-3. Pipeline builder generates cleaning code in `pipelines/generated/`
-4. Generated pipelines are executed and succeed
+3. Pipeline builder generates **plain Python cleaning scripts** in `pipelines/generated/`
+4. Generated **plain Python pipelines** are executed and succeed
 
 ### Run Individual Components
 
 ```bash
-# Step 1: Run the failing ingestion (creates errors)
+# Step 1: Run the failing PREFECT ingestion (creates errors)
 python flows/ingestion_flow.py
 
-# Step 2: Run the pipeline builder to generate fixes
+# Step 2: Run the pipeline builder to generate PLAIN PYTHON fixes
 python demo_pipeline_builder.py
 
-# Step 3: Run the generated cleaning pipeline
+# Step 3: Run the generated PLAIN PYTHON cleaning pipeline
 python pipelines/generated/clean_users_pipeline.py
 
 # Step 4: Start Nanobot server for manual investigation
@@ -168,6 +271,7 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────┐
+│            TIER 1: PREFECT FLOW (Demonstration)                │
 │                 flows/ingestion_flow.py                         │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
 │  │ validate     │───▶│ create       │───▶│ transform_and_load   │  │
@@ -175,7 +279,7 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 │  └─────────────┘    └─────────────┘    └─────────────────────┘  │
 │                              │                                  │
 │                              ▼                                  ▼
-│                    raw_users table         users table (fails)
+│                    raw_users table         users table (FAILS)  │
 └─────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -185,7 +289,7 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 │  │ Test Tools:      │    │ Trigger Nanobot Investigation     │  │
 │  │ - inspect_file   │    │ - Uses tools from nanobot_tools  │  │
 │  │ - check_schema   │    │ - Analyzes logs, DB, source data  │  │
-│  │ - get_ingestion  │    │ - Generates cleaning pipeline    │  │
+│  │ - get_ingestion  │    │ - Identifies need for cleaning   │  │
 │  │   _status        │    │                                   │  │
 │  └─────────────────┘    └─────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -196,37 +300,35 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 │  ┌─────────────────┐    ┌─────────────────────────────────┐  │
 │  │ Tools:           │    │ generate_cleaning_pipeline()      │  │
 │  │ - load_ideal_    │───▶│ - Compares source vs ideal       │  │
-│  │   schema        │    │ - Generates SQL + Python code    │  │
-│  │ - infer_source_  │    │ - Handles type casting, NULLs   │  │
-│  │   schema        │    │ - Saves to pipelines/generated  │  │
-│  │ - compare_      │    │                                   │  │
+│  │   schema        │    │ - Generates PLAIN PYTHON code    │  │
+│  │ - infer_source_  │    │   (not Prefect flows)          │  │
+│  │   schema        │    │ - Handles type casting, NULLs   │  │
+│  │ - compare_      │    │ - Saves to pipelines/generated  │  │
 │  │   schemas       │    │                                   │  │
 │  └─────────────────┘    └─────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│           Generated Cleaning Pipeline                           │
-│  pipelines/generated/clean_users_pipeline.py                   │
-│  - Automatically loads source data                           │
-│  - Applies type conversions with COALESCE fallback             │
-│  - Fills NULL values with defaults                           │
-│  - Inserts cleaned data into target table                     │
+│            TIER 2: PLAIN PYTHON CLEANING PIPELINE               │
+│          pipelines/generated/clean_users_pipeline.py           │
+│  - Loads source data with pandas                                  │
+│  - Applies type conversions with fillna fallback                │
+│  - Fills NULL values with schema defaults                       │
+│  - Inserts cleaned data into DuckDB                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
 ```
-Source CSV → [Prefect Flow] → raw_users (staging) → [Transformation] → users (target)
-                         ↓
-                  [FAILS due to data errors]
+Source CSV → [Prefect Flow] → raw_users (staging) → [FAILS]
                          ↓
                   [Nanobot investigates]
                          ↓
-                  [Pipeline Builder generates fix]
+                  [Pipeline Builder generates PLAIN PYTHON]
                          ↓
-                  Generated Pipeline → users_clean (fixed)
+                  [Plain Python Script] → users_clean (fixed)
 ```
 
 ---
@@ -282,7 +384,7 @@ for tool_class in PIPELINE_TOOL_CLASSES:
     tool_instance = tool_class()
     bot.register_tool(tool_instance)
 
-# Trigger pipeline generation
+# Trigger pipeline generation (generates PLAIN PYTHON, not Prefect)
 result = bot.run("""
     Investigate the failed data ingestion. 
     Use: infer_source_schema, load_ideal_schema, compare_schemas, 
@@ -304,91 +406,18 @@ result = bot.run("""
 | `inspect_file` | Inspect source data files for metadata and samples | `path`, `sample_size=10` |
 | `check_schema` | Validate data against expected schema | `path`, `schema` |
 | `send_slack_alert` | Send investigation results to Slack (mock) | `message`, `severity` |
-| `get_ingestion_status` | Get current status of ingestion pipeline | None |
+| `get_ingestion_status` | Get current status of the ingestion pipeline | None |
 
 ### Pipeline Builder Tools (`agents/pipeline_builder/tools.py`)
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `load_ideal_schema` | Load ideal schema definition from YAML | None |
-| `infer_source_schema` | Infer schema from source CSV file | `file_path`, `sample_size=100` |
-| `compare_schemas` | Compare source and ideal schemas | `source_path`, `ideal_path` |
-| `generate_cleaning_pipeline` | Generate complete cleaning pipeline | `source_path`, `ideal_path`, `output_table` |
+These tools generate **plain Python scripts**, not Prefect flows:
 
----
-
-## Schema Files
-
-### `schemas/ideal_schema.yaml`
-
-Defines the expected schema for the users table with type constraints, nullable flags, and default values:
-
-```yaml
-tables:
-  users:
-    description: "Clean user data table"
-    columns:
-      - name: id
-        type: integer
-        nullable: false
-        description: "User ID"
-      - name: name
-        type: string
-        nullable: false
-        description: "User name"
-      - name: email
-        type: string
-        nullable: false
-        default: "unknown@example.com"
-        description: "User email"
-      - name: age
-        type: integer
-        nullable: false
-        default: 0
-        constraints:
-          min: 0
-          max: 150
-      - name: join_date
-        type: date
-        nullable: false
-        default: "1970-01-01"
-      - name: status
-        type: string
-        nullable: false
-        default: "inactive"
-        enum: ["active", "inactive", "pending"]
-      - name: score
-        type: float
-        nullable: false
-        default: 0.0
-```
-
----
-
-## MCP Server (Optional)
-
-The MCP (Model Context Protocol) server provides additional resources and tools for enhanced agent capabilities.
-
-### Running the MCP Server
-
-```bash
-python flows/mcp_server.py --host 127.0.0.1 --port 8081
-```
-
-### Exposed Resources
-
-- `logs/ingestion.log` - Main ingestion pipeline log
-- `data/source_data.csv` - Source CSV with intentional errors
-- `data/ingestion.db` - DuckDB database
-- `schemas/ideal_schema.yaml` - Ideal schema definition
-- `SKILLS.md` - Troubleshooting guide
-
-### Additional MCP Tools
-
-- `query_database` - Execute SQL queries
-- `get_data_quality_report` - Generate data quality reports
-- `get_recent_errors` - Extract recent errors from logs
-- `get_file_metadata` - Get file metadata and statistics
+| Tool | Description | Output |
+|------|-------------|--------|
+| `load_ideal_schema` | Load ideal schema definition from YAML | Schema dictionary |
+| `infer_source_schema` | Infer schema from source CSV file | Inferred schema |
+| `compare_schemas` | Compare source and ideal schemas | Comparison with mismatches |
+| `generate_cleaning_pipeline` | Generate **plain Python** cleaning pipeline | Python code (not Prefect) |
 
 ---
 
@@ -397,13 +426,12 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 When the agent is triggered, it follows this protocol:
 
 1. **Check Logs**: Use `read_logs` to get error messages from `logs/ingestion.log`
-2. **Inspect Source**: Use `inspect_file` to examine `data/source_data.csv`
+2. **Inspect Source**: Use `inspect_file` on `data/source_data.csv`
 3. **Query Database**: Use `query_duckdb` to check `raw_users` table state
 4. **Validate Schema**: Use `check_schema` to identify data quality issues
-5. **Compare Schemas**: Use `compare_schemas` to find type/nullability mismatches
-6. **Generate Pipeline**: Use `generate_cleaning_pipeline` to create fix
-7. **Analyze Findings**: Identify root causes and impact
-8. **Send Alert**: Use `send_slack_alert` to notify team
+5. **Analyze Findings**: Identify root causes and impact
+6. **Generate Fix**: Use Pipeline Builder to create **plain Python cleaning script**
+7. **Send Alert**: Use `send_slack_alert` to notify team
 
 ### Expected Findings
 
@@ -416,9 +444,9 @@ The agent should identify:
    - Row 11: Malformed email ('karen@example' missing TLD)
 3. **Root Cause**: Source CSV contains data that doesn't match target schema constraints
 4. **Recommended Actions**:
-   - Use COALESCE with CAST to handle type conversions
-   - Fill NULL values with defaults
-   - Add data validation before transformation
+   - Generate **plain Python cleaning pipeline** using Pipeline Builder
+   - Apply COALESCE with CAST for type conversions
+   - Fill NULL values with defaults from schema
 
 ---
 
@@ -457,7 +485,7 @@ PYTHONPATH=/home/aq/Documents/Source/loops
 
 ## Database Schema
 
-### `raw_users` (Staging Table - Created Automatically)
+### `raw_users` (Staging Table - Created by Prefect Flow)
 
 ```sql
 CREATE TABLE raw_users (
@@ -471,7 +499,9 @@ CREATE TABLE raw_users (
 )
 ```
 
-### `users` (Target Table - Strict Constraints)
+### `users` (Target Table - Strict Constraints, Will Fail)
+
+This is the table that the **Prefect flow** tries (and fails) to insert into:
 
 ```sql
 CREATE TABLE users (
@@ -487,9 +517,21 @@ CREATE TABLE users (
 )
 ```
 
-### `users_clean` (Generated Clean Table)
+### `users_clean` (Cleaned Table - Created by Plain Python Pipeline)
 
-Created by the generated cleaning pipeline with properly typed and validated data.
+This is the table that the **generated plain Python pipeline** successfully creates:
+
+```sql
+CREATE TABLE users_clean (
+    id INTEGER,
+    name VARCHAR,
+    email VARCHAR,
+    age INTEGER,
+    join_date DATE,
+    status VARCHAR,
+    score FLOAT
+)
+```
 
 ---
 
@@ -522,8 +564,8 @@ For production use, consider:
 4. **Add monitoring** for agent health and performance
 5. **Implement circuit breakers** to prevent infinite loops
 6. **Add rate limiting** for database queries
-7. **Set up automated triggers** for investigation on failure
-8. **Add data lineage tracking** for audit purposes
+7. **For Prefect flows**: Set up Prefect Cloud/Server for orchestration
+8. **For cleaning pipelines**: Consider wrapping in Prefect if orchestration is needed
 
 ---
 
@@ -537,7 +579,7 @@ For production use, consider:
 | Database connection errors | Check `data/ingestion.db` exists and permissions |
 | Prefect authentication errors | Set `PREFECT_API_KEY` or use local mode |
 | Tools not found | Ensure `PYTHONPATH` includes project root |
-| Module not found errors | Activate virtual environment |
+| Module not found errors | Activate virtual environment and install dependencies |
 | DuckDB CLI not accessible | Install duckdb package or add venv/bin to PATH |
 
 ### Debug Mode
@@ -557,35 +599,51 @@ log_level: DEBUG
 
 ## Files Summary
 
-| File | Purpose |
-|------|---------|
-| `run_demo.py` | Main entry point - runs complete demo workflow |
-| `demo_pipeline_builder.py` | Standalone pipeline builder demonstration |
-| `flows/ingestion_flow.py` | Prefect flow that fails on bad data |
-| `flows/nanobot_tools.py` | Investigation tools for Nanobot |
-| `flows/mcp_server.py` | MCP server for enhanced capabilities |
-| `agents/pipeline_builder/tools.py` | Pipeline generation logic |
-| `agents/pipeline_builder/nanobot_tools.py` | Nanobot tool classes for pipeline builder |
-| `agents/pipeline_builder/config.json` | Pipeline builder configuration |
-| `agents/pipeline_builder/skills.md` | Pipeline builder specific skills |
-| `schemas/*.yaml` | Schema definitions for each data type |
-| `config/nanobot_config.yaml` | Full Nanobot server configuration |
-| `config/nanobot_config_minimal.json` | Minimal config for demo |
-| `config/nanobot_logging.yaml` | Logging configuration |
-| `data/source_data.csv` | Source data with intentional errors |
-| `data/ingestion.db` | DuckDB database (auto-created) |
-| `SKILLS.md` | General troubleshooting guide for agents |
-| `AGENTS.md` | Instructions for AI agents working with this repo |
-| `.env` | Environment variables |
+| File | Purpose | Type |
+|------|---------|------|
+| `run_demo.py` | Main entry point - runs complete demo workflow | Orchestrator |
+| `demo_pipeline_builder.py` | Standalone pipeline builder demonstration | Utility |
+| `flows/ingestion_flow.py` | **Prefect flow** that fails on bad data | Tier 1 - Demo |
+| `flows/nanobot_tools.py` | Investigation tools for Nanobot | Tools |
+| `flows/mcp_server.py` | MCP server for enhanced capabilities | Server |
+| `flows/investigation_skills.md` | Stage 1: Investigation agent skills | Skills |
+| `flows/validation_skills.md` | Stage 3: Validation agent skills | Skills |
+| `agents/pipeline_builder/tools.py` | Pipeline generation logic | Tools |
+| `agents/pipeline_builder/nanobot_tools.py` | Nanobot tool classes for pipeline builder | Tools |
+| `agents/pipeline_builder/config.json` | Pipeline builder configuration | Config |
+| `agents/pipeline_builder/skills.md` | Stage 2: Pipeline builder skills | Skills |
+| `schemas/*.yaml` | Schema definitions for each data type | Config |
+| `config/nanobot_config.yaml` | Full Nanobot server configuration | Config |
+| `config/nanobot_config_minimal.json` | Minimal config for demo | Config |
+| `config/nanobot_logging.yaml` | Logging configuration | Config |
+| `data/source_data.csv` | Source data with intentional errors | Data |
+| `data/ingestion.db` | DuckDB database (auto-created) | Database |
+| `pipelines/generated/*.py` | **Plain Python** cleaning pipelines (auto-generated) | Tier 2 - Solution |
+| `SKILLS.md` | Master skills index for all stages | Documentation |
+| `AGENTS.md` | Instructions for AI agents | Documentation |
+| `.env` | Environment variables | Config |
 
 ---
 
 ## Related Documentation
 
-- **SKILLS.md** - General troubleshooting methodology for AI agents
-- **AGENTS.md** - Instructions and constraints for AI agents working with this codebase
-- **schemas/*.yaml** - Data schema definitions
-- **config/*.yaml** - Configuration files
+- **SKILLS.md** - Master skills index and workflow overview
+- **AGENTS.md** - Instructions and constraints for AI agents
+- **agents/pipeline_builder/skills.md** - Pipeline builder specific skills
+- **flows/investigation_skills.md** - Investigation agent skills
+- **flows/validation_skills.md** - Validation agent skills
+
+---
+
+## Key Takeaway
+
+This project demonstrates a **practical pattern** for self-healing data pipelines:
+
+1. **Use Prefect** for complex orchestration where you need retries, logging, and task dependencies
+2. **Use plain Python** for simple transformations where orchestration overhead isn't needed
+3. **Let AI agents** detect failures and generate the appropriate fix (Prefect or plain Python)
+
+The **generated cleaning pipelines are plain Python** because they're simple, focused transformations that don't require the complexity of a workflow orchestrator.
 
 ---
 

@@ -6,7 +6,7 @@ This document serves as the **entry point** and **index** for all specialized sk
 
 ## Overview
 
-The Loops project implements a **3-stage autonomous workflow** for troubleshooting and fixing data ingestion failures:
+The Loops project implements a **3-stage autonomous workflow** for troubleshooting and fixing data ingestion failures using a **hybrid pipeline architecture**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -17,8 +17,8 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 │  │  STAGE 1:        │    │  STAGE 2:        │    │  STAGE 3:    │  │
 │  │  INVESTIGATION  │───▶│  PIPELINE       │───▶│  VALIDATION  │  │
 │  │                 │    │  BUILDER        │    │              │  │
-│  │  "What went     │    │  "How do I fix  │    │  "Did it     │  │
-│  │   wrong?"       │    │   it?"          │    │   work?"     │  │
+│  │  (Prefect      │    │  (Generates     │    │  (Plain     │  │
+│  │   Analysis)   │    │   Plain Python) │    │   Python)   │  │
 │  └─────────────────┘    └─────────────────┘    └─────────────┘  │
 │         │                  │                   │            │
 │         ▼                  ▼                   ▼            │
@@ -33,6 +33,21 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Pipeline Architecture Clarification
+
+This project uses a **hybrid model** with two distinct pipeline types:
+
+| Pipeline Type | Location | Purpose | Technology |
+|---------------|----------|---------|------------|
+| **Prefect Flow** | `flows/ingestion_flow.py` | Demonstrate failure | Prefect + DuckDB |
+| **Plain Python** | `pipelines/generated/*.py` | Fix data issues | Pandas + DuckDB |
+
+**Why the distinction?**
+- **Prefect Flow**: Used only for the **demo** to show what happens when data quality issues occur. It has orchestration, retries, logging - the full Prefect experience.
+- **Plain Python**: Used for **generated cleaning pipelines** because they're simple, focused transformations that don't need orchestration overhead.
+
+The **Pipeline Builder** (Stage 2) generates **plain Python scripts**, not Prefect flows.
+
 ---
 
 ## Stage-Specific Skills
@@ -43,12 +58,12 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 
 **Agent Identity**: Senior Data Engineer / Data Detective
 
-**Mission**: Thoroughly investigate data ingestion failures to identify root causes, impacted data, and recommend solutions.
+**Mission**: Thoroughly investigate **Prefect flow** failures to identify root causes, impacted data, and recommend solutions.
 
 **Key Responsibilities**:
-- Read and analyze error logs
+- Read and analyze error logs (from Prefect flow execution)
 - Inspect source data files
-- Query database state
+- Query DuckDB database state (raw_users table)
 - Validate against schemas
 - Identify all data quality issues
 - Formulate solution recommendations
@@ -59,12 +74,12 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 - `query_duckdb(query)` - Query DuckDB database
 - `inspect_file(path, sample_size)` - Inspect CSV files
 - `check_schema(path, schema)` - Validate data against schema
-- `get_ingestion_status()` - Get pipeline status
+- `get_ingestion_status()` - Get Prefect pipeline status
 - `send_slack_alert(message, severity)` - Send alerts
 
-**Trigger**: Ingestion flow fails or user requests investigation
+**Trigger**: Prefect flow fails or user requests investigation
 
-**Handoff**: To Stage 2 with findings and clear instructions
+**Handoff**: To Stage 2 with findings: "Generate **plain Python** cleaning pipeline"
 
 **When to use**: Always the **first stage** after a failure is detected
 
@@ -76,26 +91,35 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 
 **Agent Identity**: Data Pipeline Engineer
 
-**Mission**: Automatically generate data cleaning pipelines based on schema comparisons and identified issues.
+**Mission**: Automatically generate **plain Python cleaning scripts** based on schema comparisons and identified issues.
 
 **Key Responsibilities**:
 - Load and compare schemas (source vs ideal)
 - Identify type mismatches, NULL issues, constraint violations
-- Generate SQL and Python cleaning transformations
-- Create executable Prefect flows
+- Generate **plain Python** (not Prefect) cleaning transformations
+- Create executable Python scripts using pandas + DuckDB
 - Generate validation queries
-- Save pipeline to `pipelines/generated/`
+- Save **plain Python** pipeline to `pipelines/generated/`
 
-**Tools Used**:
+**Tools Used** (generate plain Python code):
 - `load_ideal_schema()` - Load schema from YAML
 - `infer_source_schema(file_path, sample_size)` - Infer schema from CSV
 - `compare_schemas(source_path, ideal_path)` - Compare schemas
-- `generate_cleaning_pipeline(source_path, ideal_path, output_table)` - Generate complete pipeline
+- `generate_cleaning_pipeline(source_path, ideal_path, output_table)` - Generate **plain Python** cleaning script
 - `write_file(path, content)` - Save generated code
 
-**Trigger**: Investigation complete with identified issues
+**Output**: Plain Python scripts (e.g., `pipelines/generated/clean_users_pipeline.py`) that:
+```python
+def clean_data(df):
+    # Uses pandas, not Prefect
+    df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
+    df['email'] = df['email'].fillna('unknown@example.com')
+    return df
+```
 
-**Handoff**: To Stage 3 with generated pipeline path
+**Trigger**: Investigation complete with identified data quality issues
+
+**Handoff**: To Stage 3 with generated **plain Python** pipeline path
 
 **When to use**: After Stage 1 identifies data quality issues that require transformation
 
@@ -107,11 +131,11 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 
 **Agent Identity**: Data Quality Assurance Engineer
 
-**Mission**: Execute generated pipelines and validate they produce correct, high-quality data.
+**Mission**: Execute generated **plain Python** pipelines and validate they produce correct, high-quality data.
 
 **Key Responsibilities**:
 - Pre-execution checks (file exists, syntax valid, etc.)
-- Execute pipeline and capture results
+- Execute **plain Python** pipeline using subprocess
 - Validate row counts match expectations
 - Check for NULL values in NOT NULL columns
 - Verify all types match target schema
@@ -123,12 +147,12 @@ The Loops project implements a **3-stage autonomous workflow** for troubleshooti
 
 **Tools Used**:
 - `query_duckdb(query)` - Query DuckDB for validation
-- `subprocess.run()` - Execute pipeline (via Python)
+- `subprocess.run()` - Execute plain Python pipeline
 - Custom validation queries (NULL checks, type checks, etc.)
 
-**Trigger**: Pipeline Builder generates a cleaning pipeline
+**Trigger**: Pipeline Builder generates a **plain Python** cleaning pipeline
 
-**Handoff**: 
+**Handooff**: 
 - To deployment if PASS
 - To Pipeline Builder if FAIL (with specific issues)
 
@@ -159,14 +183,14 @@ All agents have access to:
 - `data/source_data.csv` - Source CSV with intentional errors
 - `data/ingestion.db` - DuckDB database
 - `schemas/ideal_schema.yaml` - Target schema
-- `logs/ingestion.log` - Main ingestion log
-- `pipelines/generated/` - Generated cleaning pipelines
+- `logs/ingestion.log` - Main ingestion log (from Prefect flow)
+- `pipelines/generated/` - **Plain Python** cleaning pipelines (auto-generated)
 - `config/nanobot_config.yaml` - Agent configuration
 
 **Key Tables**:
-- `raw_users` - Staging table (all source data)
-- `users` - Target table (strict constraints, will fail)
-- `users_clean` - Cleaned output table (generated by pipeline)
+- `raw_users` - Staging table (all source data, created by Prefect flow)
+- `users` - Target table (strict constraints, Prefect flow fails here)
+- `users_clean` - Cleaned output table (**created by plain Python pipeline**)
 
 ### Communication Patterns
 
@@ -181,13 +205,15 @@ Action Required: [What the next stage should do]
 Instructions: [Specific instructions]
 Tools to Use: [List of relevant tools]
 Expected Output: [What should be produced]
+
+Note: Generated pipelines will be PLAIN PYTHON, not Prefect flows.
 ```
 
 **Final Output Format** (Stage 3):
 ```json
 {
   "status": "PASS|FAIL|WARN",
-  "pipeline": "path/to/pipeline.py",
+  "pipeline": "path/to/plain_python_pipeline.py",
   "findings": [...],
   "validation": {...},
   "recommendations": [...]
@@ -203,7 +229,7 @@ Expected Output: [What should be produced]
    - Type mismatches
    - Format violations
    - Constraint violations
-   - → **Fix**: Generate cleaning pipeline
+   - → **Fix**: Generate **plain Python** cleaning pipeline
 
 2. **Configuration Errors**
    - Missing files
@@ -217,10 +243,10 @@ Expected Output: [What should be produced]
    - → **Fix**: Check connections, credentials, network
 
 4. **Code Errors**
-   - Syntax errors
+   - Syntax errors in generated plain Python
    - Import errors
    - Logic errors
-   - → **Fix**: Debug and correct code
+   - → **Fix**: Debug and correct the generated Python code
 
 ---
 
@@ -235,14 +261,14 @@ USER REQUEST / DETECTED FAILURE
 ┌─────────────────────────────────────────────────────────────┐
 │ STAGE 1: INVESTIGATION                                       │
 │ ┌─────────────────────────────────────────────────────────┐ │
-│ │ 1. Read logs/ingestion.log                              │ │ │
+│ │ 1. Read logs/ingestion.log (from Prefect flow)          │ │ │
 │ │ 2. Inspect data/source_data.csv                         │ │ │
-│ │ 3. Query raw_users table                               │ │ │
+│ │ 3. Query raw_users table (created by Prefect flow)      │ │ │
 │ │ 4. Validate against ideal schema                        │ │ │
 │ │ 5. Identify all issues                                  │ │ │
 │ │ 6. Formulate root cause analysis                       │ │ │
 │ └─────────────────────────────────────────────────────────┘ │
-│ Output: Complete investigation report                     │
+│ Output: "Generate plain Python cleaning pipeline"          │
 └─────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -252,12 +278,12 @@ USER REQUEST / DETECTED FAILURE
 │ │ 1. Load ideal schema                                    │ │ │
 │ │ 2. Infer source schema                                 │ │ │
 │ │ 3. Compare schemas to identify mismatches                │ │ │
-│ │ 4. Generate SQL transformations (CAST + COALESCE)      │ │ │
-│ │ 5. Generate Python/Prefect pipeline                     │ │ │
+│ │ 4. Generate TRANSFORMATIONS (for plain Python)          │ │ │
+│ │ 5. Generate plain Python cleaning script                │ │ │
 │ │ 6. Generate validation queries                         │ │ │
-│ │ 7. Save to pipelines/generated/                        │ │ │
+│ │ 7. Save to pipelines/generated/clean_*.py              │ │ │
 │ └─────────────────────────────────────────────────────────┘ │
-│ Output: Generated cleaning pipeline + validation queries      │
+│ Output: PLAIN PYTHON SCRIPT (not Prefect flow)             │
 └─────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -265,7 +291,7 @@ USER REQUEST / DETECTED FAILURE
 │ STAGE 3: VALIDATION                                         │
 │ ┌─────────────────────────────────────────────────────────┐ │
 │ │ 1. Pre-execution checks                                 │ │ │
-│ │ 2. Execute generated pipeline                            │ │ │
+│ │ 2. Execute generated PLAIN PYTHON pipeline              │ │ │
 │ │ 3. Validate row counts                                   │ │ │
 │ │ 4. Check NULL constraints                               │ │ │
 │ │ 5. Verify types match                                   │ │ │
@@ -274,12 +300,12 @@ USER REQUEST / DETECTED FAILURE
 │ │ 8. Verify data consistency                               │ │ │
 │ │ 9. Test performance                                     │ │ │
 │ └─────────────────────────────────────────────────────────┘ │
-│ Output: Complete validation report with PASS/FAIL status      │
+│ Output: Validation report for PLAIN PYTHON pipeline         │
 └─────────────────────────────────────────────────────────────┘
     │
     ├── FAIL ──► Return to Stage 2 with specific issues
     │
-    └── PASS ──► Deploy to production
+    └── PASS ──► Deploy plain Python pipeline
 ```
 
 ### Agent-to-Agent Communication
@@ -299,22 +325,18 @@ Identified Issues:
   2. Column: age, Issue: Type mismatch (string → integer), Rows: 1
      - Problem values: ['N/A']
      - Fix: COALESCE(CAST(age AS INTEGER), 0)
-  
-  3. Column: email, Issue: Format invalid, Rows: 1
-     - Problem values: ['karen@example']
-     - Fix: Email validation and correction
 
-Action: Generate cleaning pipeline for data/source_data.csv
+Action: Generate PLAIN PYTHON cleaning pipeline for data/source_data.csv
 Target: users_clean table
 Schema: schemas/ideal_schema.yaml
 Tools: load_ideal_schema, infer_source_schema, compare_schemas, generate_cleaning_pipeline
 Save to: pipelines/generated/clean_users_pipeline.py
 
-Expected Pipeline Features:
-  - Handle NULL emails with default 'unknown@example.com'
-  - Cast age to INTEGER with fallback 0
-  - Validate and fix email formats
-  - Include all validation queries
+Expected Output: A PLAIN PYTHON script (not Prefect) that:
+  1. Loads data/source_data.csv with pandas
+  2. Applies type conversions with fillna fallback
+  3. Fills NULL values with schema defaults
+  4. Inserts cleaned data into users_clean table using DuckDB
 ```
 
 **Stage 2 → Stage 3 (Pipeline Builder → Validation)**:
@@ -323,22 +345,23 @@ PIPELINE GENERATION COMPLETE - HANDOFF TO VALIDATION
 ====================================================
 
 Pipeline Generated: pipelines/generated/clean_users_pipeline.py
+Pipeline Type: PLAIN PYTHON (not Prefect flow)
 
 Source: data/source_data.csv
 Target: users_clean
 Schema: schemas/ideal_schema.yaml
 
 Issues Addressed:
-  ✓ NULL emails → COALESCE(email, 'unknown@example.com')
-  ✓ Type mismatch (age) → COALESCE(CAST(age AS INTEGER), 0)
-  ✓ Format invalid (email) → Email validation
+  ✓ NULL emails → df['email'].fillna('unknown@example.com')
+  ✓ Type mismatch (age) → pd.to_numeric(df['age'], errors='coerce').fillna(0)
+  ✓ Format invalid (email) → Email validation with regex
 
-Transformations Applied:
-  1. email: COALESCE(email, 'unknown@example.com')
-  2. age: COALESCE(CAST(age AS INTEGER), 0)
-  3. join_date: COALESCE(CAST(join_date AS DATE), '1970-01-01')
-  4. status: COALESCE(status, 'inactive')
-  5. score: COALESCE(CAST(score AS FLOAT), 0.0)
+Transformations Applied (PLAIN PYTHON/pandas):
+  1. email: df['email'].fillna('unknown@example.com')
+  2. age: pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
+  3. join_date: pd.to_datetime(df['join_date'], errors='coerce').fillna('1970-01-01')
+  4. status: df['status'].fillna('inactive')
+  5. score: pd.to_numeric(df['score'], errors='coerce').fillna(0.0)
 
 Validation Queries Generated:
   - Row count check
@@ -346,7 +369,7 @@ Validation Queries Generated:
   - Type checks for all columns
   - Constraint checks (age range, status enum)
 
-Action: Execute and validate the pipeline
+Action: Execute and validate the PLAIN PYTHON pipeline
 Expected: All 13 rows processed, no NULLs, all types correct
 ```
 
@@ -358,6 +381,7 @@ VALIDATION PASSED - READY FOR DEPLOYMENT
 ========================================
 
 Pipeline: pipelines/generated/clean_users_pipeline.py
+Pipeline Type: PLAIN PYTHON
 Status: ALL CHECKS PASSED
 
 Validation Results:
@@ -372,7 +396,7 @@ Validation Results:
 Cleaned data available in:
   - Table: users_clean
   - Database: data/ingestion.db
-  - Row count: 13
+  - Created by: PLAIN PYTHON pipeline
 
 Action: Deploy pipeline to production workflow
 ```
@@ -383,28 +407,29 @@ VALIDATION FAILED - RETURNING TO PIPELINE BUILDER
 =================================================
 
 Pipeline: pipelines/generated/clean_users_pipeline.py
+Pipeline Type: PLAIN PYTHON
 Status: VALIDATION FAILED
 
 Failed Checks:
   1. Type Check - age column
-     - Expected: BIGINT
+     - Expected: INTEGER
      - Actual: VARCHAR
-     - Issue: CAST statement not working correctly
+     - Issue: Type conversion in plain Python not working correctly
   
   2. NULL Check - email column
      - Expected: 0 NULLs
      - Actual: 2 NULLs
-     - Issue: COALESCE default not applied
+     - Issue: fillna not applied properly
 
-Root Cause: Pipeline generated with incorrect type handling
+Root Cause: Plain Python pipeline generated with incorrect logic
 
 Action: Pipeline Builder should:
-  - Fix CAST statements to use COALESCE properly
-  - Ensure all COALESCE defaults are applied
-  - Add explicit type validation
+  - Fix pandas type conversion: pd.to_numeric(..., errors='coerce')
+  - Ensure all fillna defaults are applied
+  - Add explicit validation in the plain Python script
 
 Trigger Pipeline Builder with:
-  "Fix type conversion for age and NULL handling for email. Use COALESCE(CAST(...)) pattern for all numeric conversions."
+  "Fix type conversion for age and NULL handling for email in the PLAIN PYTHON pipeline. Use pandas properly."
 ```
 
 ---
@@ -416,19 +441,19 @@ Use this decision tree to determine which skills file to reference:
 ```
 Is this about...?
 │
-├── Diagnosing a failure?
+├── Diagnosing a Prefect flow failure?
 │   ├── Need to read logs? → flows/investigation_skills.md
 │   ├── Need to inspect data? → flows/investigation_skills.md
 │   ├── Need to query database? → flows/investigation_skills.md
 │   └── Need to validate schema? → flows/investigation_skills.md
 │
-├── Generating a fix?
+├── Generating a plain Python fix?
 │   ├── Need to compare schemas? → agents/pipeline_builder/skills.md
 │   ├── Need to generate transformations? → agents/pipeline_builder/skills.md
-│   ├── Need to create pipeline code? → agents/pipeline_builder/skills.md
+│   ├── Need to create cleaning script? → agents/pipeline_builder/skills.md
 │   └── Need to save generated code? → agents/pipeline_builder/skills.md
 │
-└── Testing a fix?
+└── Testing a plain Python pipeline?
     ├── Need to execute pipeline? → flows/validation_skills.md
     ├── Need to validate output? → flows/validation_skills.md
     ├── Need to check row counts? → flows/validation_skills.md
@@ -441,12 +466,14 @@ Is this about...?
 
 If you're new to this project, follow this learning path:
 
-1. **Read this file (SKILLS.md)** - Understand the overall workflow
-2. **Read flows/investigation_skills.md** - Learn how to diagnose failures
-3. **Read agents/pipeline_builder/skills.md** - Learn how to generate fixes
-4. **Read flows/validation_skills.md** - Learn how to verify fixes
+1. **Read this file (SKILLS.md)** - Understand the overall workflow and hybrid architecture
+2. **Read flows/investigation_skills.md** - Learn how to diagnose Prefect flow failures
+3. **Read agents/pipeline_builder/skills.md** - Learn how to generate plain Python fixes
+4. **Read flows/validation_skills.md** - Learn how to verify plain Python pipelines
 5. **Read AGENTS.md** - Learn project conventions and constraints
 6. **Read README.md** - Learn project structure and setup
+
+**Key Concept**: This project uses **two pipeline types** - Prefect for orchestration/demo, plain Python for cleaning/fixes.
 
 ---
 
@@ -457,26 +484,29 @@ If you're new to this project, follow this learning path:
 User: "The ingestion failed, fix it"
 
 Stage 1 (Investigation):
-  → Read logs, inspect data, query DB, validate schema
+  → Read logs from Prefect flow
+  → Inspect data, query DB
   → Output: "Found NULL emails and invalid age values"
   
 Stage 2 (Pipeline Builder):
-  → Compare schemas, generate transformations
-  → Output: "Generated cleaning pipeline"
+  → Compare schemas
+  → Generate plain Python cleaning script
+  → Output: "Generated pipelines/generated/clean_users_pipeline.py"
   
 Stage 3 (Validation):
-  → Execute pipeline, validate output
+  → Execute plain Python pipeline
+  → Validate output
   → Output: "Pipeline works, data is clean"
 
-Result: Self-healing complete
+Result: Self-healing complete with plain Python fix
 ```
 
 ### Workflow 2: Investigation Only
 ```
-User: "What caused the ingestion failure?"
+User: "What caused the Prefect flow failure?"
 
 Stage 1 (Investigation):
-  → Full investigation
+  → Full investigation of Prefect flow failure
   → Output: Complete root cause analysis
 
 Result: Analysis report (no fix generated)
@@ -484,45 +514,46 @@ Result: Analysis report (no fix generated)
 
 ### Workflow 3: Pipeline Generation Only
 ```
-User: "Generate a cleaning pipeline for this data"
+User: "Generate a plain Python cleaning pipeline for this data"
 
 Stage 2 (Pipeline Builder):
   → Load schemas, compare, generate
-  → Output: Generated pipeline
+  → Output: Generated plain Python cleaning script
 
-Result: Pipeline code (no investigation or validation)
+Result: Plain Python pipeline code (no investigation or validation)
 ```
 
 ### Workflow 4: Validation Only
 ```
-User: "Validate this pipeline"
+User: "Validate this plain Python pipeline"
 
 Stage 3 (Validation):
-  → Execute, validate
+  → Execute plain Python pipeline
+  → Validate output
   → Output: Validation report
 
-Result: Pass/Fail report
+Result: Pass/Fail report for plain Python pipeline
 ```
 
 ---
 
 ## Skill File Locations
 
-| Stage | Agent Type | Skills File | Purpose |
-|-------|------------|-------------|---------|
-| 1 | Investigation Agent | `flows/investigation_skills.md` | Diagnose failures |
-| 2 | Pipeline Builder Agent | `agents/pipeline_builder/skills.md` | Generate fixes |
-| 3 | Validation Agent | `flows/validation_skills.md` | Verify fixes |
-| All | Any Agent | `SKILLS.md` (this file) | Master index + shared skills |
+| Stage | Agent Type | Skills File | Purpose | Pipeline Type |
+|-------|------------|-------------|---------|----------------|
+| 1 | Investigation Agent | `flows/investigation_skills.md` | Diagnose Prefect flow failures | N/A |
+| 2 | Pipeline Builder Agent | `agents/pipeline_builder/skills.md` | Generate fixes | Plain Python |
+| 3 | Validation Agent | `flows/validation_skills.md` | Verify fixes | Plain Python |
+| All | Any Agent | `SKILLS.md` (this file) | Master index + shared skills | Both |
 
 ---
 
 ## Related Documentation
 
-- **README.md** - Project setup, structure, and usage
+- **README.md** - Project setup, structure, hybrid architecture, and usage
 - **AGENTS.md** - Instructions for AI agents working with this codebase
 - **config/nanobot_config.yaml** - Agent configuration
-- **runs_demo.py** - Main entry point that orchestrates all stages
+- **run_demo.py** - Main entry point that orchestrates all stages
 
 ---
 
@@ -539,15 +570,19 @@ Result: Pass/Fail report
 
 ## Summary
 
-This project implements a **multi-stage autonomous workflow** for data ingestion troubleshooting:
+This project implements a **multi-stage autonomous workflow** with a **hybrid pipeline architecture**:
 
-1. **Investigation** → Find what's wrong
-2. **Pipeline Building** → Generate a fix  
-3. **Validation** → Verify the fix works
+1. **Investigation** → Find what's wrong with the Prefect flow
+2. **Pipeline Building** → Generate a **plain Python** fix  
+3. **Validation** → Verify the **plain Python** fix works
+
+**Important Distinction**:
+- **Prefect flows** are used for the **failing demo** (`flows/ingestion_flow.py`)
+- **Plain Python scripts** are generated as **solutions** (`pipelines/generated/*.py`)
 
 Each stage has specialized skills documented in its own file. This master SKILLS.md file serves as the index to help you find the right guidance for your current task.
 
-**Remember**: The workflow is **sequential** - each stage builds on the previous one. Start with investigation, then build, then validate.
+**Remember**: The workflow is **sequential** - each stage builds on the previous one. Start with investigation, then build a plain Python fix, then validate it.
 
 ---
 
