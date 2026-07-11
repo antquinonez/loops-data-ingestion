@@ -334,7 +334,7 @@ def start_mcp_server():
     return None
 
 
-async def trigger_nanobot_investigation(mcp_process=None):
+async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] = None):
     """Trigger nanobot to investigate the failure."""
     print("\n" + "=" * 80)
     print("STEP 3: Triggering nanobot investigation")
@@ -641,7 +641,7 @@ def run_full_demo(archive_logs: bool = False):
                 sys.stderr = Tee(original_stderr, nanobot_log_file)
                 
                 try:
-                    asyncio.run(trigger_nanobot_investigation())
+                    asyncio.run(trigger_nanobot_investigation(run_id=run_id))
                 finally:
                     # Restore original stdout/stderr
                     sys.stdout = original_stdout
@@ -649,7 +649,7 @@ def run_full_demo(archive_logs: bool = False):
         except Exception as e:
             print(f"Error capturing Nanobot output: {e}")
             # Fallback: run without capture
-            asyncio.run(trigger_nanobot_investigation())
+            asyncio.run(trigger_nanobot_investigation(run_id=run_id))
         
         # After nanobot runs, check if it created a pipeline
         if generated_pipeline.exists():
