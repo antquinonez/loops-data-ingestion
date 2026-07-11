@@ -69,7 +69,7 @@ def setup_logging(run_id: Optional[str] = None, log_name: str = "loops") -> dict
     file_handler = logging.FileHandler(str(log_path))
     file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        '%(asctime)s - %(levelname)s - %(message)s'
     )
     file_handler.setFormatter(file_formatter)
     
@@ -94,10 +94,13 @@ def setup_logging(run_id: Optional[str] = None, log_name: str = "loops") -> dict
     prefect_logger.setLevel(logging.DEBUG)
     
     # Configure root logger to avoid duplicate messages
+    # But DON'T clear root logger handlers - that might break other things
     root_logger = logging.getLogger()
-    root_logger.handlers.clear()
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
+    # Only add our handlers if they're not already there
+    if not any(isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path) for h in root_logger.handlers):
+        root_logger.addHandler(file_handler)
+    if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+        root_logger.addHandler(console_handler)
     root_logger.setLevel(logging.WARNING)
     
     return {

@@ -4,7 +4,10 @@ import sys
 # Configure Prefect to use local mode ONLY (no cloud connection)
 # This must be set BEFORE importing prefect
 os.environ["PREFECT_API_URL"] = ""
+os.environ["PREFECT_CLOUD_API_URL"] = ""
+os.environ["PREFECT_MODE"] = "local"
 os.environ.pop("PREFECT_API_KEY", None)
+os.environ.pop("PREFECT_CLOUD_API_KEY", None)
 
 from prefect import flow, task, get_run_logger
 import pandas as pd
@@ -246,40 +249,16 @@ if __name__ == "__main__":
     
     # Use local Prefect mode (no cloud/server required)
     os.environ["PREFECT_API_URL"] = ""
+    os.environ["PREFECT_CLOUD_API_URL"] = ""
+    os.environ["PREFECT_MODE"] = "local"
     os.environ.pop("PREFECT_API_KEY", None)
+    os.environ.pop("PREFECT_CLOUD_API_KEY", None)
     
-    # For local testing without a server, just call the tasks directly
+    # For local testing without a server, run the flow directly
     print("Running cleaning pipeline...")
     
     source_path = "__SOURCE_PATH__"
     
-    # Call tasks directly
-    df = load_source_data(source_path)
-    print(f"Loaded {len(df)} rows")
-    
-    cleaned_df = clean_data(df)
-    print(f"Cleaned {len(cleaned_df)} rows")
-    
-    # Load schema if available
-    try:
-        schema_path = Path(source_path).parent.parent / "schemas" / "__SCHEMA_FILE__"
-        ideal_schema = load_ideal_schema(str(schema_path))
-    except Exception as e:
-        print(f"Warning: Could not load schema: {e}")
-        ideal_schema = {}
-    
-    # Validate
-    validation = validate_cleaned_data(cleaned_df, ideal_schema, "__OUTPUT_TABLE__")
-    print(f"Validation: {validation.get('is_valid', False)}")
-    
-    # Save
-    rows_saved = save_to_duckdb(cleaned_df, "__OUTPUT_TABLE__")
-    print(f"Saved {rows_saved} rows to __OUTPUT_TABLE__")
-    
-    result = {
-        "source_rows": len(df),
-        "cleaned_rows": len(cleaned_df),
-        "saved_rows": rows_saved,
-        "validation": validation
-    }
+    # Run the complete flow
+    result = clean_and_load_pipeline(source_path)
     print(f"\nPipeline result: {result}")

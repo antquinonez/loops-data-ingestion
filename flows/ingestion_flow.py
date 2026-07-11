@@ -9,7 +9,10 @@ import sys
 # Configure Prefect to use local mode ONLY (no cloud connection)
 # This must be set BEFORE importing prefect
 os.environ["PREFECT_API_URL"] = ""
+os.environ["PREFECT_CLOUD_API_URL"] = ""
+os.environ["PREFECT_MODE"] = "local"
 os.environ.pop("PREFECT_API_KEY", None)
+os.environ.pop("PREFECT_CLOUD_API_KEY", None)
 
 from prefect import flow, task, get_run_logger
 import duckdb
