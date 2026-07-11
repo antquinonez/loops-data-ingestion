@@ -4,6 +4,17 @@
 
 This document serves as the **entry point** and **index** for all specialized skill files. Each stage of the workflow has its own dedicated skills document with detailed guidance for that specific phase.
 
+## Quick Start: Validation Approach
+
+**Important**: This system now uses **lazy validation check generation** (Option 1). Validation checks are generated on-demand when `validate_pipeline_output()` is called, using the actual output table name. This ensures checks always reference the correct table names, even if they differ from schema table names.
+
+### Key Points for Agents:
+- **NO pre-generation**: Don't generate validation checks during pipeline creation
+- **Pass actual table names**: Always pass the actual `output_table` name (e.g., "users_clean")
+- **Lazy generation**: Checks are generated from schema when validation runs
+- **Automatic caching**: Generated checks are saved to `pipelines/validation/{output_table}_validation_checks.json` for future use
+- **Type flexibility**: Type checks now match DuckDB's typeof() values (INTEGER, FLOAT, TIMESTAMP)
+
 ## Overview
 
 The Loops project implements a **3-stage autonomous workflow** for troubleshooting and fixing data ingestion failures using a **consistent Prefect pipeline architecture**:
@@ -160,6 +171,14 @@ def clean_and_load_pipeline():
 - `query_duckdb(query)` - Query DuckDB for validation
 - `subprocess.run()` - Execute Prefect flow pipeline
 - Custom validation queries (NULL checks, type checks, etc.)
+
+**Implementation Note**: This system now uses **lazy validation check generation**. The `ValidationAgent` automatically:
+1. Tries to load existing checks from `pipelines/validation/{output_table}_validation_checks.json`
+2. If not found, generates checks from the schema using the actual `output_table` name
+3. Saves generated checks for future use
+4. Runs all checks against the database
+
+This ensures validation always uses the correct table names, even when they differ from schema table names (e.g., "users_clean" vs "users").
 
 **Trigger**: Pipeline Builder generates a **Prefect** cleaning pipeline
 

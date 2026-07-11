@@ -406,10 +406,10 @@ def get_checks_path(pipeline_name: str, output_table: str) -> Path:
     Returns:
         Path to the checks JSON file
     """
-    # Use output table name as the primary identifier
-    table_base = output_table.replace("_clean", "")
+    # Use the full output table name as the identifier
+    # This ensures checks are saved with the correct table name
     VALIDATION_DIR.mkdir(parents=True, exist_ok=True)
-    return VALIDATION_DIR / f"{table_base}_validation_checks.json"
+    return VALIDATION_DIR / f"{output_table}_validation_checks.json"
 
 
 def validate_pipeline_output(
@@ -451,10 +451,11 @@ def validate_pipeline_output(
             if standard_checks_path.exists():
                 checks = agent.load_checks(str(standard_checks_path))
             else:
-                # Generate new checks
+                # Generate new checks with the actual output table name
                 checks = ValidationCheckGenerator.generate_from_schema(
                     schema_path=schema_path,
-                    table_name=output_table.replace("_clean", "")
+                    table_name=output_table,
+                    output_table_name=output_table
                 )
                 # Save for future use
                 agent.save_checks(checks, str(standard_checks_path))

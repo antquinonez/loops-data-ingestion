@@ -188,13 +188,15 @@ class ValidationCheckGenerator:
     """
     
     @staticmethod
-    def generate_from_schema(schema_path: str, table_name: str) -> List[ValidationCheck]:
+    def generate_from_schema(schema_path: str, table_name: str, output_table_name: Optional[str] = None) -> List[ValidationCheck]:
         """
         Generate validation checks from an ideal schema file.
         
         Args:
             schema_path: Path to the ideal schema YAML file
-            table_name: Name of the table in the schema
+            table_name: Name of the table in the schema (for looking up schema definition)
+            output_table_name: Optional actual table name to use in SQL queries.
+                             If not provided, uses table_name.
             
         Returns:
             List of ValidationCheck objects
@@ -208,29 +210,37 @@ class ValidationCheckGenerator:
         with open(schema_path, 'r') as f:
             schema = yaml.safe_load(f)
         
-        # Get table schema
+        # Get table schema - find the matching table in the schema
         tables = schema.get('tables', {})
-        if table_name not in tables:
+        schema_table_name = None
+        
+        # First try exact match
+        if table_name in tables:
+            schema_table_name = table_name
+        else:
             # Try to find the table by name pattern
             for tname, tschema in tables.items():
                 if table_name in tname or tname in table_name:
-                    table_name = tname
+                    schema_table_name = tname
                     break
             else:
                 raise ValueError(f"Table {table_name} not found in schema")
         
-        table_schema = tables[table_name]
+        # Use output_table_name for SQL queries if provided, otherwise use schema table name
+        query_table_name = output_table_name if output_table_name else schema_table_name
+        
+        table_schema = tables[schema_table_name]
         columns = table_schema.get('columns', [])
         
         # Row count check
         checks.append(ValidationCheck(
-            id=f"{table_name}_row_count",
-            description=f"Verify {table_name} has data",
+            id=f"{query_table_name}_row_count",
+            description=f"Verify {query_table_name} has data",
             check_type="sql",
-            query=f"SELECT COUNT(*) FROM {table_name}",
+            query=f"SELECT COUNT(*) FROM {query_table_name}",
             expected="> 0",
             severity="medium",
-            table=table_name
+            table=query_table_name
         ))
         
         # For each column, generate appropriate checks
@@ -248,99 +258,99 @@ class ValidationCheckGenerator:
             # NULL check for NOT NULL columns
             if not nullable:
                 checks.append(ValidationCheck(
-                    id=f"{table_name}_{col_name}_not_null",
+                    id=f"{query_table_name}_{col_name}_not_null",
                     description=f"Verify {col_name} has no NULL values (NOT NULL constraint)",
                     check_type="sql",
-                    query=f"SELECT COUNT(*) FROM {table_name} WHERE {col_name} IS NULL",
+                    query=f"SELECT COUNT(*) FROM {query_table_name} WHERE {col_name} IS NULL",
                     expected=0,
                     severity="critical",
                     column=col_name,
-                    table=table_name
+                    table=query_table_name
                 ))
             
             # Type check
             duckdb_type = _map_schema_type_to_duckdb(col_type)
             checks.append(ValidationCheck(
-                id=f"{table_name}_{col_name}_type_check",
+                id=f"{query_table_name}_{col_name}_type_check",
                 description=f"Verify {col_name} has correct type ({col_type})",
                 check_type="sql",
-                query=f"SELECT COUNT(*) FROM {table_name} WHERE typeof({col_name}) != '{duckdb_type}'",
+                query=f"SELECT COUNT(*) FROM {query_table_name} WHERE typeof({col_name}) != '{duckdb_type}'",
                 expected=0,
                 severity="critical",
                 column=col_name,
-                table=table_name
+                table=query_table_name
             ))
             
             # Minimum value check
             if 'min' in constraints:
                 min_val = constraints['min']
                 checks.append(ValidationCheck(
-                    id=f"{table_name}_{col_name}_min",
+                    id=f"{query_table_name}_{col_name}_min",
                     description=f"Verify {col_name} >= {min_val}",
                     check_type="sql",
-                    query=f"SELECT COUNT(*) FROM {table_name} WHERE {col_name} < {min_val}",
+                    query=f"SELECT COUNT(*) FROM {query_table_name} WHERE {col_name} < {min_val}",
                     expected=0,
                     severity="high",
                     column=col_name,
-                    table=table_name
+                    table=query_table_name
                 ))
             
             # Maximum value check
             if 'max' in constraints:
                 max_val = constraints['max']
                 checks.append(ValidationCheck(
-                    id=f"{table_name}_{col_name}_max",
+                    id=f"{query_table_name}_{col_name}_max",
                     description=f"Verify {col_name} <= {max_val}",
                     check_type="sql",
-                    query=f"SELECT COUNT(*) FROM {table_name} WHERE {col_name} > {max_val}",
+                    query=f"SELECT COUNT(*) FROM {query_table_name} WHERE {col_name} > {max_val}",
                     expected=0,
                     severity="high",
                     column=col_name,
-                    table=table_name
+                    table=query_table_name
                 ))
             
             # Enum check
             if col_enum:
                 enum_values = ", ".join([f"'{v}'" for v in col_enum])
                 checks.append(ValidationCheck(
-                    id=f"{table_name}_{col_name}_enum",
+                    id=f"{query_table_name}_{col_name}_enum",
                     description=f"Verify {col_name} is in valid enum values",
                     check_type="sql",
-                    query=f"SELECT COUNT(*) FROM {table_name} WHERE {col_name} NOT IN ({enum_values})",
+                    query=f"SELECT COUNT(*) FROM {query_table_name} WHERE {col_name} NOT IN ({enum_values})",
                     expected=0,
                     severity="high",
                     column=col_name,
-                    table=table_name
+                    table=query_table_name
                 ))
             
             # Email format check
             if col_format == 'email':
                 checks.append(ValidationCheck(
-                    id=f"{table_name}_{col_name}_email_format",
+                    id=f"{query_table_name}_{col_name}_email_format",
                     description=f"Verify {col_name} has valid email format",
                     check_type="sql",
                     query=f"""
-                        SELECT COUNT(*) FROM {table_name} 
+                        SELECT COUNT(*) FROM {query_table_name} 
                         WHERE {col_name} IS NOT NULL 
                         AND {col_name} NOT LIKE '%_@_%._%'
                     """,
                     expected=0,
                     severity="medium",
                     column=col_name,
-                    table=table_name
+                    table=query_table_name
                 ))
             
             # Date format check
             if col_type == 'date':
                 checks.append(ValidationCheck(
-                    id=f"{table_name}_{col_name}_date_valid",
+                    id=f"{query_table_name}_{col_name}_date_valid",
                     description=f"Verify {col_name} contains valid dates",
                     check_type="sql",
-                    query=f"SELECT COUNT(*) FROM {table_name} WHERE {col_name} IS NOT NULL AND NOT isdate({col_name})",
+                    query=f"SELECT COUNT(*) FROM {query_table_name} WHERE {col_name} IS NOT NULL AND typeof({col_name}) NOT IN ('DATE', 'TIMESTAMP')",
                     expected=0,
                     severity="high",
                     column=col_name,
-                    table=table_name
+                    table=query_table_name
                 ))
             
             # String length checks
@@ -348,41 +358,46 @@ class ValidationCheckGenerator:
                 if 'min_length' in constraints:
                     min_len = constraints['min_length']
                     checks.append(ValidationCheck(
-                        id=f"{table_name}_{col_name}_min_length",
+                        id=f"{query_table_name}_{col_name}_min_length",
                         description=f"Verify {col_name} length >= {min_len}",
                         check_type="sql",
-                        query=f"SELECT COUNT(*) FROM {table_name} WHERE LENGTH({col_name}) < {min_len}",
+                        query=f"SELECT COUNT(*) FROM {query_table_name} WHERE LENGTH({col_name}) < {min_len}",
                         expected=0,
                         severity="medium",
                         column=col_name,
-                        table=table_name
+                        table=query_table_name
                     ))
                 if 'max_length' in constraints:
                     max_len = constraints['max_length']
                     checks.append(ValidationCheck(
-                        id=f"{table_name}_{col_name}_max_length",
+                        id=f"{query_table_name}_{col_name}_max_length",
                         description=f"Verify {col_name} length <= {max_len}",
                         check_type="sql",
-                        query=f"SELECT COUNT(*) FROM {table_name} WHERE LENGTH({col_name}) > {max_len}",
+                        query=f"SELECT COUNT(*) FROM {query_table_name} WHERE LENGTH({col_name}) > {max_len}",
                         expected=0,
                         severity="medium",
                         column=col_name,
-                        table=table_name
+                        table=query_table_name
                     ))
         
         return checks
 
 
 def _map_schema_type_to_duckdb(schema_type: str) -> str:
-    """Map schema type to DuckDB type for validation."""
+    """Map schema type to DuckDB type for validation.
+    
+    Note: This maps to the types returned by DuckDB's typeof() function,
+    which may differ from the declared type in information_schema.
+    """
     type_mapping = {
-        'integer': 'BIGINT',
-        'int': 'BIGINT',
-        'float': 'DOUBLE',
-        'double': 'DOUBLE',
+        'integer': 'INTEGER',
+        'int': 'INTEGER',
+        'bigint': 'INTEGER',
+        'float': 'FLOAT',
+        'double': 'FLOAT',
         'string': 'VARCHAR',
         'text': 'VARCHAR',
-        'date': 'DATE',
+        'date': 'TIMESTAMP',  # DuckDB stores dates as TIMESTAMP with time 00:00:00
         'datetime': 'TIMESTAMP',
         'boolean': 'BOOLEAN',
         'bool': 'BOOLEAN',
