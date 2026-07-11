@@ -25,13 +25,8 @@ from pathlib import Path
 import logging
 
 # Import path configuration
-try:
-    from utils.paths import paths
-    from utils.logging_config import setup_logging, get_logger
-except ImportError:
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from utils.paths import paths
-    from utils.logging_config import setup_logging, get_logger
+from utils.paths import paths
+from utils.logging_config import setup_logging, get_logger
 
 # Get run ID from environment for unique log files
 RUN_ID = os.environ.get('RUN_ID', datetime.now().strftime('%Y%m%d_%H%M%S'))

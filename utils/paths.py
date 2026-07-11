@@ -42,10 +42,10 @@ class PathConfig:
             config_path: Optional path to paths.yaml config file.
                         If None, will search in standard locations.
         """
-        self._config = self._load_config(config_path)
+        self._config, self._config_dir = self._load_config(config_path)
         self._validate_paths()
 
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
+    def _load_config(self, config_path: Optional[str]) -> tuple[Dict[str, Any], Path]:
         """Load path configuration from YAML file.
         
         Search order:
@@ -55,28 +55,29 @@ class PathConfig:
         4. Current working directory + /config/paths.yaml
         """
         if config_path is not None:
-            if Path(config_path).exists():
-                return self._load_yaml(config_path)
+            config_file = Path(config_path).expanduser().resolve()
+            if config_file.exists():
+                return self._load_yaml(config_file), config_file.parent
             else:
                 raise FileNotFoundError(f"Config file not found: {config_path}")
         
         # Try environment variable
         env_config = os.environ.get("LOOPS_CONFIG_DIR")
         if env_config:
-            env_path = Path(env_config) / "paths.yaml"
+            env_path = Path(env_config).expanduser().resolve() / "paths.yaml"
             if env_path.exists():
-                return self._load_yaml(str(env_path))
+                return self._load_yaml(env_path), env_path.parent
         
         # Try relative to this module's location
-        module_dir = Path(__file__).parent.parent
+        module_dir = Path(__file__).resolve().parent.parent
         default_config = module_dir / "config" / "paths.yaml"
         if default_config.exists():
-            return self._load_yaml(str(default_config))
+            return self._load_yaml(default_config), default_config.parent
         
         # Try current working directory
         cwd_config = Path.cwd() / "config" / "paths.yaml"
         if cwd_config.exists():
-            return self._load_yaml(str(cwd_config))
+            return self._load_yaml(cwd_config), cwd_config.parent
         
         # Last resort: try parent directories
         # This handles cases where the script is run from within the project
@@ -88,14 +89,15 @@ class PathConfig:
         
         for path in search_paths:
             if path.exists():
-                return self._load_yaml(str(path))
+                resolved = path.resolve()
+                return self._load_yaml(resolved), resolved.parent
         
         raise FileNotFoundError(
             "Could not find paths.yaml configuration. "
             "Please create config/paths.yaml or set LOOPS_CONFIG_DIR environment variable."
         )
 
-    def _load_yaml(self, path: str) -> Dict[str, Any]:
+    def _load_yaml(self, path: Path) -> Dict[str, Any]:
         """Load YAML file and apply environment overrides."""
         with open(path, 'r') as f:
             config = yaml.safe_load(f)
@@ -151,14 +153,19 @@ class PathConfig:
             Absolute Path object
         """
         value = self.get(key)
-        
+
+        # Special-case project root to avoid recursive resolution
+        if key == "project_root":
+            base_dir = self._config_dir or Path.cwd()
+            return (base_dir / value).resolve()
+
         # If it's already an absolute path, return it
         if os.path.isabs(value):
             return Path(value)
-        
+
         # Otherwise, resolve relative to project root
         project_root = self.get_abs("project_root")
-        return project_root / value
+        return (project_root / value).resolve()
 
     def __getattr__(self, name: str) -> Path:
         """Allow attribute-style access: paths.data_dir, paths.db_path, etc."""

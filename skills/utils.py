@@ -16,12 +16,12 @@ Usage:
 
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
-import os
-import sys
+
+from utils.paths import get_project_root
 
 
 # Project configuration
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = get_project_root()
 
 
 # Stage definitions with their skill files and agent types
@@ -539,8 +539,9 @@ def register_stage_tools(bot, stage: int, project_root: Optional[Path] = None) -
     
     # Setup Python path
     root = project_root or PROJECT_ROOT
-    sys.path.insert(0, str(root))
-    os.environ["PYTHONPATH"] = str(root)
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+        os.environ.setdefault("PYTHONPATH", str(root))
     
     for tool_name, tool_config in tools_config.items():
         try:

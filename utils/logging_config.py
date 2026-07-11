@@ -10,18 +10,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# Import path configuration
-try:
-    from utils.paths import paths, get_project_root
-except ImportError:
-    import os
-    PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-    sys.path.insert(0, str(PROJECT_ROOT))
-    os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
-    from utils.paths import paths, get_project_root
-    PROJECT_ROOT = get_project_root()
-else:
-    PROJECT_ROOT = get_project_root()
+from utils.paths import paths, get_project_root
+
+PROJECT_ROOT = get_project_root()
 
 
 # Global run context

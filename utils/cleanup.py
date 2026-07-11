@@ -6,24 +6,14 @@ and generated files between runs.
 """
 
 import os
-import sys
 import shutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, List
 
-# Import path configuration
-try:
-    from utils.paths import paths, get_project_root
-except ImportError:
-    # Fallback - use hardcoded path
-    PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-    sys.path.insert(0, str(PROJECT_ROOT))
-    os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
-    from utils.paths import paths, get_project_root
-    PROJECT_ROOT = get_project_root()
-else:
-    PROJECT_ROOT = get_project_root()
+from utils.paths import paths, get_project_root
+
+PROJECT_ROOT = get_project_root()
 
 
 def cleanup_all(archive_logs: bool = True, keep_db: bool = False) -> dict:

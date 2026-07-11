@@ -188,7 +188,7 @@ All agents have access to:
 
 ### Project Knowledge
 
-**Project Root**: `/home/aq/Documents/Source/loops`
+**Project Root**: project root of this repository
 
 **Key Paths**:
 - `data/source_data.csv` - Source CSV with intentional errors

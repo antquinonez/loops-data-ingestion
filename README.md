@@ -207,7 +207,7 @@ The **Prefect cleaning flows** handle these issues by:
 
 ```bash
 # Clone or navigate to the project
-cd /home/aq/Documents/Source/loops
+   cd /path/to/your/loops
 
 # Create and activate virtual environment
 python -m venv venv
@@ -481,7 +481,7 @@ Create a `.env` file:
 ```bash
 OPENAI_API_KEY=your-api-key-here
 OPENAI_MODEL=gpt-4o-mini
-PYTHONPATH=/home/aq/Documents/Source/loops
+PYTHONPATH=/path/to/your/loops
 ```
 
 ---

@@ -9,9 +9,12 @@ import sys
 import os
 from pathlib import Path
 
-# Project root
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
-sys.path.insert(0, str(PROJECT_ROOT))
+from utils.paths import get_project_root
+
+PROJECT_ROOT = get_project_root()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+os.environ.setdefault("PYTHONPATH", str(PROJECT_ROOT))
 
 # Load environment
 from dotenv import load_dotenv

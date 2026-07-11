@@ -26,9 +26,11 @@ from typing import Dict, List, Optional, Any
 import yaml
 import re
 
+from utils.paths import get_project_root
+
 
 # Project configuration
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = get_project_root()
 SKILLS_DIR = PROJECT_ROOT / "skills"
 
 

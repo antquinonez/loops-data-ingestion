@@ -8,21 +8,13 @@ import os
 import json
 import csv
 import logging
-from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
+from utils.paths import paths
+
 # Set up logging for tools
 logger = logging.getLogger("nanobot.tools")
-
-# Import path configuration
-try:
-    from utils.paths import paths
-except ImportError:
-    # Fallback for backward compatibility - import from parent directory
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from utils.paths import paths
 
 # Get paths from configuration
 DATA_DIR = paths.data_dir

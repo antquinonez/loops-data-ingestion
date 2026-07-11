@@ -7,12 +7,12 @@ version: "0.1.0"
 
 debug: true
 log_level: "DEBUG"
-log_config: "/home/aq/Documents/Source/loops/config/nanobot_logging.yaml"
+log_config: "config/nanobot_logging.yaml"
 
 # Database for session memory (optional)
 database:
   enabled: true
-  path: "/home/aq/Documents/Source/loops/data/nanobot.db"
+  path: "data/nanobot.db"
 
 # Server configuration
 server:
@@ -62,7 +62,7 @@ agents:
     
     # Context files to load (SKILLS.md will be loaded here)
     context_files:
-      - "/home/aq/Documents/Source/loops/SKILLS.md"
+      - "SKILLS.md"
     
     # Tools available to this agent
     tools:

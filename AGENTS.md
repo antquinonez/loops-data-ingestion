@@ -108,7 +108,7 @@ OPENAI_API_KEY="your-api-key-here"
 
 # Optional
 OPENAI_MODEL="gpt-4o-mini"  # Default model
-PYTHONPATH=/home/aq/Documents/Source/loops
+PYTHONPATH=$(pwd)
 ```
 
 ### Virtual Environment
@@ -126,11 +126,11 @@ pip install -q nanobot duckdb prefect python-dateutil mcp python-dotenv
 
 ### Path Configuration
 
-The project root is: `/home/aq/Documents/Source/loops`
+The project root is: `$(pwd)`
 
 All Python files should have:
 ```python
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
 ```
@@ -233,7 +233,7 @@ from typing import Optional
 import yaml
 from pathlib import Path
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 class LoadIdealSchemaTool(Tool):
     """Tool to load ideal schema definition."""
@@ -323,7 +323,7 @@ Always use absolute paths from `PROJECT_ROOT`:
 ```python
 from pathlib import Path
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Good
 schema_path = PROJECT_ROOT / "schemas" / "users_schema.yaml"
@@ -372,7 +372,7 @@ import pandas as pd
 from pathlib import Path
 import logging
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "ingestion.db")
 
 @task
@@ -453,7 +453,7 @@ import os
 from dotenv import load_dotenv
 
 # Load from project .env
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 # Verify required variables

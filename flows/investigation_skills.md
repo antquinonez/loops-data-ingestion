@@ -67,9 +67,9 @@ read_logs(path="logs/ingestion.log", tail_n=100)
 ```
 
 **Log file locations**:
-- `/home/aq/Documents/Source/loops/logs/ingestion.log` - Main ingestion log
-- `/home/aq/Documents/Source/loops/logs/prefect.log` - Prefect orchestration log
-- `/home/aq/Documents/Source/loops/logs/nanobot.log` - Previous investigations
+- `logs/ingestion.log` - Main ingestion log
+- `logs/prefect.log` - Prefect orchestration log
+- `logs/nanobot.log` - Previous investigations
 
 **Pro tip**: Start with `tail_n=50` from ingestion.log, then expand if needed.
 
@@ -159,7 +159,7 @@ WHERE email IS NULL OR email = '' OR age NOT LIKE '%[0-9]%'
 LIMIT 10;
 ```
 
-**Database location**: `/home/aq/Documents/Source/loops/data/ingestion.db`
+**Database location**: `data/ingestion.db`
 
 ---
 

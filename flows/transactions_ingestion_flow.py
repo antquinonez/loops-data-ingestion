@@ -9,13 +9,7 @@ import os
 from pathlib import Path
 import logging
 
-# Import path configuration
-try:
-    from utils.paths import paths
-except ImportError:
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from utils.paths import paths
+from utils.paths import paths
 
 # Configure logging
 transactions_logger = logging.getLogger('transactions_ingestion')

@@ -29,13 +29,7 @@ from mcp.types import (
     Tool,
 )
 
-# Import path configuration
-try:
-    from utils.paths import paths
-except ImportError:
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from utils.paths import paths
+from utils.paths import paths
 
 PROJECT_ROOT = paths.get_abs("project_root")
 DATA_DIR = paths.data_dir

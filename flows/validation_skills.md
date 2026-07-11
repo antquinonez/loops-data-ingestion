@@ -77,7 +77,7 @@ The validation phase has two main components:
 # Check file exists
 import os
 from pathlib import Path
-pipeline_path = Path("/home/aq/Documents/Source/loops/pipelines/generated/clean_users_pipeline.py")
+pipeline_path = Path.cwd() / "pipelines/generated/clean_users_pipeline.py"
 pipeline_path.exists()
 
 # Check syntax
@@ -98,7 +98,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path.cwd()
 pipeline_path = PROJECT_ROOT / "pipelines/generated/clean_users_pipeline.py"
 
 result = subprocess.run(
@@ -124,12 +124,15 @@ else:
 #### Method B: Import and Call (For testing)
 ```python
 import sys
-sys.path.insert(0, "/home/aq/Documents/Source/loops")
+from pathlib import Path
+
+PROJECT_ROOT = Path.cwd()
+sys.path.insert(0, str(PROJECT_ROOT))
 
 # Import the generated pipeline module
 import importlib.util
 spec = importlib.util.spec_from_file_location("clean_users_pipeline", 
-    "/home/aq/Documents/Source/loops/pipelines/generated/clean_users_pipeline.py")
+    str(PROJECT_ROOT / "pipelines/generated/clean_users_pipeline.py"))
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
@@ -502,7 +505,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path("/home/aq/Documents/Source/loops")
+PROJECT_ROOT = Path.cwd()
 pipeline_path = PROJECT_ROOT / "pipelines/generated/clean_users_pipeline.py"
 
 # Run pipeline twice

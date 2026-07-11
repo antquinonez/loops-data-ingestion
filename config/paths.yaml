@@ -2,7 +2,7 @@
 # All paths are relative to project_root unless specified as absolute
 
 # Base configuration
-project_root: "/home/aq/Documents/Source/loops"
+project_root: ".."
 
 # Directory paths (relative to project_root)
 data_dir: "data"

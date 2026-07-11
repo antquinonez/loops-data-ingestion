@@ -11,16 +11,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
 
-logger = logging.getLogger(__name__)
+from utils.paths import paths
 
-# Import path configuration
-try:
-    from utils.paths import paths
-except ImportError:
-    # Fallback for backward compatibility
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    from utils.paths import paths
+logger = logging.getLogger(__name__)
 
 # Get paths from configuration
 PROJECT_ROOT = paths.get_abs("project_root")
