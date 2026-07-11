@@ -297,17 +297,31 @@ def start_mcp_server():
             [sys.executable, str(server_path)],
             cwd=PROJECT_ROOT,
             env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
         print(f"✓ MCP server started with PID {process.pid}")
         print("   Server runs on: http://127.0.0.1:8081")
+        
+        # Check quickly if it's still running (non-blocking)
+        import time
+        time.sleep(0.5)
+        if process.poll() is not None:
+            # Process crashed - check error
+            try:
+                _, stderr = process.communicate(timeout=1)
+                stderr_text = stderr.decode() if stderr else ""
+                if stderr_text:
+                    print(f"⚠️  MCP server failed: {stderr_text.split(chr(10))[0][:100]}")
+            except:
+                pass
+            print("   MCP server will not be available (this is optional)")
+            return None
+        
         return process
     except Exception as e:
         print(f"⚠️  Failed to start MCP server: {e}")
         print("   MCP server will not be available (this is optional)")
-        print("   To enable MCP server, ensure the 'mcp' package is installed:")
-        print("   pip install mcp")
         return None
 
 
