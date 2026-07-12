@@ -760,8 +760,8 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
     
     transformation_code = "\n".join(indented_transformations)
     
-    # Use simple template without Prefect for local execution
-    template_path = paths.get_abs("project_root") / "agents" / "pipeline_builder" / "flow_template_simple.txt"
+    # Use Prefect template that falls back to sync mode if no server is available
+    template_path = paths.get_abs("project_root") / "agents" / "pipeline_builder" / "flow_template_prefect_v3.txt"
     with open(template_path, 'r') as f:
         template = f.read()
     
