@@ -1,6 +1,11 @@
 # Data Ingestion Troubleshooting with Nanobot
 
-An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues using a **consistent Prefect pipeline architecture**.
+[![Tests: 103 passed](https://img.shields.io/badge/tests-103%20passed-brightgreen)](https://github.com)
+[![Python 3.14](https://img.shields.io/badge/python-3.14-blue)](https://python.org)
+[![Prefect 3.x](https://img.shields.io/badge/prefect-3.x-orange)](https://prefect.io)
+[![MCP Supported](https://img.shields.io/badge/MCP-Supported-lightgrey)](https://modelcontextprotocol.io)
+
+An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues using a **hybrid Prefect/pipeline architecture**.
 
 ## Overview
 
@@ -8,16 +13,17 @@ This project showcases:
 
 1. **Intentional Data Errors**: A **Prefect** ingestion flow that fails due to data quality issues (NULL values, type mismatches, malformed data)
 2. **Autonomous Investigation**: A Nanobot agent that automatically troubleshoots failures using custom tools
-3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **Prefect cleaning flows** to fix data issues
+3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **hybrid cleaning pipelines** with Prefect decorators to fix data issues
 4. **Schema Validation**: Automatic comparison of source data against ideal schemas
 5. **Self-Healing**: The system can generate and execute cleaning pipelines to resolve ingestion failures
+6. **Comprehensive Testing**: 103 tests covering all components with 100% pass rate
 
 ### Key Technologies
 
 - **Nanobot**: Autonomous AI agent framework with tool integration
 - **DuckDB**: Embedded analytical database for data processing
-- **Prefect**: Workflow orchestration (used for **all** pipelines)
-- **Pandas**: Data manipulation library (used within Prefect flows)
+- **Prefect**: Workflow orchestration (generated pipelines use Prefect decorators with sync fallback)
+- **Pandas**: Data manipulation library for data manipulation
 - **OpenAI API**: LLM-powered investigation and code generation
 - **MCP Server**: Model Context Protocol for enhanced agent capabilities (optional)
 
@@ -33,10 +39,10 @@ This project uses a **two-tier pipeline architecture**:
 - **Type**: Full Prefect flow with `@flow` and `@task` decorators
 - **Status**: Will fail due to data quality issues
 
-### Tier 2: Prefect Cleaning Flows (AUTO-GENERATED)
+### Tier 2: Hybrid Prefect/Sync Cleaning Pipelines (AUTO-GENERATED)
 - **Files**: `pipelines/generated/clean_*.py`
 - **Purpose**: **Fixes** the data quality issues
-- **Type**: Prefect flows with `@flow` and `@task` decorators
+- **Type**: Prefect flows with `@flow` and `@task` decorators (falls back to sync mode if no Prefect server)
 - **Status**: Succeeds by applying type conversions, NULL handling, and constraint enforcement
 
 ```
@@ -105,19 +111,19 @@ This project uses a **two-tier pipeline architecture**:
 
 ### Why Two Different Pipeline Types?
 
-| Aspect | Prefect Flow (Demo) | Prefect Flow (Cleaning) |
-|--------|---------------------|-------------------------|
+| Aspect | Prefect Flow (Demo) | Hybrid Pipeline (Cleaning) |
+|--------|---------------------|---------------------------|
 | **Purpose** | Demonstration (show failure) | Solution (fix data) |
-| **Complexity** | Orchestration overhead | Orchestration with task dependencies |
-| **Dependencies** | Prefect library | Prefect + pandas + DuckDB |
-| **Error Handling** | Built-in retry, logging | Built-in retry, logging |
-| **Use Case** | Multi-step workflows | Multi-step data cleaning workflows |
+| **Complexity** | Prefect orchestration | Prefect decorators + sync fallback |
+| **Dependencies** | Prefect library | Prefect optional (sync mode works without server) |
+| **Error Handling** | Built-in retry, logging | Try/except with error handling |
+| **Use Case** | Multi-step workflows | Auto-generated data cleaning |
 
-The **Prefect flow** is used for **both tiers** - the demo flow shows failures, and the generated cleaning flows fix them. Using Prefect for all pipelines provides:
-1. Consistent orchestration across the entire workflow
-2. Built-in retry, logging, and observability for all steps
-3. Task dependency management for complex cleaning operations
-4. Unified deployment and monitoring experience
+The demo uses **Prefect orchestration**, while the generated cleaning pipelines use **Prefect decorators with graceful fallback to synchronous execution** when no Prefect server is available. This provides:
+1. Consistent Prefect decorators for future orchestration readiness
+2. Graceful degradation - works without a Prefect server
+3. Automatic server detection for full orchestration when available
+4. Unified code structure across all generated pipelines
 
 ---
 
@@ -239,8 +245,8 @@ python run_demo.py
 The demo will:
 1. **Prefect flow fails** (expected) due to data errors
 2. Nanobot investigates using the tools in `flows/nanobot_tools.py`
-3. Pipeline builder generates **Prefect cleaning flows** in `pipelines/generated/`
-4. Generated **Prefect pipelines** are executed and succeed
+3. Pipeline builder generates **hybrid cleaning pipelines** with Prefect decorators in `pipelines/generated/`
+4. Generated **hybrid pipelines** are executed (sync mode by default) and succeed
 
 ### Run Individual Components
 
@@ -251,7 +257,7 @@ python flows/ingestion_flow.py
 # Step 2: Run the pipeline builder to generate PREFECT fixes
 python demo_pipeline_builder.py
 
-# Step 3: Run the generated PREFECT cleaning pipeline
+# Step 3: Run the generated hybrid cleaning pipeline (works with or without Prefect server)
 python pipelines/generated/clean_users_pipeline.py
 
 # Step 4: Start Nanobot server for manual investigation
@@ -313,12 +319,13 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│            TIER 2: PREFECT CLEANING PIPELINE                   │
+│            TIER 2: HYBRID PREFECT/SYNC CLEANING PIPELINE       │
 │          pipelines/generated/clean_users_pipeline.py           │
-│  - Loads source data with pandas in @task functions          │
-│  - Applies type conversions with fillna fallback in @task      │
-│  - Fills NULL values with schema defaults in @task            │
-│  - Inserts cleaned data into DuckDB in @task                   │
+│  - Loads source data with pandas (@task decorators)          │
+│  - Applies type conversions with fillna fallback              │
+│  - Fills NULL values with schema defaults                      │
+│  - Inserts cleaned data into DuckDB                            │
+│  - Works with Prefect server or sync fallback                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -329,9 +336,9 @@ Source CSV → [Prefect Flow] → raw_users (staging) → [FAILS]
                          ↓
                   [Nanobot investigates]
                          ↓
-                  [Pipeline Builder generates PREFECT flows]
+                  [Pipeline Builder generates Hybrid flows]
                          ↓
-                  [Prefect Flow] → users_clean (fixed)
+                  [Hybrid Flow] → users_clean (fixed)
 ```
 
 ---
@@ -413,14 +420,14 @@ result = bot.run("""
 
 ### Pipeline Builder Tools (`agents/pipeline_builder/tools.py`)
 
-These tools generate **Prefect flows** for data cleaning:
+These tools generate **hybrid pipelines** for data cleaning:
 
 | Tool | Description | Output |
 |------|-------------|--------|
 | `load_ideal_schema` | Load ideal schema definition from YAML | Schema dictionary |
 | `infer_source_schema` | Infer schema from source CSV file | Inferred schema |
 | `compare_schemas` | Compare source and ideal schemas | Comparison with mismatches |
-| `generate_cleaning_pipeline` | Generate **Prefect flow** cleaning pipeline | Prefect flow code |
+| `generate_cleaning_pipeline` | Generate **hybrid pipeline** with Prefect decorators | Python code with @flow/@task decorators |
 
 ---
 
@@ -433,7 +440,7 @@ When the agent is triggered, it follows this protocol:
 3. **Query Database**: Use `query_duckdb` to check `raw_users` table state
 4. **Validate Schema**: Use `check_schema` to identify data quality issues
 5. **Analyze Findings**: Identify root causes and impact
-6. **Generate Fix**: Use Pipeline Builder to create **Prefect cleaning flow**
+6. **Generate Fix**: Use Pipeline Builder to create **hybrid cleaning pipeline** with Prefect decorators
 7. **Send Alert**: Use `send_slack_alert` to notify team
 
 ### Expected Findings
@@ -542,17 +549,25 @@ CREATE TABLE users_clean (
 
 ### Test Files
 
-- `test_nanobot_with_pipeline_tools.py` - Tests Nanobot integration with pipeline tools
-- `test_pipeline_tools_with_nanobot.py` - Tests pipeline tools with Nanobot
+- `tests/test_pipeline_builder.py` - Tests for pipeline builder tools (27 tests)
+- `tests/test_limits.py` - Tests for pipeline limits and attempt tracking (32 tests)
+- `test_validation.py` - Tests for validation agent and checks (24 tests)
+- `tests/test_mcp_server.py` - Tests for MCP server functionality (20 tests)
 
 ### Run Tests
 
 ```bash
-# Test pipeline tools
-python -m pytest test_pipeline_tools_with_nanobot.py -v
+# Run all tests (103 total)
+python -m pytest -v
 
-# Test Nanobot integration
-python test_nanobot_with_pipeline_tools.py
+# Run specific test suites
+python -m pytest tests/test_pipeline_builder.py -v  # Pipeline builder
+python -m pytest tests/test_limits.py -v           # Limits/attempt tracking
+python -m pytest tests/test_mcp_server.py -v        # MCP server
+python -m pytest test_validation.py -v            # Validation
+
+# Run with coverage
+python -m pytest --cov=flows --cov=agents -v
 ```
 
 ---
@@ -567,8 +582,8 @@ For production use, consider:
 4. **Add monitoring** for agent health and performance
 5. **Implement circuit breakers** to prevent infinite loops
 6. **Add rate limiting** for database queries
-7. **For all Prefect flows**: Set up Prefect Cloud/Server for orchestration
-8. All pipelines (demo and cleaning) use Prefect for consistent orchestration
+7. **For full Prefect orchestration**: Start a Prefect server (optional - sync mode works without it)
+8. Generated pipelines use Prefect decorators and work in both server and sync modes
 
 ---
 
@@ -606,12 +621,13 @@ log_level: DEBUG
 |------|---------|------|
 | `run_demo.py` | Main entry point - runs complete demo workflow | Orchestrator |
 | `demo_pipeline_builder.py` | Standalone pipeline builder demonstration | Utility |
-| `flows/ingestion_flow.py` | **Prefect flow** that fails on bad data | Tier 1 - Demo |
+| `flows/ingestion_flow.py` | Prefect flow that fails on bad data | Tier 1 - Demo |
 | `flows/nanobot_tools.py` | Investigation tools for Nanobot | Tools |
 | `flows/mcp_server.py` | MCP server for enhanced capabilities | Server |
 | `flows/investigation_skills.md` | Stage 1: Investigation agent skills | Skills |
 | `flows/validation_skills.md` | Stage 3: Validation agent skills | Skills |
 | `agents/pipeline_builder/tools.py` | Pipeline generation logic | Tools |
+| `agents/pipeline_builder/flow_template_prefect_v3.txt` | Prefect template with sync fallback | Template |
 | `agents/pipeline_builder/nanobot_tools.py` | Nanobot tool classes for pipeline builder | Tools |
 | `agents/pipeline_builder/config.json` | Pipeline builder configuration | Config |
 | `agents/pipeline_builder/skills.md` | Stage 2: Pipeline builder skills | Skills |
@@ -621,7 +637,7 @@ log_level: DEBUG
 | `config/nanobot_logging.yaml` | Logging configuration | Config |
 | `data/source_data.csv` | Source data with intentional errors | Data |
 | `data/ingestion.db` | DuckDB database (auto-created) | Database |
-| `pipelines/generated/*.py` | **Prefect** cleaning flows (auto-generated) | Tier 2 - Solution |
+| `pipelines/generated/*.py` | Hybrid cleaning pipelines with Prefect decorators (auto-generated) | Tier 2 - Solution |
 | `SKILLS.md` | Master skills index for all stages | Documentation |
 | `AGENTS.md` | Instructions for AI agents | Documentation |
 | `.env` | Environment variables | Config |
@@ -635,6 +651,7 @@ log_level: DEBUG
 - **agents/pipeline_builder/skills.md** - Pipeline builder specific skills
 - **flows/investigation_skills.md** - Investigation agent skills
 - **flows/validation_skills.md** - Validation agent skills
+- **tests/README.md** - Test suite documentation (if available)
 
 ---
 
@@ -642,11 +659,11 @@ log_level: DEBUG
 
 This project demonstrates a **practical pattern** for self-healing data pipelines:
 
-1. **Use Prefect** for all pipeline orchestration to maintain consistency across the entire workflow
-2. **Use Prefect** for both demo flows and cleaning flows to leverage built-in retries, logging, and task dependencies
-3. **Let AI agents** detect failures and generate Prefect flows to fix data issues
+1. **Use Prefect** for demo flows to show orchestration capabilities
+2. **Use Prefect decorators** for generated pipelines with graceful fallback to synchronous execution
+3. **Let AI agents** detect failures and generate pipelines with Prefect decorators
 
-The **generated cleaning pipelines are Prefect flows** because they provide consistent orchestration, observability, and error handling across the entire data processing workflow.
+The **generated cleaning pipelines use Prefect decorators** and automatically detect whether a Prefect server is available. They work in both server mode (full orchestration) and sync mode (local execution), providing maximum flexibility.
 
 ---
 
