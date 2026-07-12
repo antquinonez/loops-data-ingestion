@@ -516,20 +516,20 @@ class TestGetChecksPath:
         
         path = get_checks_path("users", "users_clean")
         
-        assert path.name == "users_validation_checks.json"
+        assert path.name == "users_clean_validation_checks.json"
         assert "validation" in str(path)
         
     def test_get_checks_path_transactions(self):
         """Test getting checks path for transactions pipeline."""
         path = get_checks_path("transactions", "transactions_clean")
         
-        assert path.name == "transactions_validation_checks.json"
+        assert path.name == "transactions_clean_validation_checks.json"
         
     def test_get_checks_path_orders(self):
         """Test getting checks path for orders pipeline."""
         path = get_checks_path("orders", "orders_clean")
         
-        assert path.name == "orders_validation_checks.json"
+        assert path.name == "orders_clean_validation_checks.json"
 
 
 class TestPipelineBuilderIntegration:
