@@ -1,8 +1,8 @@
 # Data Ingestion Troubleshooting with Nanobot
 
 [![Tests: 103 passed](https://img.shields.io/badge/tests-103%20passed-brightgreen)](https://github.com)
-[![Python 3.14](https://img.shields.io/badge/python-3.14-blue)](https://python.org)
-[![Prefect 3.x](https://img.shields.io/badge/prefect-3.x-orange)](https://prefect.io)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
+[![Prefect 3.7+](https://img.shields.io/badge/prefect-3.7+-orange)](https://prefect.io)
 [![MCP Supported](https://img.shields.io/badge/MCP-Supported-lightgrey)](https://modelcontextprotocol.io)
 
 An **autonomous AI agent system** for diagnosing and automatically fixing data ingestion failures. This proof-of-concept demonstrates a complete workflow where an AI agent (Nanobot) detects, investigates, and resolves data quality issues using a **hybrid Prefect/pipeline architecture**.
@@ -13,17 +13,17 @@ This project showcases:
 
 1. **Intentional Data Errors**: A **Prefect** ingestion flow that fails due to data quality issues (NULL values, type mismatches, malformed data)
 2. **Autonomous Investigation**: A Nanobot agent that automatically troubleshoots failures using custom tools
-3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **hybrid cleaning pipelines** with Prefect decorators to fix data issues
+3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **hybrid Prefect/sync cleaning pipelines** with Prefect decorators to fix data issues
 4. **Schema Validation**: Automatic comparison of source data against ideal schemas
 5. **Self-Healing**: The system can generate and execute cleaning pipelines to resolve ingestion failures
 6. **Comprehensive Testing**: 103 tests covering all components with 100% pass rate
 
 ### Key Technologies
 
-- **Nanobot**: Autonomous AI agent framework with tool integration
+- **nanobot-ai**: Autonomous AI agent framework with tool integration (PyPI: `nanobot-ai`)
 - **DuckDB**: Embedded analytical database for data processing
-- **Prefect**: Workflow orchestration (generated pipelines use Prefect decorators with sync fallback)
-- **Pandas**: Data manipulation library for data manipulation
+- **Prefect 3.7+**: Workflow orchestration (generated pipelines use Prefect decorators with sync fallback)
+- **Pandas**: Data manipulation library
 - **OpenAI API**: LLM-powered investigation and code generation
 - **MCP Server**: Model Context Protocol for enhanced agent capabilities (optional)
 
@@ -147,13 +147,13 @@ loops/
 │   ├── transactions.csv      # Transactions data (optional)
 │   └── ingestion.db          # DuckDB database (created on first run)
 ├── flows/
-│   ├── ingestion_flow.py     # PREFECT flow that fails on bad data (Tier 1)
+│   ├── ingestion_flow.py     # Prefect flow that fails on bad data (Tier 1)
 │   ├── nanobot_tools.py      # Investigation tools for Nanobot
 │   ├── mcp_server.py         # MCP server for enhanced capabilities
 │   ├── investigation_skills.md # Stage 1: Investigation agent skills
 │   └── validation_skills.md   # Stage 3: Validation agent skills
 ├── pipelines/
-│   └── generated/            # Auto-generated PLAIN PYTHON cleaning pipelines (Tier 2)
+│   └── generated/            # Auto-generated hybrid Prefect/sync cleaning pipelines (Tier 2)
 │       ├── clean_users_pipeline.py
 │       ├── clean_transactions_pipeline.py
 │       └── clean_orders_pipeline.py
@@ -190,11 +190,11 @@ The `data/source_data.csv` file contains several intentional data quality issues
 | 7 | age | "N/A" | Type conversion error (STRING to INTEGER) |
 | 11 | email | "karen@example" | Invalid format (missing TLD) |
 
-These issues cause the **Prefect flow** to fail with:
+These issues cause the **Prefect ingestion flow** to fail with:
 - `ConversionException: Could not convert string 'N/A' to INT32`
 - `NOT NULL constraint failed: users.email`
 
-The **Prefect cleaning flows** handle these issues by:
+The **hybrid Prefect/sync cleaning flows** handle these issues by:
 - Using `pd.to_numeric(..., errors='coerce').fillna(default)` for type conversions in @task functions
 - Using `df['column'].fillna(default)` for NULL values in @task functions
 - Using proper validation before loading in @task functions
@@ -205,7 +205,7 @@ The **Prefect cleaning flows** handle these issues by:
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+ (required by nanobot-ai and pandas 3.x)
 - Virtual environment (recommended)
 - OpenAI API key (required for Nanobot LLM access)
 
@@ -220,8 +220,11 @@ python -m venv venv
 source venv/bin/activate  # Linux/Mac
 # OR: venv\Scripts\activate  # Windows
 
-# Install dependencies
-pip install -q nanobot duckdb prefect python-dateutil mcp python-dotenv pandas
+# Install dependencies (from requirements.txt)
+pip install -r requirements.txt
+
+# Or install individually
+pip install nanobot-ai prefect>=3.7.0 duckdb>=1.5.0 mcp>=1.28.0 pandas python-dotenv
 
 # Set your OpenAI API key (required)
 export OPENAI_API_KEY="your-api-key-here"
@@ -234,11 +237,11 @@ export OPENAI_MODEL="gpt-4o-mini"
 
 ```bash
 # Run the full demo - this will:
-# 1. Run the PREFECT ingestion flow (it will fail)
+# 1. Run the Prefect ingestion flow (it will fail)
 # 2. Test investigation tools
 # 3. Trigger Nanobot to analyze and fix the issues
-# 4. Generate PREFECT cleaning pipelines
-# 5. Execute the generated PREFECT pipelines to verify the fix
+# 4. Generate hybrid Prefect/sync cleaning pipelines
+# 5. Execute the generated hybrid pipelines to verify the fix
 python run_demo.py
 ```
 
@@ -251,10 +254,10 @@ The demo will:
 ### Run Individual Components
 
 ```bash
-# Step 1: Run the failing PREFECT ingestion (creates errors)
+# Step 1: Run the failing Prefect ingestion (creates errors)
 python flows/ingestion_flow.py
 
-# Step 2: Run the pipeline builder to generate PREFECT fixes
+# Step 2: Run the pipeline builder to generate hybrid Prefect/sync fixes
 python demo_pipeline_builder.py
 
 # Step 3: Run the generated hybrid cleaning pipeline (works with or without Prefect server)
@@ -309,7 +312,7 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 │  ┌─────────────────┐    ┌─────────────────────────────────┐  │
 │  │ Tools:           │    │ generate_cleaning_pipeline()      │  │
 │  │ - load_ideal_    │───▶│ - Compares source vs ideal       │  │
-│  │   schema        │    │ - Generates PREFECT flow code    │  │
+│  │   schema        │    │ - Generates hybrid Prefect/sync flow code    │  │
 │  │ - infer_source_  │    │ - Handles type casting, NULLs   │  │
 │  │   schema        │    │ - Saves to pipelines/generated  │  │
 │  │ - compare_      │    │                                   │  │
@@ -394,7 +397,7 @@ for tool_class in PIPELINE_TOOL_CLASSES:
     tool_instance = tool_class()
     bot.register_tool(tool_instance)
 
-# Trigger pipeline generation (generates PREFECT flows)
+# Trigger pipeline generation (generates hybrid Prefect/sync flows)
 result = bot.run("""
     Investigate the failed data ingestion. 
     Use: infer_source_schema, load_ideal_schema, compare_schemas, 
@@ -454,7 +457,7 @@ The agent should identify:
    - Row 11: Malformed email ('karen@example' missing TLD)
 3. **Root Cause**: Source CSV contains data that doesn't match target schema constraints
 4. **Recommended Actions**:
-   - Generate **Prefect cleaning flow** using Pipeline Builder
+   - Generate **hybrid Prefect/sync cleaning flow** using Pipeline Builder
    - Apply COALESCE with CAST for type conversions
    - Fill NULL values with defaults from schema
 
@@ -527,9 +530,9 @@ CREATE TABLE users (
 )
 ```
 
-### `users_clean` (Cleaned Table - Created by Prefect Cleaning Flow)
+### `users_clean` (Cleaned Table - Created by Hybrid Prefect/Sync Cleaning Flow)
 
-This is the table that the **generated Prefect cleaning flow** successfully creates:
+This is the table that the **generated hybrid Prefect/sync cleaning flow** successfully creates:
 
 ```sql
 CREATE TABLE users_clean (
@@ -627,7 +630,7 @@ log_level: DEBUG
 | `flows/investigation_skills.md` | Stage 1: Investigation agent skills | Skills |
 | `flows/validation_skills.md` | Stage 3: Validation agent skills | Skills |
 | `agents/pipeline_builder/tools.py` | Pipeline generation logic | Tools |
-| `agents/pipeline_builder/flow_template_prefect_v3.txt` | Prefect template with sync fallback | Template |
+| `agents/pipeline_builder/flow_template_prefect_v3.txt` | Prefect 3.x template with sync fallback | Template |
 | `agents/pipeline_builder/nanobot_tools.py` | Nanobot tool classes for pipeline builder | Tools |
 | `agents/pipeline_builder/config.json` | Pipeline builder configuration | Config |
 | `agents/pipeline_builder/skills.md` | Stage 2: Pipeline builder skills | Skills |
