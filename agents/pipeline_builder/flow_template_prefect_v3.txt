@@ -11,8 +11,11 @@ from pathlib import Path
 
 # First, configure Prefect to use local mode by default
 # This prevents it from trying to connect to cloud
-os.environ["PREFECT_API_URL"] = os.environ.get("PREFECT_API_URL", "")
+# For Prefect 3.x, use ephemeral local server by default
+os.environ["PREFECT_API_URL"] = os.environ.get("PREFECT_API_URL", "http://127.0.0.1:4200/api")
 os.environ["PREFECT_CLOUD_API_URL"] = ""
+os.environ["PREFECT_MODE"] = "local"
+os.environ["PREFECT_EPHEMERAL_START"] = "true"
 os.environ.pop("PREFECT_API_KEY", None)
 os.environ.pop("PREFECT_CLOUD_API_KEY", None)
 
@@ -20,7 +23,7 @@ os.environ.pop("PREFECT_CLOUD_API_KEY", None)
 USE_PREFECT_SERVER = False
 try:
     import httpx
-    PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://localhost:4200")
+    PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://localhost:4200/api")
     if PREFECT_API_URL and PREFECT_API_URL != "":
         try:
             response = httpx.get(f"{PREFECT_API_URL}/api/health", timeout=1.0)

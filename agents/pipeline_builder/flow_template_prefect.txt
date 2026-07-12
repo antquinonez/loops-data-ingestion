@@ -3,9 +3,11 @@ import sys
 
 # Configure Prefect to use local mode ONLY (no cloud connection)
 # This must be set BEFORE importing prefect
-os.environ["PREFECT_API_URL"] = ""
+# For Prefect 3.x, use ephemeral local server
+os.environ["PREFECT_API_URL"] = "http://127.0.0.1:4200/api"
 os.environ["PREFECT_CLOUD_API_URL"] = ""
 os.environ["PREFECT_MODE"] = "local"
+os.environ["PREFECT_EPHEMERAL_START"] = "true"
 os.environ.pop("PREFECT_API_KEY", None)
 os.environ.pop("PREFECT_CLOUD_API_KEY", None)
 
@@ -248,9 +250,11 @@ if __name__ == "__main__":
     import os
     
     # Use local Prefect mode (no cloud/server required)
-    os.environ["PREFECT_API_URL"] = ""
+    # For Prefect 3.x, use ephemeral local server
+    os.environ["PREFECT_API_URL"] = "http://127.0.0.1:4200/api"
     os.environ["PREFECT_CLOUD_API_URL"] = ""
     os.environ["PREFECT_MODE"] = "local"
+    os.environ["PREFECT_EPHEMERAL_START"] = "true"
     os.environ.pop("PREFECT_API_KEY", None)
     os.environ.pop("PREFECT_CLOUD_API_KEY", None)
     

@@ -1,0 +1,6 @@
+# Core dependencies for Loops project
+prefect>=3.7.0
+nanobot-ai>=0.1.0
+duckdb>=1.5.0
+mcp>=1.28.0
+python-dotenv>=0.21.0

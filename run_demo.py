@@ -65,8 +65,11 @@ def cleanup_and_initialize(archive_logs: bool = False) -> dict:
     run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
     
     # Configure Prefect to use local mode for all subprocesses
-    os.environ["PREFECT_API_URL"] = ""
+    # For Prefect 3.x, use ephemeral local server
+    os.environ["PREFECT_API_URL"] = "http://127.0.0.1:4200/api"
     os.environ["PREFECT_CLOUD_API_URL"] = ""
+    os.environ["PREFECT_MODE"] = "local"
+    os.environ["PREFECT_EPHEMERAL_START"] = "true"
     os.environ.pop("PREFECT_API_KEY", None)
     os.environ.pop("PREFECT_CLOUD_API_KEY", None)
     
@@ -178,9 +181,11 @@ def run_ingestion_flow(run_id: Optional[str] = None):
     # Build environment with run_id for unique log files
     run_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
     # Ensure Prefect uses local mode and no external services
-    run_env["PREFECT_API_URL"] = ""
+    # For Prefect 3.x, use ephemeral local server
+    run_env["PREFECT_API_URL"] = "http://127.0.0.1:4200/api"
     run_env["PREFECT_CLOUD_API_URL"] = ""
     run_env["PREFECT_MODE"] = "local"
+    run_env["PREFECT_EPHEMERAL_START"] = "true"
     run_env.pop("PREFECT_API_KEY", None)
     run_env.pop("PREFECT_CLOUD_API_KEY", None)
     if run_id:
@@ -291,9 +296,10 @@ def start_mcp_server():
         return None
     
     env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
-    env.setdefault("PREFECT_API_URL", "")
+    env.setdefault("PREFECT_API_URL", "http://127.0.0.1:4200/api")
     env.setdefault("PREFECT_CLOUD_API_URL", "")
     env.setdefault("PREFECT_MODE", "local")
+    env.setdefault("PREFECT_EPHEMERAL_START", "true")
     env.pop("PREFECT_API_KEY", None)
     env.pop("PREFECT_CLOUD_API_KEY", None)
     
@@ -853,9 +859,11 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
     # Build environment with run_id for unique log files
     base_env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
     # Ensure Prefect uses local mode
-    base_env["PREFECT_API_URL"] = ""
+    # For Prefect 3.x, use ephemeral local server
+    base_env["PREFECT_API_URL"] = "http://127.0.0.1:4200/api"
     base_env["PREFECT_CLOUD_API_URL"] = ""
     base_env["PREFECT_MODE"] = "local"
+    base_env["PREFECT_EPHEMERAL_START"] = "true"
     base_env.pop("PREFECT_API_KEY", None)
     base_env.pop("PREFECT_CLOUD_API_KEY", None)
     if run_id:
