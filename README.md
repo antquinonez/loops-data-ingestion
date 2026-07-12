@@ -31,7 +31,15 @@ This project showcases:
 
 ## Architecture: Hybrid Pipeline Model
 
-This project uses a **two-tier pipeline architecture**:
+For detailed architecture diagrams (Levels 3-5), see [ARCHITECTURE.md](ARCHITECTURE.md) which includes:
+- Pipeline generation workflow with agent context
+- Component interaction sequence diagrams
+- Individual pipeline structure
+- Agent context flow and lifecycle
+- MCP server integration details
+- Error handling and retry logic
+
+This project uses a **two-tier pipeline architecture** with **agentic loops** for autonomous troubleshooting.
 
 ### Tier 1: Prefect Orchestration Flow (DEMO ONLY)
 - **File**: `flows/ingestion_flow.py`
@@ -45,68 +53,117 @@ This project uses a **two-tier pipeline architecture**:
 - **Type**: Prefect flows with `@flow` and `@task` decorators (falls back to sync mode if no Prefect server)
 - **Status**: Succeeds by applying type conversions, NULL handling, and constraint enforcement
 
+### Level 1: System Overview with Agent Loops
+
+```mermaid
+flowchart TB
+    subgraph Context["📁 Project Context (Static)"]
+        S[("source_data.csv")]
+        SC[("schemas/*.yaml")]
+        C[("config/*.yaml")]
+        SK[("SKILLS.md")]
+    end
+    
+    subgraph MCP["🔗 MCP Server (Optional)"]
+        direction TB
+        MR[("Resources")]
+        MT[("Tools")]
+        MR -->|read-only| ML["ingestion.log"]
+        MR -->|read-only| MS["source_data.csv"]
+        MR -->|read-only| MD["ingestion.db"]
+        MT -->|executes| MQ["query_database()"]
+        MT -->|executes| MQR["get_data_quality_report()"]
+    end
+    
+    subgraph Agent["🤖 Nanobot Agent (Single Agent Loop)"]
+        direction TB
+        A1["1. Receive Task"]
+        A2["2. Load Context\n(SKILLS.md, schemas)"]
+        A3["3. Register Tools"]
+        A4["4. Execute Tools\n(inspect_file, check_schema, etc.)"]
+        A5["5. Generate Pipeline Code"]
+        A6["6. Return Result"]
+        
+        A1 --> A2 --> A3 --> A4 --> A5 --> A6
+    end
+    
+    subgraph Demo["🎭 Demo Orchestration"]
+        direction TB
+        R["run_demo.py"]
+        T1["Tier 1: ingestion_flow.py"]
+        T2["Tier 2: clean_*_pipeline.py"]
+        
+        R -->|runs| T1
+        T1 -->|fails, triggers| Agent
+        Agent -->|generates| T2
+        R -->|runs| T2
+    end
+    
+    Context --> |provided to| Agent
+    MCP -->|optional context| Agent
+    Demo -->|orchestrates| Agent
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    HYBRID PIPELINE ARCHITECTURE                 │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  TIER 1: Prefect (Orchestration)                             │
-│  ─────────────────────────────────                           │
-│  flows/ingestion_flow.py                                      │
-│  ┌─────────────────────────────────┐                         │
-│  │ @flow                                       │                         │
-│  │ def data_ingestion_pipeline():            │                         │
-│  │   @task                                     │                         │
-│  │   def validate_source_file():           ✓ PASS              │         │
-│  │   @task                                     │                         │
-│  │   def create_target_table():              ✓ PASS              │         │
-│  │   @task                                     │                         │
-│  │   def load_to_raw():                       ✓ PASS              │         │
-│  │   @task                                     │                         │
-│  │   def transform_and_load():              ✗ FAIL (intentionally) │
-│  │                                              │                 │
-│  │  - NOT NULL constraint violations          │                 │
-│  │  - Type conversion errors (N/A → INT)      │                 │
-│  │  - Invalid data formats                     │                 │
-│  └─────────────────────────────────┘                         │
-│                                                             │
-│         ↓ FAILS → Triggers Investigation                     │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│  TIER 2: Prefect (Cleaning)                                   │
-│  ─────────────────────────────────                           │
-│  pipelines/generated/clean_users_pipeline.py                 │
-│                                                             │
-│  @task                                                       │
-│  def load_source_data(path):                                │
-│      return pd.read_csv(path)                               ✓ PASS│
-│                                                             │
-│  @task                                                       │
-│  def clean_data(df):                                        │
-│      # Type conversions with defaults                       │
-│      df['age'] = pd.to_numeric(df['age'], errors='coerce')   │
-│                   .fillna(0).astype(int)                       │
-│      # Enforce constraints                                   │
-│      df['email'] = df['email'].fillna('unknown@example.com') │
-│      df['status'] = df['status'].apply(lambda x: x if x      │
-│                   in {'active', 'inactive'} else 'inactive')  │
-│                                                             │
-│  @task                                                       │
-│  def save_to_duckdb(df, table):                              │
-│      conn = duckdb.connect(...)                              │
-│      df.to_sql(table, conn, if_exists='replace')             ✓ PASS│
-│                                                             │
-│  @flow                                                       │
-│  def clean_and_load_pipeline():                             │
-│      df = load_source_data(...)                              │
-│      df = clean_data(df)                                     │
-│      save_to_duckdb(df, "users_clean")                      │
-│                                                             │
-│                    ✓ ALL CHECKS PASS
-└─────────────────────────────────────────────────────────────┘
+
+### Level 2: Data Flow with Context History
+
+```mermaid
+flowchart LR
+    subgraph Input["📥 Input"]
+        CSV[("source_data.csv")]
+        IDEAL[("users_schema.yaml")]
+    end
+    
+    subgraph Tier1["🔴 Tier 1: Demo Failure"]
+        VF["validate_source_file()"]
+        CT["create_target_table()"]
+        LR["load_to_raw()"]
+        TL["transform_and_load()\n❌ FAILS"]
+        
+        CSV --> VF --> CT --> LR --> TL
+    end
+    
+    subgraph Investigation["🔍 Investigation Phase (Agent Loop)"]
+        direction TB
+        I1["Context Loaded:\n- ingestion.log\n- raw_users table\n- source_data.csv sample"]
+        I2["Tools Used:\n- inspect_file\n- check_schema\n- query_duckdb"]
+        I3["Findings:\n- NULL email (row 6)\n- 'N/A' age (row 7)\n- Malformed email (row 11)"]
+        
+        I1 --> I2 --> I3
+    end
+    
+    subgraph PipelineGen["🏗️ Pipeline Generation (Agent Loop)"]
+        direction TB
+        PG1["Context Loaded:\n- ideal_schema.yaml\n- inferred_source_schema\n- comparison results"]
+        PG2["Tools Used:\n- load_ideal_schema\n- infer_source_schema\n- compare_schemas\n- generate_cleaning_pipeline"]
+        PG3["Output:\n- clean_users_pipeline.py"]
+        
+        PG1 --> PG2 --> PG3
+    end
+    
+    subgraph Tier2["🟢 Tier 2: Cleaning Success"]
+        LSD["load_source_data()"]
+        CD["clean_data()\n✅ Handles NULLs, types, constraints"]
+        LIS["load_ideal_schema()"]
+        VCD["validate_cleaned_data()"]
+        STD["save_to_duckdb()"]
+        
+        CSV --> LSD --> CD --> LIS --> VCD --> STD
+    end
+    
+    TL -->|triggers| Investigation
+    Investigation -->|informs| PipelineGen
+    PipelineGen -->|creates| Tier2
+    IDEAL --> PipelineGen
+    
+    classDef agentLoop fill:#e1f5fe,stroke:#0288d1
+    classDef dataStore fill:#e8f5e9,stroke:#2e7d32
+    classDef failure fill:#ffebee,stroke:#c62828
+    classDef success fill:#e8f5e9,stroke:#2e7d32
+    
+    class Investigation,PipelineGen agentLoop
+    class CSV,IDEAL dataStore
+    class TL failure
+    class VCD,CD,STD success
 ```
 
 ### Why Two Different Pipeline Types?
