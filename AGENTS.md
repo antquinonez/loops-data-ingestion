@@ -4,6 +4,32 @@ This document provides instructions, constraints, and best practices for AI agen
 
 ---
 
+## 🔴 Critical Implementation Patterns
+
+### Hybrid Prefect/sync Pipelines
+⚠️ **ALL GENERATED PIPELINES MUST USE THIS PATTERN:**
+
+- Use Prefect 3.7+ decorators (`@flow`, `@task`)
+- **Always include sync fallback** for when no Prefect server is available
+- Check server availability: `os.environ.get("PREFECT_API_KEY")` and `PREFECT_EPHEMERAL_START`
+- Define dummy decorators when server is unavailable
+- See template: `agents/pipeline_builder/flow_template_prefect_v3.txt`
+
+### Pipeline-Aware Validation (Lazy Generation)
+- ⚠️ **DO NOT pre-generate validation checks** during pipeline creation
+- Use `validate_pipeline_output()` with pipeline metadata
+- Pass `source_path` and `source_row_count` (don't query raw_ tables)
+- Let the function generate checks on-demand from schema
+- Cache generated checks to `pipelines/validation/{output_table}_validation_checks.json`
+
+### Single Agent Architecture
+- Use **one Nanobot instance** with sequential phases
+- Phase 1: Investigation (uses `flows/nanobot_tools.py`)
+- Phase 2: Pipeline Generation (uses `agents/pipeline_builder/nanobot_tools.py`)
+- Maintains context continuity between phases
+
+---
+
 ## Overview
 
 This project is an **autonomous data ingestion troubleshooting system** that uses Nanobot AI agents to detect, investigate, and fix data quality issues in ETL pipelines. When working with this codebase, you are expected to:
@@ -18,15 +44,9 @@ This project is an **autonomous data ingestion troubleshooting system** that use
 
 ## Project Architecture
 
-### Entry Point
+### Agent Architecture: Single Instance, Multiple Roles
 
-- **`run_demo.py`** - Main entry point that orchestrates the complete workflow
-  - Step 1: Runs ingestion flow (fails intentionally)
-  - Step 2: Tests investigation tools
-  - Step 3: Triggers Nanobot investigation
-  - Step 4: Generates and executes cleaning pipelines
-
-### Core Components
+This project uses **a single Nanobot agent instance** that performs multiple roles sequentially:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -46,17 +66,30 @@ This project is an **autonomous data ingestion troubleshooting system** that use
               │                     │                     │
               ▼                     ▼                     ▼
      ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-     │  Investigates    │   │  Generates       │   │  Defines         │
-     │  failures        │   │  cleaning code   │   │  expected        │
-     │                 │   │                 │   │  schemas         │
+     │  Phase 1:        │   │  Phase 2:       │   │  Defines         │
+     │  Investigation   │   │  Pipeline        │   │  expected        │
+     │  (Single Agent)  │   │  Generation      │   │  schemas         │
+     │                 │   │  (Same Agent)    │   │                  │
      └─────────────────┘   └─────────────────┘   └─────────────────┘
 ```
+
+**Key Insight**: Both investigation and pipeline generation are performed by the **same Nanobot instance** in sequential phases, maintaining context continuity.
+
+### Entry Point
+
+- **`run_demo.py`** - Main entry point that orchestrates the complete workflow
+  - Step 1: Runs ingestion flow (fails intentionally)
+  - Step 2: Tests investigation tools
+  - Step 3: Triggers Nanobot investigation (Phase 1)
+  - Step 4: Generates and executes cleaning pipelines (Phase 2)
 
 ---
 
 ## Agent Roles and Responsibilities
 
-### 1. Investigation Agent
+**IMPORTANT**: This project uses **a single Nanobot agent instance** that sequentially performs both investigation and pipeline generation. The roles below represent **phases** of the same agent, not separate agents.
+
+### Phase 1: Investigation Role
 
 **Purpose**: Diagnose data ingestion failures
 
@@ -74,27 +107,31 @@ This project is an **autonomous data ingestion troubleshooting system** that use
 3. Query `raw_users` table with `query_duckdb`
 4. Use `check_schema` to validate against ideal schema
 5. Identify root cause and recommend fixes
+6. **Transition to Phase 2**: Register pipeline builder tools and proceed to generation
 
 **Configuration**: `config/nanobot_config.yaml`
 
-### 2. Pipeline Builder Agent
+### Phase 2: Pipeline Builder Role
 
-**Purpose**: Generate data cleaning pipelines automatically
+**Purpose**: Generate **hybrid Prefect/sync** data cleaning pipelines automatically
 
 **Tools Available**:
 - `load_ideal_schema()` - Load schema from YAML
 - `infer_source_schema(file_path, sample_size)` - Infer schema from CSV
 - `compare_schemas(source_path, ideal_path)` - Compare schemas
-- `generate_cleaning_pipeline(source_path, ideal_path, output_table)` - Generate complete pipeline
+- `generate_cleaning_pipeline(source_path, ideal_path, output_table)` - Generate complete pipeline with Prefect decorators + sync fallback
 
 **Expected Workflow**:
 1. Load ideal schema with `load_ideal_schema()`
 2. Infer source schema with `infer_source_schema()`
 3. Compare with `compare_schemas()`
-4. Generate cleaning code with `generate_cleaning_pipeline()`
+4. Generate **hybrid Prefect/sync** cleaning code with `generate_cleaning_pipeline()`
 5. Save to `pipelines/generated/`
+6. Validate output using pipeline-aware validation (lazy check generation)
 
 **Configuration**: `agents/pipeline_builder/config.json`
+
+**Key Difference**: The generated pipelines use **hybrid Prefect/sync architecture** - they include Prefect 3.x decorators but fall back to synchronous execution when no Prefect server is available.
 
 ---
 
@@ -113,6 +150,8 @@ PYTHONPATH=$(pwd)
 
 ### Virtual Environment
 
+**Required Dependencies**: Prefect 3.7+ is required for hybrid pipeline generation.
+
 ```bash
 # Activate the existing venv
 source venv/bin/activate  # Linux/Mac
@@ -121,7 +160,7 @@ venv\Scripts\activate     # Windows
 # If venv doesn't exist
 python -m venv venv
 source venv/bin/activate
-pip install -q nanobot duckdb prefect python-dateutil mcp python-dotenv
+pip install -q nanobot duckdb>=1.5.0 prefect>=3.7.0 mcp>=1.28.0 pandas python-dotenv
 ```
 
 ### Path Configuration
@@ -297,9 +336,12 @@ loops/
 │   ├── nanobot_tools.py     # Investigation tools
 │   └── mcp_server.py        # MCP server
 ├── pipelines/               # Generated pipelines
-│   └── generated/           # Auto-generated by agents
+│   └── generated/           # Auto-generated hybrid Prefect/sync pipelines
 ├── schemas/                 # Schema definitions
 │   └── *.yaml              # YAML schema files
+├── skills/                  # Skill loading utilities
+│   ├── __init__.py         # SkillLoader class for loading skills
+│   └── utils.py            # Utility functions for agent context
 ├── logs/                    # Log files
 └── *.py                     # Entry point scripts
 ```
@@ -340,23 +382,26 @@ data_path = "../data/source_data.csv"
 
 ### When Generating Pipeline Code
 
-1. **Use the existing templates** in `agents/pipeline_builder/flow_template.txt`
+1. **Use the existing templates** in `agents/pipeline_builder/flow_template_prefect_v3.txt`
 2. **Follow the pattern** from existing generated pipelines
-3. **Include proper error handling**
-4. **Add logging** for debugging
-5. **Use COALESCE and CAST** for type conversions in SQL, or pandas with Prefect tasks
+3. **Include proper error handling** with try/except blocks
+4. **Add logging** for debugging using Prefect-compatible logger
+5. **Use pandas with Prefect tasks** for data transformations
 6. **Respect default values** from schema definitions
+7. **Include hybrid Prefect/sync fallback** - always check for server availability
 
-### Pipeline Generation Checklist
+### Pipeline Generation Checklist (Hybrid Prefect/sync)
 
-- [ ] Load source data correctly
-- [ ] Handle NULL values with defaults from schema
-- [ ] Convert types with CAST and COALESCE
-- [ ] Respect constraints (min, max, enum)
-- [ ] Validate output data
-- [ ] Include proper error handling
-- [ ] Add logging statements
-- [ ] Follow existing code style
+- [ ] Use Prefect 3.7+ decorators (`@flow`, `@task`)
+- [ ] Include sync fallback with dummy decorators
+- [ ] Check `PREFECT_API_KEY` and `PREFECT_EPHEMERAL_START` environment variables
+- [ ] Load source data correctly with pandas
+- [ ] Handle NULL values with defaults from schema using `.fillna()`
+- [ ] Convert types with `pd.to_numeric(..., errors='coerce').fillna(default).astype(type)`
+- [ ] Respect constraints (min, max, enum) with validation
+- [ ] Validate output data using pipeline-aware validation
+- [ ] Include proper error handling and logging
+- [ ] Follow existing code style from generated pipelines
 
 ### Example Generated Pipeline Structure
 
@@ -567,12 +612,20 @@ def test_tool_functionality():
 
 ### Test Execution
 
+**Total: 103 tests across all test files**
+
 ```bash
 # Run specific test
-python -m pytest test_pipeline_tools_with_nanobot.py -v
+python -m pytest tests/test_pipeline_tools_with_nanobot.py -v
 
-# Run all tests
+# Run all tests (103 total)
 python -m pytest -v
+
+# Run specific test suites
+python -m pytest tests/test_pipeline_builder.py -v    # Pipeline builder tools (27 tests)
+python -m pytest tests/test_limits.py -v              # Pipeline attempt tracking (32 tests)
+python -m pytest tests/test_mcp_server.py -v           # MCP server functionality (20 tests)
+python -m pytest test_validation.py -v                  # Validation agent (24 tests)
 
 # Run with coverage
 python -m pytest --cov=flows --cov=agents -v
@@ -617,6 +670,39 @@ print(result)
 
 ---
 
+## Enhanced Error Handling
+
+### PipelineAttemptTracker (utils/limits.py)
+
+The system now includes circuit breaker pattern for pipeline execution:
+
+```python
+from utils.limits import PipelineAttemptTracker
+
+tracker = PipelineAttemptTracker()
+
+if tracker.should_attempt(pipeline_name):
+    try:
+        # execute pipeline
+        result = run_pipeline()
+        tracker.record_success(pipeline_name)
+        return result
+    except Exception as e:
+        tracker.record_failure(pipeline_name, str(e))
+        raise
+else:
+    raise CircuitBreakerError(f"Too many failures for {pipeline_name}")
+```
+
+**Features**:
+- Tracks attempts per pipeline
+- Implements exponential backoff
+- Prevents infinite loops
+- Detects repeated errors
+- Circuit breaker pattern for stability
+
+---
+
 ## Constraints and Limitations
 
 ### Do NOT
@@ -628,16 +714,23 @@ print(result)
 - [ ] Hardcode API keys in files (use environment variables)
 - [ ] Create files outside the project structure
 - [ ] Modify generated files in `pipelines/generated/` manually (they are auto-generated)
+- [ ] Generate pipelines without hybrid Prefect/sync fallback
+- [ ] Pre-generate validation checks (use lazy generation instead)
+- [ ] Query non-existent `raw_*` tables for source data (use pipeline metadata)
 
 ### DO
 
 - [ ] Follow existing code patterns and style
 - [ ] Use absolute paths from `PROJECT_ROOT`
-- [ ] Add proper error handling
-- [ ] Include logging for debugging
+- [ ] Add proper error handling with try/except blocks
+- [ ] Include logging for debugging using Prefect-compatible logger
 - [ ] Test new functionality before committing
 - [ ] Update documentation when adding new features
 - [ ] Respect the existing architecture
+- [ ] Use hybrid Prefect/sync patterns for all generated pipelines
+- [ ] Use pipeline-aware validation with lazy check generation
+- [ ] Register both investigation and pipeline builder tools to the same agent
+- [ ] Maintain context continuity between Phase 1 and Phase 2
 
 ---
 
@@ -653,6 +746,8 @@ print(result)
 4. **Register the tool**: Update `run_demo.py` or create registration code
 5. **Test the tool**: Create a test in `test_*.py`
 6. **Document the tool**: Update this file and README.md
+
+**Note**: If the tool is for validation, ensure it uses **lazy validation check generation** pattern.
 
 ### Adding a New Data Type
 
@@ -673,24 +768,35 @@ print(result)
 
 ## Example Agent Session
 
-Here's how a typical agent session should work:
+Here's how a typical agent session should work with the **single agent, multiple phases** approach:
 
 ```
 USER: "Investigate the data ingestion failure and fix it."
 
-AGENT:
+AGENT (Single Nanobot Instance):
+Phase 1 - Investigation:
 1. Reading logs/ingestion.log to understand the error...
 2. Inspecting data/source_data.csv...
 3. Querying raw_users table...
 4. Comparing source schema with ideal schema...
 5. Found 3 issues: NULL email, invalid age, malformed email
-6. Generating cleaning pipeline...
-7. Saving to pipelines/generated/clean_users_pipeline.py
-8. Executing generated pipeline...
-9. Verification: Pipeline succeeded, users_clean table created
 
-Result: Ingestion failure fixed by generating and executing cleaning pipeline.
+Phase 2 - Pipeline Generation:
+6. Loading ideal schema from schemas/users_schema.yaml...
+7. Inferring source schema from data/source_data.csv...
+8. Comparing schemas to identify mismatches...
+9. Generating hybrid Prefect/sync cleaning pipeline...
+10. Saving to pipelines/generated/clean_users_pipeline.py
+
+Phase 3 - Validation:
+11. Executing generated hybrid pipeline (Prefect decorators + sync fallback)...
+12. Using pipeline-aware validation with lazy check generation...
+13. Verification: Pipeline succeeded, users_clean table created
+
+Result: Ingestion failure fixed by single agent performing investigation → generation → validation with context continuity.
 ```
+
+**Key Point**: All phases are performed by the **same Nanobot instance**, maintaining context throughout the workflow.
 
 ---
 
@@ -757,8 +863,11 @@ When working with this codebase:
 4. **Test your changes** - Verify new functionality works
 5. **Document** - Update documentation for new features
 6. **Respect constraints** - Follow the do's and don'ts above
+7. **Use single agent pattern** - One Nanobot instance with sequential phases (Investigation → Pipeline Generation → Validation)
 
 The system is designed to be **autonomous** - your goal as an agent is to help it work better, not to replace its functionality.
+
+**Remember**: All generated pipelines must use the **hybrid Prefect/sync pattern** with Prefect 3.7+ decorators and graceful fallback to synchronous execution.
 
 ---
 
@@ -766,10 +875,11 @@ The system is designed to be **autonomous** - your goal as an agent is to help i
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| Python | 3.10+ | Runtime |
+| Python | 3.11+ | Runtime (required by nanobot-ai and pandas 3.x) |
 | Nanobot | Latest | AI Agent Framework |
-| DuckDB | Latest | Database |
-| Prefect | Latest | Workflow Orchestration |
+| DuckDB | >=1.5.0 | Database |
+| Prefect | >=3.7.0 | Workflow Orchestration (required for hybrid sync fallback) |
+| MCP | >=1.28.0 | Model Context Protocol |
 
 ---
 
