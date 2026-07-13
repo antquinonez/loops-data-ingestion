@@ -5,7 +5,7 @@ These wrap the simple function-based tools from nanobot_tools.py into proper Too
 
 import json
 from typing import Any, Dict, Optional
-from nanobot.agent.tools.base import Tool, ToolResult
+from nanobot.agent.tools.base import Tool
 
 from flows.nanobot_tools import (
     read_logs,

@@ -11,7 +11,8 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
 
-from nanobot.agent.tools.base import Tool, tool_parameters, ToolResult
+from nanobot.agent.tools.base import Tool, tool_parameters
+from flows.nanobot_compat import ToolResult
 
 from utils.paths import paths
 

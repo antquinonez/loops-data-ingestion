@@ -42,16 +42,12 @@ docker-compose up -d
 echo ""
 echo "Container started. Running demo..."
 echo ""
+echo "Press Ctrl+C to stop the demo at any time."
+echo "Use './docker-stop.sh' to stop the container after the demo completes."
+echo ""
 
-# Run the demo and stream output
-docker-compose logs -f loops &
-LOGS_PID=$!
-
-# Run the demo in the container
+# Run the demo in the container and attach to its output
 docker-compose exec loops python run_demo.py
-
-# Clean up logs tail
-kill $LOGS_PID 2>/dev/null || true
 
 echo ""
 echo "========================================"
