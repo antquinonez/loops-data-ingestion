@@ -382,8 +382,8 @@ class GenerateCleaningPipelineTool(Tool):
         self, 
         source_path: str, 
         ideal_path: Optional[str] = None,
-        output_table: str = "users_clean",
-        source_table: str = "raw_users",
+        output_table: Optional[str] = None,
+        source_table: Optional[str] = None,
         **kwargs: Any
     ) -> Any:
         """Generate cleaning pipeline."""

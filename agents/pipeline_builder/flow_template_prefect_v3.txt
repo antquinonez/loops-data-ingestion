@@ -191,6 +191,21 @@ def validate_cleaned_data(df: pd.DataFrame, ideal_schema: dict, table_name: str)
         else:
             mapped_dtype = dtype_mapping.get(actual_dtype, "unknown")
         
+        # Override for JSON fields
+        if ideal_type == "json" and (mapped_dtype == "string" or actual_dtype == "object"):
+            is_valid_json = True
+            try:
+                import json
+                for val in df[col_name].dropna():
+                    if isinstance(val, (dict, list)):
+                        continue
+                    json.loads(str(val))
+            except:
+                is_valid_json = False
+            
+            if is_valid_json:
+                mapped_dtype = "json"
+        
         if mapped_dtype != ideal_type:
             col_validations["issues"].append({
                 "type": "type_mismatch",

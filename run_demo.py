@@ -872,13 +872,30 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
     # Reset tracker for this demo run
     pipeline_tracker.reset()
     
+    def get_output_table_from_schema(schema_path):
+        """Extract output_table from schema file."""
+        try:
+            import yaml
+            with open(schema_path, 'r') as f:
+                schema = yaml.safe_load(f)
+            tables = schema.get('tables', {})
+            if tables:
+                # Get the first table
+                first_table_name = list(tables.keys())[0]
+                first_table = tables[first_table_name]
+                # Return output_table from schema, or derive from table name
+                return first_table.get('output_table', f'{first_table_name}_clean')
+        except Exception as e:
+            print(f"⚠️  Could not read output_table from schema {schema_path}: {e}")
+        return None
+    
     # Define pipelines to process
     pipelines = [
         {
             'name': 'users',
             'source_path': str(paths.source_data),
             'ideal_path': str(paths.users_schema),
-            'output_table': 'users_clean',
+            'output_table': get_output_table_from_schema(str(paths.users_schema)),
             'output_file': 'pipelines/generated/clean_users_pipeline.py'
         }
     ]
@@ -889,7 +906,7 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
             'name': 'transactions',
             'source_path': str(paths.transactions_data),
             'ideal_path': str(paths.transactions_schema),
-            'output_table': 'transactions_clean',
+            'output_table': get_output_table_from_schema(str(paths.transactions_schema)),
             'output_file': 'pipelines/generated/clean_transactions_pipeline.py'
         })
     
@@ -899,7 +916,7 @@ def run_pipeline_builder_demo(run_id: Optional[str] = None):
             'name': 'orders',
             'source_path': str(paths.orders_data),
             'ideal_path': str(paths.orders_schema),
-            'output_table': 'orders_clean',
+            'output_table': get_output_table_from_schema(str(paths.orders_schema)),
             'output_file': 'pipelines/generated/clean_orders_pipeline.py'
         })
     

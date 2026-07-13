@@ -119,6 +119,23 @@ def _infer_type(values: List[str]) -> str:
     except:
         pass
     
+    # Check if all values are JSON strings
+    try:
+        import json
+        if all(((v.strip().startswith('{') and v.strip().endswith('}')) or 
+                (v.strip().startswith('[') and v.strip().endswith(']')))
+               for v in values if v):
+            # Try to parse at least one non-empty value to verify
+            verified = False
+            for v in values:
+                if v and v.strip():
+                    json.loads(v)
+                    verified = True
+            if verified:
+                return "json"
+    except:
+        pass
+        
     # Default to string
     return "string"
 
@@ -319,16 +336,16 @@ def _generate_recommendation(column: str, ideal_def: Dict, source_def: Dict, iss
 
 
 def generate_cleaning_pipeline(source_path: str, ideal_path: Optional[str] = None, 
-                               output_table: str = "users_clean",
-                               source_table: str = "raw_users") -> Dict[str, Any]:
+                               output_table: Optional[str] = None,
+                               source_table: Optional[str] = None) -> Dict[str, Any]:
     """
     Generate a complete cleaning pipeline based on schema comparison.
     
     Args:
         source_path: Path to source CSV file
         ideal_path: Path to ideal schema YAML file (optional)
-        output_table: Name of the output table
-        source_table: Name of the source table in DuckDB (default: raw_users)
+        output_table: Name of the output table (defaults to schema's output_table or users_clean)
+        source_table: Name of the source table in DuckDB (defaults to raw_{table_name})
     
     Returns:
         Dictionary with:
@@ -369,6 +386,18 @@ def generate_cleaning_pipeline(source_path: str, ideal_path: Optional[str] = Non
             ideal_table = tables[table_name]
         else:
             return {"error": "No tables found in ideal schema"}
+    
+    # Determine output_table from schema if not provided
+    if output_table is None:
+        output_table = ideal_table.get("output_table", f"{table_name}_clean")
+    
+    # Determine source_table from output_table if not provided
+    if source_table is None:
+        # Derive from output_table: users_clean -> raw_users
+        if output_table.endswith("_clean"):
+            source_table = f"raw_{output_table[:-6]}"
+        else:
+            source_table = f"raw_{output_table}"
     
     ideal_cols = ideal_table.get("columns", [])
     ideal_by_name = {col["name"]: col for col in ideal_cols} if isinstance(ideal_cols, list) else ideal_cols
@@ -595,6 +624,33 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
                         f"df['{col_name}'] = df['{col_name}'].clip(upper={max_val})"
                     )
         
+        # For JSON columns, handle parsing, validation, and schema evolution fallback
+        elif ideal_type == "json":
+            default_val = col_def.get("default", "{}")
+            if default_val is None:
+                default_val = "{}"
+            if isinstance(default_val, (dict, list)):
+                import json
+                default_val_str = json.dumps(default_val)
+            else:
+                default_val_str = str(default_val)
+                
+            transformations.append(
+                f"# Validate and clean JSON column {col_name} to handle changing schemas safely\n"
+                f"def clean_json_{col_name}(val):\n"
+                f"    import json\n"
+                f"    if pd.isna(val) or not val:\n"
+                f"        return '{default_val_str}'\n"
+                f"    try:\n"
+                f"        if isinstance(val, (dict, list)):\n"
+                f"            return json.dumps(val)\n"
+                f"        parsed = json.loads(str(val))\n"
+                f"        return json.dumps(parsed)\n"
+                f"    except Exception:\n"
+                f"        return '{default_val_str}'\n"
+                f"df['{col_name}'] = df['{col_name}'].apply(clean_json_{col_name})"
+            )
+        
         # Handle enum constraints - enforce valid values
         if "enum" in col_def:
             valid_values = col_def["enum"]
@@ -713,7 +769,7 @@ def _generate_prefect_cleaning_flow(source_path: str, output_table: str,
                 default = ideal_by_name[col_name].get("default")
                 
                 # Skip if already handled above
-                if ideal_type == "date" or (ideal_type == "integer" and ideal_by_name[col_name].get("constraints")):
+                if ideal_type == "date" or ideal_type == "json" or (ideal_type == "integer" and ideal_by_name[col_name].get("constraints")):
                     continue
                     
                 if ideal_type == "integer":

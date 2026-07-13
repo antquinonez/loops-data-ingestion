@@ -483,3 +483,72 @@ class TestIntegration:
         assert "def clean_data" in pipeline_code
         assert "def save_to_duckdb" in pipeline_code
         assert "def load_source_data" in pipeline_code
+
+
+class TestJSONEmbeddedSchema:
+    """Tests for handling embedded JSON columns in CSV files."""
+    
+    def test_infer_type_json(self):
+        """Test that JSON column type is correctly inferred."""
+        from agents.pipeline_builder.tools import _infer_type
+        
+        json_values = [
+            '{"theme": "dark", "version": 1}',
+            '{"theme": "light", "user_group": "admin"}',
+            '{"theme": "dark"}'
+        ]
+        assert _infer_type(json_values) == "json"
+        
+    def test_infer_source_schema_with_json(self, tmp_path):
+        """Test inferring source schema containing a JSON column."""
+        from agents.pipeline_builder.tools import infer_source_schema
+        
+        csv_content = """id,name,metadata
+1,Alice,"{""theme"": ""dark"", ""version"": 1}"
+2,Bob,"{""theme"": ""light"", ""user_group"": ""admin""}"
+3,Charlie,"{""theme"": ""dark""}"
+"""
+        csv_file = tmp_path / "test_json_data.csv"
+        csv_file.write_text(csv_content)
+        
+        inferred = infer_source_schema(str(csv_file))
+        assert "columns" in inferred
+        assert inferred["columns"]["metadata"]["type"] == "json"
+        
+    def test_generate_cleaning_pipeline_with_json(self, tmp_path):
+        """Test generating pipeline code for JSON columns."""
+        from agents.pipeline_builder.tools import generate_cleaning_pipeline
+        
+        csv_content = """id,name,metadata
+1,Alice,"{""theme"": ""dark"", ""version"": 1}"
+"""
+        csv_file = tmp_path / "test_json_data.csv"
+        csv_file.write_text(csv_content)
+        
+        schema_content = """
+tables:
+  users:
+    columns:
+      - name: id
+        type: integer
+      - name: name
+        type: string
+      - name: metadata
+        type: json
+        default: "{}"
+"""
+        schema_file = tmp_path / "test_json_schema.yaml"
+        schema_file.write_text(schema_content)
+        
+        pipeline = generate_cleaning_pipeline(
+            str(csv_file),
+            str(schema_file),
+            output_table="test_json_clean"
+        )
+        
+        assert "pipeline_code" in pipeline
+        code = pipeline["pipeline_code"]
+        assert "clean_json_metadata" in code
+        assert "json.loads" in code
+        assert "json.dumps" in code
+

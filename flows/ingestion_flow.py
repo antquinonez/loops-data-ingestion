@@ -94,6 +94,7 @@ def create_target_table() -> dict:
         join_date DATE NOT NULL,
         status VARCHAR NOT NULL,
         score FLOAT NOT NULL,
+        metadata VARCHAR,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id)
     )
@@ -113,7 +114,8 @@ def create_target_table() -> dict:
                 age VARCHAR,
                 join_date VARCHAR,
                 status VARCHAR,
-                score VARCHAR
+                score VARCHAR,
+                metadata VARCHAR
             )
         """)
         logger.info("Raw staging table created")
@@ -175,7 +177,7 @@ def transform_and_load() -> dict:
         logger.info("Attempting to insert into users table (this will fail)...")
         
         insert_sql = """
-        INSERT INTO users (id, name, email, age, join_date, status, score)
+        INSERT INTO users (id, name, email, age, join_date, status, score, metadata)
         SELECT 
             CAST(id AS INTEGER),
             name,
@@ -183,7 +185,8 @@ def transform_and_load() -> dict:
             CAST(age AS INTEGER),  -- This will fail on 'N/A'
             CAST(join_date AS DATE),
             status,
-            CAST(score AS FLOAT)
+            CAST(score AS FLOAT),
+            metadata
         FROM raw_users
         """
         

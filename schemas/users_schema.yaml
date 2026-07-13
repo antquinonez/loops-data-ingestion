@@ -6,7 +6,7 @@ version: 1
 tables:
   users:
     description: "Clean user data table with proper constraints"
-    
+    output_table: "users_clean"
     columns:
       - name: id
         type: integer
@@ -65,6 +65,12 @@ tables:
         constraints:
           min: 0.0
           max: 100.0
+          
+      - name: metadata
+        type: json
+        nullable: true
+        description: "Embedded user metadata JSON"
+        default: "{}"
 
 # Data quality rules
 quality_rules:

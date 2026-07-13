@@ -4,7 +4,7 @@ version: 1
 tables:
   transactions:
     description: "Clean transactions data table"
-    
+    output_table: "transactions_clean"
     columns:
       - name: transaction_id
         type: integer
