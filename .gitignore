@@ -19,6 +19,10 @@ Thumbs.db
 # Virtual environment
 venv/
 
+# Docker
+# Note: Dockerfile, docker-compose.yml, .dockerignore, docker-run.sh, docker-stop.sh
+# are NOT ignored - they are source configuration files that should be committed
+
 # Project specific
 logs/
 sessions/

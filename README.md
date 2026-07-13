@@ -329,6 +329,104 @@ python flows/mcp_server.py --host 127.0.0.1 --port 8081
 
 ---
 
+## Docker (Recommended)
+
+The project includes full Docker support with `docker-compose` for easy setup and development.
+
+### Prerequisites
+
+- Docker installed on your system
+- Docker Compose (included with Docker Desktop)
+- OpenAI API key in your `.env` file
+
+### Setup
+
+1. **Ensure your `.env` file has your OpenAI API key** (it is NOT baked into the Docker image):
+
+```bash
+# .env file in project root
+OPENAI_API_KEY=your-api-key-here
+OPENAI_MODEL=gpt-4.1-mini-2025-04-14
+```
+
+2. **Build and start the container**:
+
+```bash
+# Build the image and start the container
+docker-compose up -d --build
+
+# Or for interactive mode (attaches to container):
+docker-compose up --build
+```
+
+3. **Run the demo inside the container**:
+
+```bash
+# Execute the demo in the running container
+docker-compose exec loops python run_demo.py
+```
+
+### Convenience Scripts
+
+For easier management, use the provided convenience scripts:
+
+```bash
+# Start the demo (builds, starts container, runs demo)
+./docker-run.sh
+
+# Stop the demo container
+./docker-stop.sh
+```
+
+Make sure they are executable:
+
+```bash
+chmod +x docker-run.sh docker-stop.sh
+```
+
+### Common Docker Commands
+
+```bash
+# Build the image
+docker-compose build
+
+# Start the container (detached)
+docker-compose up -d
+
+# Stop the container
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Run a specific command
+docker-compose exec loops python demo_pipeline_builder.py
+
+# Open a shell in the container
+docker-compose exec loops bash
+
+# Rebuild and restart (after code changes)
+docker-compose up -d --build --force-recreate
+```
+
+### File Persistence
+
+The following directories are mounted as volumes and persist outside the container:
+- `./data/` - DuckDB database files
+- `./logs/` - Application logs
+- `./pipelines/` - Generated cleaning pipelines
+- `./schemas/` - Schema definitions (read-only)
+- `./config/` - Configuration files (read-only)
+
+### Security Note
+
+The `.env` file and `.dockerignore` are configured so that:
+- **OPENAI_API_KEY is never baked into the Docker image**
+- The `.env` file is loaded by docker-compose at runtime
+- Source data files (`.csv`, `.db`) are excluded from the image but mounted as volumes
+
+---
+
 ## Architecture
 
 ### Workflow Overview

@@ -1,0 +1,23 @@
+services:
+  loops:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: loops-demo
+    environment:
+      - PYTHONPATH=/app
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1-mini-2025-04-14}
+    volumes:
+      # Persist data directory (DuckDB database)
+      - ./data:/app/data
+      # Persist logs
+      - ./logs:/app/logs
+      # Persist generated pipelines
+      - ./pipelines:/app/pipelines
+      # Persist schemas and configs (read-only)
+      - ./schemas:/app/schemas:ro
+      - ./config:/app/config:ro
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
