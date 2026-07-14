@@ -7,10 +7,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Get current user's UID and GID (same as docker-run.sh)
-UID=${UID:-$(id -u)}
-GID=${GID:-$(id -g)}
-export UID
-export GID
+# Use DOCKER_* vars to avoid conflict with shell readonly UID/GID
+DOCKER_USER_ID=${UID:-$(id -u)}
+DOCKER_GROUP_ID=${GID:-$(id -g)}
+export DOCKER_USER_ID
+export DOCKER_GROUP_ID
 
 echo "========================================"
 echo "  Stopping Loops Demo Docker Container"

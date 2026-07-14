@@ -383,7 +383,7 @@ chmod +x docker-run.sh docker-stop.sh
 
 #### How It Works
 
-The scripts automatically detect your **UID and GID** and pass them to Docker. This ensures:
+The scripts automatically detect your **UID and GID** (using `DOCKER_USER_ID` and `DOCKER_GROUP_ID` to avoid shell conflicts) and pass them to Docker. This ensures:
 - Files created in mounted volumes (data/, logs/, pipelines/) are owned by **you**, not root
 - No `sudo` required to access files like `data/ingestion.db`
 - DBeaver and other tools can open the database directly

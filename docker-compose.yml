@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
+        - USER_ID=${DOCKER_USER_ID:-1000}
+        - GROUP_ID=${DOCKER_GROUP_ID:-1000}
     container_name: loops-demo
     environment:
       - PYTHONPATH=/app
