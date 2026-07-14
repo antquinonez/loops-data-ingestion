@@ -56,7 +56,7 @@ echo "Press Ctrl+C to stop the demo at any time."
 echo "Use './docker-stop.sh' to stop the container after the demo completes."
 echo ""
 
-# Run the demo in the container and attach to its output
+# Run the demo in the container
 docker-compose exec loops python run_demo.py
 
 echo ""

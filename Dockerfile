@@ -42,5 +42,5 @@ ENV PYTHONPATH=/app
 # Switch to non-root user
 USER appuser
 
-# Default command (can be overridden)
-CMD ["python", "run_demo.py"]
+# Default command: keep container running (demo is run via docker-compose exec)
+CMD ["tail", "-f", "/dev/null"]

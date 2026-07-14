@@ -681,6 +681,9 @@ def run_full_demo(archive_logs: bool = False):
         if generated_pipeline.exists():
             print("\n✓ Nanobot successfully created a cleaning pipeline!")
             print(f"  Pipeline saved to: {generated_pipeline}")
+            # Run pipeline builder to execute the generated pipeline
+            print("  Running pipeline builder to execute the generated pipeline...")
+            run_pipeline_builder_demo(run_id=run_id)
         else:
             print("\n⚠️  Nanobot did not create a pipeline file.")
             print("  Running pipeline builder demo as fallback...")
