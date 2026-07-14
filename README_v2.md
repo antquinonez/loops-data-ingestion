@@ -1,6 +1,6 @@
 # Loops Data Ingestion System (README v2)
 
-[![Tests: 103 passed](https://img.shields.io/badge/tests-103%20passed-brightgreen)](https://github.com)
+[![Tests: 106 passed](https://img.shields.io/badge/tests-106%20passed-brightgreen)](https://github.com)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
 [![Prefect 3.7+](https://img.shields.io/badge/prefect-3.7+-orange)](https://prefect.io)
 [![MCP Supported](https://img.shields.io/badge/MCP-Supported-lightgrey)](https://modelcontextprotocol.io)
@@ -398,7 +398,7 @@ loops/
 
 ## 🧪 Testing Suite
 
-The repository contains a suite of **103 unit and integration tests** verifying tool registry, limits, validation generation, and MCP endpoints.
+The repository contains a suite of **106 unit and integration tests** verifying tool registry, limits, validation generation, MCP endpoints, and pipeline tools with Nanobot integration.
 
 To run the tests, ensure your virtual environment is active, or invoke using the venv python executable:
 
@@ -412,6 +412,80 @@ Run specific test suites:
 - **Pipeline Limits / Backoff**: `venv/bin/python -m pytest tests/test_limits.py -v` (32 tests)
 - **MCP Server**: `venv/bin/python -m pytest tests/test_mcp_server.py -v` (20 tests)
 - **Validation Agent**: `venv/bin/python -m pytest test_validation.py -v` (24 tests)
+- **Nanobot Integration**: `venv/bin/python -m pytest tests/test_pipeline_tools_with_nanobot.py -v` (3 tests)
+
+---
+
+## 🐳 Docker Support
+
+The project includes full Docker support with `docker-compose` for easy setup and development.
+
+### Prerequisites
+- Docker installed on your system
+- Docker Compose (included with Docker Desktop)
+- OpenAI API key in your `.env` file
+
+### Quick Start with Docker
+
+1. **Ensure your `.env` file has your OpenAI API key**:
+   ```bash
+   OPENAI_API_KEY=your-api-key-here
+   OPENAI_MODEL=gpt-4.1-mini-2025-04-14
+   ```
+
+2. **Use the convenience scripts**:
+   ```bash
+   # Make scripts executable (one-time setup)
+   chmod +x docker-run.sh docker-stop.sh docker-clean.sh
+   
+   # Start the demo
+   ./docker-run.sh
+   
+   # Query the database (container stays running)
+   docker-compose exec loops python3 -c "import duckdb; conn = duckdb.connect('data/ingestion.db'); print(conn.execute('SHOW TABLES').fetchall()); conn.close()"
+   
+   # Stop the container
+   ./docker-stop.sh
+   
+   # Clean up and start fresh
+   ./docker-clean.sh
+   ```
+
+### Manual Docker Commands
+
+```bash
+# Build the image and start the container
+docker-compose up -d --build
+
+# Execute the demo in the running container
+docker-compose exec loops python run_demo.py
+
+# View logs
+docker-compose logs -f
+
+# Open a shell in the container
+docker-compose exec loops bash
+
+# Stop the container
+docker-compose down
+```
+
+### How It Works
+
+The Docker setup uses UID/GID passing to ensure files created in mounted volumes are owned by you:
+- The container runs with `tail -f /dev/null` as its CMD to keep it running
+- `docker-run.sh` uses `docker-compose exec` to run the demo inside the container
+- This ensures only one instance of `run_demo.py` executes (no duplicate runs)
+- No `sudo` required - all files are owned by your user
+
+### Generated Tables
+
+After running the demo, the DuckDB database (`data/ingestion.db`) contains:
+- `raw_users` - Raw staging data (13 rows)
+- `users` - Strict target table (0 rows - transform intentionally fails)
+- `users_clean` - Cleaned user data (13 rows)
+- `orders_clean` - Cleaned orders data (13 rows)
+- `transactions_clean` - Cleaned transactions data (13 rows)
 
 ---
 

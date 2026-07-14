@@ -1,6 +1,6 @@
 # Data Ingestion Troubleshooting with Nanobot
 
-[![Tests: 103 passed](https://img.shields.io/badge/tests-103%20passed-brightgreen)](https://github.com)
+[![Tests: 106 passed](https://img.shields.io/badge/tests-106%20passed-brightgreen)](https://github.com)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
 [![Prefect 3.7+](https://img.shields.io/badge/prefect-3.7+-orange)](https://prefect.io)
 [![MCP Supported](https://img.shields.io/badge/MCP-Supported-lightgrey)](https://modelcontextprotocol.io)
@@ -16,7 +16,7 @@ This project showcases:
 3. **Automatic Pipeline Generation**: AI-powered pipeline builder that generates **hybrid Prefect/sync cleaning pipelines** with Prefect decorators to fix data issues
 4. **Schema Validation**: Automatic comparison of source data against ideal schemas
 5. **Self-Healing**: The system can generate and execute cleaning pipelines to resolve ingestion failures
-6. **Comprehensive Testing**: 103 tests covering all components with 100% pass rate
+6. **Comprehensive Testing**: 106 tests covering all components with 100% pass rate
 
 ### Key Technologies
 
@@ -227,11 +227,26 @@ loops/
 │   └── nanobot.log           # Nanobot investigation logs
 ├── sessions/
 │   └── *.jsonl              # Session files
+├── utils/
+│   ├── limits.py             # Pipeline attempt tracking and circuit breakers
+│   ├── paths.py              # Centralized path management
+│   ├── cleanup.py            # Cleanup utilities for logs and databases
+│   └── validation.py         # Validation check generators
+├── logs/
+│   ├── ingestion.log         # Ingestion pipeline logs
+│   ├── prefect.log           # Prefect flow logs
+│   └── nanobot.log           # Nanobot investigation logs
 ├── run_demo.py               # Main demo entry point (orchestrates all stages)
 ├── demo_pipeline_builder.py # Standalone pipeline builder demo
 ├── SKILLS.md                # Master skills index for all stages
 ├── AGENTS.md               # Instructions for AI agents working with this repo
 ├── README.md                # This file
+├── Dockerfile               # Docker image configuration
+├── docker-compose.yml       # Docker Compose configuration
+├── docker-run.sh            # Convenience script to start demo in Docker
+├── docker-stop.sh           # Convenience script to stop Docker container
+├── docker-clean.sh          # Convenience script to clean up and start fresh
+├── .dockerignore            # Files to exclude from Docker image
 └── .env                    # Environment variables (OPENAI_API_KEY)
 ```
 
@@ -349,19 +364,24 @@ OPENAI_API_KEY=your-api-key-here
 OPENAI_MODEL=gpt-4.1-mini-2025-04-14
 ```
 
-2. **Build and start the container**:
+2. **Use the convenience script** (recommended):
 
 ```bash
-# Build the image and start the container
-docker-compose up -d --build
+# Make scripts executable (one-time setup)
+chmod +x docker-run.sh docker-stop.sh docker-clean.sh
 
-# Or for interactive mode (attaches to container):
-docker-compose up --build
+# Start the demo (builds image, starts container, runs demo)
+./docker-run.sh
+
+# The container stays running after demo completes - you can query the database
 ```
 
-3. **Run the demo inside the container**:
+3. **Or run manually**:
 
 ```bash
+# Build the image and start the container (container stays running with tail -f /dev/null)
+docker-compose up -d --build
+
 # Execute the demo in the running container
 docker-compose exec loops python run_demo.py
 ```
@@ -386,10 +406,12 @@ chmod +x docker-run.sh docker-stop.sh docker-clean.sh
 
 #### How It Works
 
-The scripts automatically detect your **UID and GID** (using `DOCKER_USER_ID` and `DOCKER_GROUP_ID` to avoid shell conflicts) and pass them to Docker. This ensures:
+The scripts automatically detect your **UID and GID** (using `DOCKER_USER_ID` and `DOCKER_GROUP_ID` to avoid shell conflicts) and pass them to Docker. The container runs with `tail -f /dev/null` as its CMD to keep it running, while `docker-run.sh` executes the demo via `docker-compose exec`. This ensures:
+- Only one instance of `run_demo.py` runs (no duplicate execution)
 - Files created in mounted volumes (data/, logs/, pipelines/) are owned by **you**, not root
 - No `sudo` required to access files like `data/ingestion.db`
 - DBeaver and other tools can open the database directly
+- Container stays running after demo completes for database querying
 
 #### Important: Auto-Cleanup Behavior
 
@@ -428,11 +450,12 @@ docker-compose up -d --build --force-recreate
 ### File Persistence
 
 The following directories are mounted as volumes and persist outside the container:
-- `./data/` - DuckDB database files
+- `./data/` - DuckDB database files (includes `ingestion.db` with tables: `raw_users`, `users`, `users_clean`, `orders_clean`, `transactions_clean`)
 - `./logs/` - Application logs
 - `./pipelines/` - Generated cleaning pipelines
 - `./schemas/` - Schema definitions (read-only)
 - `./config/` - Configuration files (read-only)
+- `./memory/` - Nanobot memory directory
 
 ### File Ownership
 
@@ -740,11 +763,12 @@ CREATE TABLE users_clean (
 - `tests/test_limits.py` - Tests for pipeline limits and attempt tracking (32 tests)
 - `test_validation.py` - Tests for validation agent and checks (24 tests)
 - `tests/test_mcp_server.py` - Tests for MCP server functionality (20 tests)
+- `tests/test_pipeline_tools_with_nanobot.py` - Tests for pipeline tools with Nanobot integration (3 tests)
 
 ### Run Tests
 
 ```bash
-# Run all tests (103 total)
+# Run all tests (106 total)
 python -m pytest -v
 
 # Run specific test suites
@@ -752,6 +776,7 @@ python -m pytest tests/test_pipeline_builder.py -v  # Pipeline builder
 python -m pytest tests/test_limits.py -v           # Limits/attempt tracking
 python -m pytest tests/test_mcp_server.py -v        # MCP server
 python -m pytest test_validation.py -v            # Validation
+python -m pytest tests/test_pipeline_tools_with_nanobot.py -v  # Nanobot integration
 
 # Run with coverage
 python -m pytest --cov=flows --cov=agents -v
