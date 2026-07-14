@@ -372,13 +372,16 @@ For easier management, use the provided convenience scripts:
 
 ```bash
 # Make executable (one-time setup)
-chmod +x docker-run.sh docker-stop.sh
+chmod +x docker-run.sh docker-stop.sh docker-clean.sh
 
 # Start the demo (builds image with your UID/GID, starts container, runs demo)
 ./docker-run.sh
 
 # Stop the demo container
 ./docker-stop.sh
+
+# Clean all generated files and start fresh
+./docker-clean.sh
 ```
 
 #### How It Works
@@ -387,6 +390,15 @@ The scripts automatically detect your **UID and GID** (using `DOCKER_USER_ID` an
 - Files created in mounted volumes (data/, logs/, pipelines/) are owned by **you**, not root
 - No `sudo` required to access files like `data/ingestion.db`
 - DBeaver and other tools can open the database directly
+
+#### Important: Auto-Cleanup Behavior
+
+**By design, `run_demo.py` cleans up at the start of every run:**
+- Deletes `data/ingestion.db` (and related files)
+- Deletes `logs/*.log` files
+- Deletes `pipelines/generated/*.py` files
+
+This ensures each demo run starts with a clean state. To preserve data between runs, use `docker-clean.sh` selectively or modify the cleanup behavior in `run_demo.py`.
 
 ### Common Docker Commands
 
