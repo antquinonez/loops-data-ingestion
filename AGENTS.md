@@ -389,6 +389,8 @@ data_path = "../data/source_data.csv"
 5. **Use pandas with Prefect tasks** for data transformations
 6. **Respect default values** from schema definitions
 7. **Include hybrid Prefect/sync fallback** - always check for server availability
+8. **Load data directly from CSV** - pipelines read from CSV files, not from raw_* tables
+9. **Handle all three data types** - generate pipelines for users, orders, and transactions when applicable
 
 ### Pipeline Generation Checklist (Hybrid Prefect/sync)
 
@@ -612,13 +614,13 @@ def test_tool_functionality():
 
 ### Test Execution
 
-**Total: 103 tests across all test files**
+**Total: 106 tests across all test files**
 
 ```bash
 # Run specific test
 python -m pytest tests/test_pipeline_tools_with_nanobot.py -v
 
-# Run all tests (103 total)
+# Run all tests (106 total)
 python -m pytest -v
 
 # Run specific test suites
@@ -626,9 +628,13 @@ python -m pytest tests/test_pipeline_builder.py -v    # Pipeline builder tools (
 python -m pytest tests/test_limits.py -v              # Pipeline attempt tracking (32 tests)
 python -m pytest tests/test_mcp_server.py -v           # MCP server functionality (20 tests)
 python -m pytest test_validation.py -v                  # Validation agent (24 tests)
+python -m pytest tests/test_pipeline_tools_with_nanobot.py -v  # Nanobot integration (3 tests)
 
 # Run with coverage
 python -m pytest --cov=flows --cov=agents -v
+
+# Run in Docker (after ./docker-run.sh)
+docker-compose exec loops python -m pytest -v
 ```
 
 ---
@@ -666,6 +672,31 @@ conn.close()
 from flows.nanobot_tools import inspect_file
 result = inspect_file("data/source_data.csv", sample_size=3)
 print(result)
+```
+
+### Docker-Specific Debug Commands
+
+```bash
+# Check if container is running
+docker-compose ps
+
+# View container logs
+docker-compose logs -f
+
+# Execute Python in running container
+docker-compose exec loops python3 -c "import duckdb; print(duckdb.__version__)"
+
+# Check mounted volumes (from host)
+ls -la data/ingestion.db
+ls -la logs/
+ls -la pipelines/generated/
+
+# Open shell in container for interactive debugging
+docker-compose exec loops bash
+
+# Check UID/GID being used
+echo "Container UID: $(docker-compose exec loops id -u)"
+echo "Container GID: $(docker-compose exec loops id -g)"
 ```
 
 ---
@@ -851,6 +882,87 @@ python -c "import duckdb; conn = duckdb.connect('data/ingestion.db'); print(conn
 python -c "from flows.nanobot_tools import inspect_file; import pprint; pprint.pprint(inspect_file('data/source_data.csv', 3))"
 ```
 
+### Docker Commands
+
+```bash
+# Full cleanup and restart
+./docker-clean.sh && ./docker-run.sh
+
+# Just stop the container
+./docker-stop.sh
+
+# Rebuild image after code changes
+docker-compose build
+
+# Start container manually
+docker-compose up -d
+
+# Execute command in running container
+docker-compose exec loops python run_demo.py
+```
+
+---
+
+## Docker-Specific Guidelines
+
+When working with the Docker containerized version of this project:
+
+### Docker Architecture
+- The container uses `tail -f /dev/null` as CMD to stay running
+- `docker-run.sh` starts the container and executes `run_demo.py` via `docker-compose exec`
+- This ensures only **one instance** of `run_demo.py` runs (no duplicate execution)
+- All generated files (data/, logs/, pipelines/) are **volume-mounted** and persist outside the container
+
+### Working with Docker as an Agent
+
+**To test your changes in Docker:**
+```bash
+# Rebuild the image (required after code changes)
+docker-compose build
+
+# Run cleanup and start fresh
+./docker-clean.sh
+
+# Start the demo
+./docker-run.sh
+
+# The container stays running - you can exec into it
+docker-compose exec loops bash
+```
+
+**Important Docker considerations:**
+- Files you create in mounted volumes (`data/`, `logs/`, `pipelines/`, `memory/`) will be owned by your host user (no sudo needed)
+- The `.env` file is **NOT baked into the image** - it's loaded at runtime by docker-compose
+- To test database queries: `docker-compose exec loops python3 -c "import duckdb; conn = duckdb.connect('data/ingestion.db'); print(conn.execute('SHOW TABLES').fetchall())"`
+- Database files persist in `data/ingestion.db` on the host
+
+### Common Docker Issues for Agents
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Files owned by root | Container not using UID/GID | Use `DOCKER_USER_ID` and `DOCKER_GROUP_ID` env vars |
+| Database not found | First run not completed | Run `./docker-run.sh` first |
+| Generated pipelines missing | Cleanup ran at start | Check `pipelines/generated/` after demo completes |
+| Container exits immediately | CMD issue | Container should run `tail -f /dev/null` |
+| Duplicate execution | Both CMD and exec running | Fixed: CMD is `tail -f /dev/null`, demo runs via exec |
+
+---
+
+## Data Files
+
+The project includes multiple data sources that the pipeline builder processes:
+
+- **`data/source_data.csv`** - Primary users data (13 rows with intentional errors)
+- **`data/orders.csv`** - Orders data (13 rows) - processed by pipeline builder
+- **`data/transactions.csv`** - Transactions data (13 rows) - processed by pipeline builder
+
+**Expected output tables after successful run:**
+- `raw_users` - Raw staging data from source_data.csv
+- `users` - Strict target table (0 rows - transform intentionally fails)
+- `users_clean` - Cleaned user data (13 rows)
+- `orders_clean` - Cleaned orders data (13 rows)
+- `transactions_clean` - Cleaned transactions data (13 rows)
+
 ---
 
 ## Summary
@@ -860,7 +972,7 @@ When working with this codebase:
 1. **Understand the architecture** - Read this file and README.md first
 2. **Follow existing patterns** - Match the code style and structure
 3. **Use the tools** - Leverage existing tools rather than reimplementing
-4. **Test your changes** - Verify new functionality works
+4. **Test your changes** - Verify new functionality works (including in Docker)
 5. **Document** - Update documentation for new features
 6. **Respect constraints** - Follow the do's and don'ts above
 7. **Use single agent pattern** - One Nanobot instance with sequential phases (Investigation → Pipeline Generation → Validation)
@@ -868,6 +980,8 @@ When working with this codebase:
 The system is designed to be **autonomous** - your goal as an agent is to help it work better, not to replace its functionality.
 
 **Remember**: All generated pipelines must use the **hybrid Prefect/sync pattern** with Prefect 3.7+ decorators and graceful fallback to synchronous execution.
+
+**Docker Note**: When working in the Docker environment, remember that the demo cleans up at the start of every `run_demo.py` execution. Use `docker-clean.sh` for full cleanup, or exec into the running container to inspect state.
 
 ---
 
