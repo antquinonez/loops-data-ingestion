@@ -371,18 +371,22 @@ docker-compose exec loops python run_demo.py
 For easier management, use the provided convenience scripts:
 
 ```bash
-# Start the demo (builds, starts container, runs demo)
+# Make executable (one-time setup)
+chmod +x docker-run.sh docker-stop.sh
+
+# Start the demo (builds image with your UID/GID, starts container, runs demo)
 ./docker-run.sh
 
 # Stop the demo container
 ./docker-stop.sh
 ```
 
-Make sure they are executable:
+#### How It Works
 
-```bash
-chmod +x docker-run.sh docker-stop.sh
-```
+The scripts automatically detect your **UID and GID** and pass them to Docker. This ensures:
+- Files created in mounted volumes (data/, logs/, pipelines/) are owned by **you**, not root
+- No `sudo` required to access files like `data/ingestion.db`
+- DBeaver and other tools can open the database directly
 
 ### Common Docker Commands
 
@@ -417,6 +421,19 @@ The following directories are mounted as volumes and persist outside the contain
 - `./pipelines/` - Generated cleaning pipelines
 - `./schemas/` - Schema definitions (read-only)
 - `./config/` - Configuration files (read-only)
+
+### File Ownership
+
+Files are automatically created with your user's ownership (no `sudo` required) thanks to UID/GID passing.
+
+**If you have existing files owned by root** (from before this update):
+```bash
+# Option 1: Delete and let Docker recreate with correct ownership
+rm -rf data/*.db data/*.wal data/*.shm logs/* pipelines/generated/*
+
+# Then rebuild and run
+./docker-run.sh
+```
 
 ### Security Note
 

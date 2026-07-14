@@ -6,8 +6,17 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Get current user's UID and GID to avoid permission issues
+# This ensures files created in mounted volumes are owned by the current user
+UID=${UID:-$(id -u)}
+GID=${GID:-$(id -g)}
+
+export UID
+export GID
+
 echo "========================================"
 echo "  Starting Loops Demo in Docker"
+echo "  Running as UID=$UID, GID=$GID"
 echo "========================================"
 
 # Check if .env file exists with OPENAI_API_KEY
