@@ -19,6 +19,8 @@ services:
       - ./logs:/app/logs
       # Persist generated pipelines
       - ./pipelines:/app/pipelines
+      # Persist nanobot memory (needed for non-root user)
+      - ./memory:/app/memory
       # Persist schemas and configs (read-only)
       - ./schemas:/app/schemas:ro
       - ./config:/app/config:ro
