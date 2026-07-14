@@ -20,15 +20,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
+# Set working directory first
+WORKDIR /app
+
 # Create non-root user with configurable UID/GID
 # This ensures files created in mounted volumes are owned by the host user
 RUN groupadd -g ${GROUP_ID} appgroup && \
-    useradd -m -u ${USER_ID} -g ${GROUP_ID} -s /bin/bash appuser && \
-    mkdir -p /app/data /app/logs /app/pipelines /app/schemas /app/config && \
-    chown -R appuser:appgroup /app
-
-# Set working directory
-WORKDIR /app
+    useradd -m -u ${USER_ID} -g ${GROUP_ID} -s /bin/bash appuser
 
 # Install Python dependencies (as root for cache, then fix permissions)
 COPY requirements.txt .

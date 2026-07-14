@@ -7,6 +7,7 @@ services:
         - USER_ID=${DOCKER_USER_ID:-1000}
         - GROUP_ID=${DOCKER_GROUP_ID:-1000}
     container_name: loops-demo
+    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     environment:
       - PYTHONPATH=/app
       - OPENAI_API_KEY=${OPENAI_API_KEY}
