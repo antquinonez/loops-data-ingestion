@@ -633,7 +633,7 @@ python -m pytest tests/test_pipeline_tools_with_nanobot.py -v  # Nanobot integra
 # Run with coverage
 python -m pytest --cov=flows --cov=agents -v
 
-# Run in Docker (after ./docker-run.sh)
+# Run in Docker (after ./scripts/docker/docker-run.sh)
 docker-compose exec loops python -m pytest -v
 ```
 
@@ -858,7 +858,7 @@ Result: Ingestion failure fixed by single agent performing investigation → gen
 python run_demo.py
 
 # Run just the pipeline builder
-python demo_pipeline_builder.py
+python scripts/demo_pipeline_builder.py
 
 # Run the failing ingestion
 python flows/ingestion_flow.py
@@ -886,10 +886,10 @@ python -c "from flows.nanobot_tools import inspect_file; import pprint; pprint.p
 
 ```bash
 # Full cleanup and restart
-./docker-clean.sh && ./docker-run.sh
+./scripts/docker/docker-clean.sh && ./scripts/docker/docker-run.sh
 
 # Just stop the container
-./docker-stop.sh
+./scripts/docker/docker-stop.sh
 
 # Rebuild image after code changes
 docker-compose build
@@ -909,7 +909,7 @@ When working with the Docker containerized version of this project:
 
 ### Docker Architecture
 - The container uses `tail -f /dev/null` as CMD to stay running
-- `docker-run.sh` starts the container and executes `run_demo.py` via `docker-compose exec`
+- `scripts/docker/docker-run.sh` starts the container and executes `run_demo.py` via `docker-compose exec`
 - This ensures only **one instance** of `run_demo.py` runs (no duplicate execution)
 - All generated files (data/, logs/, pipelines/) are **volume-mounted** and persist outside the container
 
@@ -921,10 +921,10 @@ When working with the Docker containerized version of this project:
 docker-compose build
 
 # Run cleanup and start fresh
-./docker-clean.sh
+./scripts/docker/docker-clean.sh
 
 # Start the demo
-./docker-run.sh
+./scripts/docker/docker-run.sh
 
 # The container stays running - you can exec into it
 docker-compose exec loops bash
@@ -941,7 +941,7 @@ docker-compose exec loops bash
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | Files owned by root | Container not using UID/GID | Use `DOCKER_USER_ID` and `DOCKER_GROUP_ID` env vars |
-| Database not found | First run not completed | Run `./docker-run.sh` first |
+| Database not found | First run not completed | Run `./scripts/docker/docker-run.sh` first |
 | Generated pipelines missing | Cleanup ran at start | Check `pipelines/generated/` after demo completes |
 | Container exits immediately | CMD issue | Container should run `tail -f /dev/null` |
 | Duplicate execution | Both CMD and exec running | Fixed: CMD is `tail -f /dev/null`, demo runs via exec |
@@ -981,7 +981,7 @@ The system is designed to be **autonomous** - your goal as an agent is to help i
 
 **Remember**: All generated pipelines must use the **hybrid Prefect/sync pattern** with Prefect 3.7+ decorators and graceful fallback to synchronous execution.
 
-**Docker Note**: When working in the Docker environment, remember that the demo cleans up at the start of every `run_demo.py` execution. Use `docker-clean.sh` for full cleanup, or exec into the running container to inspect state.
+**Docker Note**: When working in the Docker environment, remember that the demo cleans up at the start of every `run_demo.py` execution. Use `./scripts/docker/docker-clean.sh` for full cleanup, or exec into the running container to inspect state.
 
 ---
 

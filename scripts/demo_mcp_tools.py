@@ -8,7 +8,7 @@ This script:
 3. Reports on data quality
 
 Usage:
-    python demo_mcp_tools.py
+    python scripts/demo_mcp_tools.py
 """
 
 import sys
@@ -18,7 +18,7 @@ import json
 from pathlib import Path
 
 # Setup project paths
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
 
