@@ -532,5 +532,5 @@ For production environments, consider the following enhancements:
 ## 📚 Learn More
 
 - **[AGENTS.md](AGENTS.md)** - Detailed instructions for AI agents working with this codebase
-- **[SKILLS.md](SKILLS.md)** - Master skills index and workflow overview
+- **[docs/SKILLS.md](docs/SKILLS.md)** - Master skills index and workflow overview
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed architecture diagrams and explanations

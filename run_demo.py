@@ -363,7 +363,7 @@ async def trigger_nanobot_investigation(mcp_process=None, run_id: Optional[str] 
     print(f"\n✓ OpenAI API key loaded, using model: {os.environ.get('OPENAI_MODEL', 'gpt-4o-mini')}")
     
     # Load SKILLS.md as context
-    skills_path = paths.get_abs("project_root") / "SKILLS.md"
+    skills_path = paths.get_abs("project_root") / "docs" / "SKILLS.md"
     with open(skills_path, 'r') as f:
         skills_context = f.read()
     

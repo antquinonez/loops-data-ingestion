@@ -997,4 +997,4 @@ The system is designed to be **autonomous** - your goal as an agent is to help i
 
 ---
 
-*For questions about this codebase, first check README.md, SKILLS.md, and this file (AGENTS.md). If you still have questions, ask for clarification from the user.*
+*For questions about this codebase, first check README.md, docs/SKILLS.md, and this file (AGENTS.md). If you still have questions, ask for clarification from the user.*
