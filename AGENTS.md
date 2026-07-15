@@ -627,7 +627,7 @@ python -m pytest -v
 python -m pytest tests/test_pipeline_builder.py -v    # Pipeline builder tools (27 tests)
 python -m pytest tests/test_limits.py -v              # Pipeline attempt tracking (32 tests)
 python -m pytest tests/test_mcp_server.py -v           # MCP server functionality (20 tests)
-python -m pytest test_validation.py -v                  # Validation agent (24 tests)
+python -m pytest tests/test_validation.py -v            # Validation agent (24 tests)
 python -m pytest tests/test_pipeline_tools_with_nanobot.py -v  # Nanobot integration (3 tests)
 
 # Run with coverage
