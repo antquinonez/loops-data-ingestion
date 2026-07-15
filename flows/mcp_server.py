@@ -17,6 +17,7 @@ import sys
 import asyncio
 import json
 import os
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -42,6 +43,18 @@ from utils.paths import paths
 PROJECT_ROOT = paths.get_abs("project_root")
 DATA_DIR = paths.data_dir
 LOG_DIR = paths.logs_dir
+
+# Setup logging
+logger = logging.getLogger("mcp.server")
+logger.setLevel(logging.INFO)
+
+# Add console handler if not already configured
+if not logger.handlers:
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(logging.Formatter(
+        '%(asctime)s | %(levelname)s | %(name)s | %(message)s'
+    ))
+    logger.addHandler(console_handler)
 
 
 # Define the MCP server
@@ -149,6 +162,7 @@ async def query_database(query: str) -> str:
     db_path = str(DATA_DIR / "ingestion.db")
     
     try:
+        logger.info(f"Executing query: {query[:100]}...")
         conn = duckdb.connect(database=db_path, read_only=True)
         cursor = conn.cursor()
         cursor.execute(query)
@@ -162,6 +176,7 @@ async def query_database(query: str) -> str:
         
         conn.close()
         
+        logger.info(f"Query completed: {len(rows)} rows returned")
         return json.dumps({
             "columns": columns,
             "row_count": len(rows),
@@ -169,6 +184,7 @@ async def query_database(query: str) -> str:
         }, default=str)
         
     except Exception as e:
+        logger.error(f"Query failed: {e}")
         return json.dumps({"error": str(e), "query": query})
 
 
@@ -187,6 +203,7 @@ async def get_data_quality_report(table_name: str = "raw_users") -> str:
     db_path = str(DATA_DIR / "ingestion.db")
     
     try:
+        logger.info(f"Generating data quality report for table: {table_name}")
         conn = duckdb.connect(database=db_path, read_only=True)
         
         # Get basic stats
@@ -233,9 +250,11 @@ async def get_data_quality_report(table_name: str = "raw_users") -> str:
                 })
         
         conn.close()
+        logger.info(f"Data quality report generated: {len(report['issues'])} issues found")
         return json.dumps(report, default=str, indent=2)
         
     except Exception as e:
+        logger.error(f"Failed to generate data quality report: {e}")
         return json.dumps({"error": str(e)})
 
 
@@ -261,6 +280,8 @@ async def get_recent_errors(log_path: str = None,
     if log_path is None:
         log_path = str(paths.ingestion_log)
     
+    logger.info(f"Scanning log file for errors: {log_path} (last {hours} hours)")
+    
     try:
         with open(log_path, 'r') as f:
             for line in f:
@@ -284,6 +305,7 @@ async def get_recent_errors(log_path: str = None,
                                 "message": line.strip()
                             })
         
+        logger.info(f"Found {len(errors)} errors/warnings in log file")
         return json.dumps({
             "log_file": log_path,
             "time_range": f"last {hours} hours",
@@ -292,6 +314,7 @@ async def get_recent_errors(log_path: str = None,
         }, default=str)
         
     except Exception as e:
+        logger.error(f"Failed to scan log file: {e}")
         return json.dumps({"error": str(e)})
 
 
@@ -310,11 +333,15 @@ async def get_file_metadata(path: str) -> str:
     
     file_path = Path(path)
     
+    logger.info(f"Getting metadata for file: {path}")
+    
     if not file_path.exists():
+        logger.warning(f"File not found: {path}")
         return json.dumps({"error": f"File not found: {path}"})
     
     stat = os.stat(file_path)
     
+    logger.info(f"File metadata retrieved: {stat.st_size} bytes")
     return json.dumps({
         "path": str(file_path),
         "exists": True,
@@ -337,44 +364,183 @@ def _human_readable_size(size_bytes: int) -> str:
 
 
 # ============================================================================
+# TOOLS - Actions the AI can execute via MCP
+# ============================================================================
+
+# Define tool schemas
+TOOLS = [
+    {
+        "name": "query_database",
+        "description": "Execute a read-only query against the DuckDB database",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "SQL query to execute"}
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "get_data_quality_report",
+        "description": "Generate a data quality report for a table",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "table_name": {"type": "string", "description": "Name of the table to analyze (default: raw_users)"}
+            }
+        }
+    },
+    {
+        "name": "get_recent_errors",
+        "description": "Get recent errors from log files",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "log_path": {"type": "string", "description": "Path to the log file"},
+                "hours": {"type": "integer", "default": 24, "description": "Look back this many hours"}
+            }
+        }
+    },
+    {
+        "name": "get_file_metadata",
+        "description": "Get metadata about a file",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Path to the file"}
+            },
+            "required": ["path"]
+        }
+    }
+]
+
+
+# Tool execution dispatcher
+async def execute_tool(tool_name: str, arguments: dict) -> str:
+    """Dispatch tool execution based on tool name."""
+    tools_map = {
+        "query_database": query_database,
+        "get_data_quality_report": get_data_quality_report,
+        "get_recent_errors": get_recent_errors,
+        "get_file_metadata": get_file_metadata,
+    }
+    
+    if tool_name not in tools_map:
+        logger.warning(f"Tool not found: {tool_name}")
+        return json.dumps({"error": f"Unknown tool: {tool_name}"})
+    
+    logger.info(f"Executing tool: {tool_name} with arguments: {arguments}")
+    tool_func = tools_map[tool_name]
+    
+    # Call the tool function with unpacked arguments
+    try:
+        # All tool functions take keyword arguments
+        result = await tool_func(**arguments)
+        logger.info(f"Tool {tool_name} completed successfully")
+        return result
+    except TypeError as e:
+        # Handle case where arguments don't match
+        logger.error(f"Invalid arguments for {tool_name}: {e}")
+        return json.dumps({"error": f"Invalid arguments for {tool_name}: {str(e)}"})
+    except Exception as e:
+        # Handle any other exceptions
+        logger.error(f"Error executing {tool_name}: {e}")
+        return json.dumps({"error": f"Error executing {tool_name}: {str(e)}"})
+
+
+# Register tool handlers with the server
+@server.list_tools()
+async def handle_list_tools() -> list:
+    """Return list of available tools."""
+    from mcp import types
+    
+    logger.info(f"Listing available tools: {[t['name'] for t in TOOLS]}")
+    
+    tool_objects = []
+    for tool_def in TOOLS:
+        tool_obj = types.Tool(
+            name=tool_def["name"],
+            description=tool_def["description"],
+            inputSchema=tool_def["inputSchema"],
+            outputSchema=tool_def.get("outputSchema")
+        )
+        tool_objects.append(tool_obj)
+    
+    logger.info(f"Returning {len(tool_objects)} tools")
+    return tool_objects
+
+
+@server.call_tool()
+async def handle_call_tool(tool_name: str, arguments: dict) -> list:
+    """Execute a tool and return the result."""
+    from mcp.types import TextContent
+    
+    logger.info(f"Tool call received: {tool_name}")
+    
+    # Execute the tool
+    result = await execute_tool(tool_name, arguments)
+    
+    # Return as text content
+    logger.info(f"Tool call completed: {tool_name}")
+    return [TextContent(type="text", text=result)]
+
+
+# ============================================================================
 # Server Configuration
 # ============================================================================
 
 
 def main():
-    # Add tools to server
-    # Note: The MCP library API has changed - add_tool is no longer available
-    # Tools need to be registered differently in newer versions
-    # For now, we'll skip tool registration to avoid crashing
-    # server.add_tool(query_database)
-    # server.add_tool(get_data_quality_report)
-    # server.add_tool(get_recent_errors)
-    # server.add_tool(get_file_metadata)
-    
-    # Note: MCP server resources are still available even without custom tools
 
     """Run the MCP server."""
     import argparse
+    from mcp.server.stdio import stdio_server
+    from mcp.server.models import InitializationOptions
+    from mcp.server.lowlevel.server import NotificationOptions
     
     parser = argparse.ArgumentParser(description="Data Ingestion MCP Server")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8081, help="Port to listen on")
+    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], 
+                        help="Logging level")
     args = parser.parse_args()
     
-    print(f"Starting Data Ingestion MCP Server on {args.host}:{args.port}")
-    print("\nAvailable resources:")
-    print("  - ingestion.log (ingestion pipeline logs)")
-    print("  - source_data.csv (source data with intentional errors)")
-    print("  - ingestion.db (DuckDB database)")
-    print("  - SKILLS.md (troubleshooting guide)")
-    print("\nAvailable tools:")
-    print("  - query_database: Execute SQL queries")
-    print("  - get_data_quality_report: Generate data quality reports")
-    print("  - get_recent_errors: Get recent errors from logs")
-    print("  - get_file_metadata: Get file metadata")
+    # Set log level
+    log_level = getattr(logging, args.log_level.upper(), logging.INFO)
+    logger.setLevel(log_level)
     
-    # Run the server
-    asyncio.run(server.run(args.host, args.port))
+    logger.info(f"Starting Data Ingestion MCP Server on {args.host}:{args.port}")
+    logger.info("Available resources:")
+    logger.info("  - ingestion.log (ingestion pipeline logs)")
+    logger.info("  - source_data.csv (source data with intentional errors)")
+    logger.info("  - ingestion.db (DuckDB database)")
+    logger.info("  - SKILLS.md (troubleshooting guide)")
+    logger.info("Available tools:")
+    logger.info("  - query_database: Execute SQL queries")
+    logger.info("  - get_data_quality_report: Generate data quality reports")
+    logger.info("  - get_recent_errors: Get recent errors from logs")
+    logger.info("  - get_file_metadata: Get file metadata")
+    
+    # Run the server using stdio transport
+    async def run():
+        async with stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name=server.name,
+                    server_version=server.version if server.version else "1.0.0",
+                    capabilities=server.get_capabilities(
+                        NotificationOptions(),
+                        experimental_capabilities={},
+                    ),
+                    instructions=server.instructions,
+                    website_url=server.website_url,
+                    icons=server.icons,
+                ),
+            )
+    
+    asyncio.run(run())
 
 
 if __name__ == "__main__":
