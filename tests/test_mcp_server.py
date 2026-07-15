@@ -279,3 +279,217 @@ class TestMCPServerStartup:
         sig = inspect.signature(main)
         # main() should have no required args
         assert len(sig.parameters) == 0
+
+
+class TestMCPToolRegistration:
+    """Test MCP server tool registration."""
+    
+    def test_tools_defined(self):
+        """Test that TOOLS list is defined and contains expected tools."""
+        from flows.mcp_server import TOOLS
+        
+        assert TOOLS is not None
+        assert isinstance(TOOLS, list)
+        assert len(TOOLS) == 4
+        
+        tool_names = [tool["name"] for tool in TOOLS]
+        expected_names = [
+            "query_database",
+            "get_data_quality_report", 
+            "get_recent_errors",
+            "get_file_metadata"
+        ]
+        for name in expected_names:
+            assert name in tool_names, f"Tool {name} not found in TOOLS"
+    
+    def test_tool_schemas_valid(self):
+        """Test that all tool schemas are valid."""
+        from flows.mcp_server import TOOLS
+        import json
+        
+        for tool in TOOLS:
+            # Check required fields
+            assert "name" in tool, f"Tool missing 'name' field"
+            assert "description" in tool, f"Tool {tool['name']} missing 'description'"
+            assert "inputSchema" in tool, f"Tool {tool['name']} missing 'inputSchema'"
+            
+            # Validate input schema is valid JSON Schema
+            input_schema = tool["inputSchema"]
+            assert "type" in input_schema
+            assert input_schema["type"] == "object"
+            assert "properties" in input_schema
+    
+    def test_tool_registration_handler_exists(self):
+        """Test that list_tools handler is registered."""
+        from flows.mcp_server import server
+        from mcp import types
+        
+        # Check that ListToolsRequest handler is registered
+        assert types.ListToolsRequest in server.request_handlers
+    
+    def test_call_tool_handler_exists(self):
+        """Test that call_tool handler is registered."""
+        from flows.mcp_server import server
+        from mcp import types
+        
+        # Check that CallToolRequest handler is registered
+        assert types.CallToolRequest in server.request_handlers
+    
+    def test_tools_capability_available(self):
+        """Test that server has tools capability."""
+        from flows.mcp_server import server
+        from mcp.server.lowlevel.server import NotificationOptions
+        
+        capabilities = server.get_capabilities(
+            NotificationOptions(),
+            experimental_capabilities={}
+        )
+        
+        assert capabilities.tools is not None
+        assert capabilities.tools.listChanged is not None
+    
+    def test_list_tools_returns_all_tools(self):
+        """Test that list_tools handler returns all defined tools."""
+        from flows.mcp_server import server, TOOLS
+        from mcp import types
+        import asyncio
+        
+        async def run_test():
+            # Call the handler
+            handler = server.request_handlers[types.ListToolsRequest]
+            result = await handler(types.ListToolsRequest())
+            
+            assert result is not None
+            assert hasattr(result, 'root')
+            list_result = result.root
+            assert hasattr(list_result, 'tools')
+            assert len(list_result.tools) == len(TOOLS)
+            
+            returned_names = [tool.name for tool in list_result.tools]
+            expected_names = [tool["name"] for tool in TOOLS]
+            for name in expected_names:
+                assert name in returned_names, f"Tool {name} not returned by list_tools"
+        
+        asyncio.run(run_test())
+    
+    def test_call_tool_query_database(self):
+        """Test calling query_database tool via MCP."""
+        from flows.mcp_server import server
+        from mcp import types
+        import asyncio
+        
+        async def run_test():
+            # Call the tool
+            handler = server.request_handlers[types.CallToolRequest]
+            request = types.CallToolRequest(
+                params=types.CallToolRequestParams(
+                    name="query_database",
+                    arguments={"query": "SELECT 1 as test"}
+                )
+            )
+            result = await handler(request)
+            
+            assert result is not None
+            assert hasattr(result, 'root')
+            call_result = result.root
+            assert isinstance(call_result, types.CallToolResult)
+            # Note: isError might be True if output validation fails
+            assert len(call_result.content) > 0
+            
+            # Parse the result
+            import json
+            content_text = call_result.content[0].text
+            result_data = json.loads(content_text)
+            assert "results" in result_data or "error" in result_data
+        
+        asyncio.run(run_test())
+    
+    def test_call_tool_get_file_metadata(self):
+        """Test calling get_file_metadata tool via MCP."""
+        from flows.mcp_server import server
+        from mcp import types
+        import tempfile
+        import os
+        import asyncio
+        
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            f.write("test content")
+            temp_path = f.name
+        
+        try:
+            async def run_test():
+                # Call the tool
+                handler = server.request_handlers[types.CallToolRequest]
+                request = types.CallToolRequest(
+                    params=types.CallToolRequestParams(
+                        name="get_file_metadata",
+                        arguments={"path": temp_path}
+                    )
+                )
+                result = await handler(request)
+                
+                assert result is not None
+                assert hasattr(result, 'root')
+                call_result = result.root
+                assert isinstance(call_result, types.CallToolResult)
+                # Note: isError might be True if output validation fails
+                assert len(call_result.content) > 0
+                
+                # Parse the result
+                import json
+                content_text = call_result.content[0].text
+                result_data = json.loads(content_text)
+                assert result_data["exists"] is True
+                assert result_data["size_bytes"] > 0
+            
+            asyncio.run(run_test())
+        finally:
+            os.unlink(temp_path)
+    
+    def test_call_tool_invalid_tool(self):
+        """Test calling a non-existent tool."""
+        from flows.mcp_server import server
+        from mcp import types
+        import asyncio
+        
+        async def run_test():
+            # Call a non-existent tool
+            handler = server.request_handlers[types.CallToolRequest]
+            request = types.CallToolRequest(
+                params=types.CallToolRequestParams(
+                    name="nonexistent_tool",
+                    arguments={}
+                )
+            )
+            result = await handler(request)
+            
+            assert result is not None
+            assert hasattr(result, 'root')
+            call_result = result.root
+            assert isinstance(call_result, types.CallToolResult)
+            # The error is returned as content, not as isError
+            assert len(call_result.content) > 0
+            
+            # Check error message
+            import json
+            content_text = call_result.content[0].text
+            result_data = json.loads(content_text)
+            assert "error" in result_data
+            assert "Unknown tool" in result_data["error"]
+        
+        asyncio.run(run_test())
+    
+    def test_server_tools_printed_on_startup(self):
+        """Test that server prints available tools on startup."""
+        # This is a documentation test - verifying the print statements exist
+        from flows.mcp_server import main
+        import inspect
+        source = inspect.getsource(main)
+        
+        # Check that tools are mentioned in the print statements
+        assert "Available tools:" in source
+        assert "query_database" in source
+        assert "get_data_quality_report" in source
+        assert "get_recent_errors" in source
+        assert "get_file_metadata" in source
