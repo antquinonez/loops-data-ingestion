@@ -376,7 +376,7 @@ loops/
 ├── docs/                            # Documentation
 │   ├── SKILLS.md                    # Master skills index
 │   └── ARCHITECTURE.md               # System architecture documentation
-└── AGENTS.md                        # Instructions for AI agents
+├── AGENTS.md                        # Instructions for AI agents
 └── .env                            # Environment variables (OPENAI_API_KEY)
 ```
 
@@ -434,7 +434,7 @@ The project includes full Docker support with `docker-compose` for easy setup an
    ./scripts/docker/docker-stop.sh
    
    # Clean up and start fresh
-   ./docker-clean.sh
+   ./scripts/docker/docker-clean.sh
    ```
 
 ### Manual Docker Commands
