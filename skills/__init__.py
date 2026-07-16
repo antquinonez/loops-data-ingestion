@@ -8,7 +8,7 @@ Skills are organized by stage:
 - Stage 1: Investigation (flows/investigation_skills.md)
 - Stage 2: Pipeline Builder (agents/pipeline_builder/skills.md)
 - Stage 3: Validation (flows/validation_skills.md)
-- Shared: General skills (SKILLS.md)
+- Shared: General skills (docs/SKILLS.md)
 
 Usage:
     from skills import SkillLoader, register_all_skills
@@ -51,7 +51,7 @@ class SkillLoader:
     
     # All skills files
     ALL_SKILLS_FILES = [
-        "SKILLS.md",  # Master index
+        "docs/SKILLS.md",  # Master index
         "flows/investigation_skills.md",
         "agents/pipeline_builder/skills.md",
         "flows/validation_skills.md",

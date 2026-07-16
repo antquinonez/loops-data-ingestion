@@ -4,7 +4,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+cd "$PROJECT_ROOT"
 
 echo "========================================"
 echo "  Cleaning Loops Project"
@@ -44,7 +45,7 @@ rm -rf memory/sessions 2>/dev/null || true
 rm -f logs/pipeline_attempts.jsonl 2>/dev/null || true
 
 echo ""
-echo "✓ Cleanup complete!"
+echo "Cleanup complete!"
 echo ""
 echo "All generated files removed. Next run will start fresh."
-echo "Use './docker-run.sh' to start the demo."
+echo "Use './scripts/docker/docker-run.sh' to start the demo."

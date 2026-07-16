@@ -307,7 +307,7 @@ python run_demo.py
 python flows/ingestion_flow.py
 
 # 2. Run the standalone pipeline builder (fallback mode)
-python demo_pipeline_builder.py
+python scripts/demo_pipeline_builder.py
 
 # 3. Run the generated hybrid cleaning pipeline
 python pipelines/generated/clean_users_pipeline.py
@@ -363,13 +363,19 @@ loops/
 │   └── validation.py               # Validation check generators
 ├── Dockerfile                       # Docker image configuration
 ├── docker-compose.yml               # Docker Compose configuration
-├── docker-run.sh                    # Start demo in Docker
-├── docker-stop.sh                   # Stop Docker container
-├── docker-clean.sh                  # Clean up and start fresh
 ├── .dockerignore                    # Files excluded from Docker image
+├── scripts/                         # Utility and demo scripts
+│   ├── docker/                      # Docker management scripts
+│   │   ├── docker-run.sh            # Start demo in Docker
+│   │   ├── docker-stop.sh           # Stop Docker container
+│   │   └── docker-clean.sh          # Clean up and start fresh
+│   ├── demo_pipeline_builder.py     # Standalone pipeline builder demo
+│   ├── demo_mcp_tools.py            # MCP tools validation demo
+│   └── validate_with_mcp.py         # Direct MCP validation demo
 ├── run_demo.py                       # Main entry point (orchestrates all stages)
-├── demo_pipeline_builder.py         # Standalone pipeline builder demo
-├── SKILLS.md                        # Master skills index
+├── docs/                            # Documentation
+│   ├── SKILLS.md                    # Master skills index
+│   └── ARCHITECTURE.md               # System architecture documentation
 ├── AGENTS.md                        # Instructions for AI agents
 └── .env                            # Environment variables (OPENAI_API_KEY)
 ```
@@ -416,19 +422,19 @@ The project includes full Docker support with `docker-compose` for easy setup an
 2. **Use the convenience scripts**:
    ```bash
    # Make scripts executable (one-time setup)
-   chmod +x docker-run.sh docker-stop.sh docker-clean.sh
+   chmod +x scripts/docker/docker-run.sh scripts/docker/docker-stop.sh scripts/docker/docker-clean.sh
    
    # Start the demo
-   ./docker-run.sh
+   ./scripts/docker/docker-run.sh
    
    # Query the database (container stays running)
    docker-compose exec loops python3 -c "import duckdb; conn = duckdb.connect('data/ingestion.db'); print(conn.execute('SHOW TABLES').fetchall()); conn.close()"
    
    # Stop the container
-   ./docker-stop.sh
+   ./scripts/docker/docker-stop.sh
    
    # Clean up and start fresh
-   ./docker-clean.sh
+   ./scripts/docker/docker-clean.sh
    ```
 
 ### Manual Docker Commands
@@ -454,7 +460,7 @@ docker-compose down
 
 The Docker setup uses UID/GID passing to ensure files created in mounted volumes are owned by you:
 - The container runs with `tail -f /dev/null` as its CMD to keep it running
-- `docker-run.sh` uses `docker-compose exec` to run the demo inside the container
+- `scripts/docker/docker-run.sh` uses `docker-compose exec` to run the demo inside the container
 - This ensures only one instance of `run_demo.py` executes (no duplicate runs)
 - No `sudo` required - all files are owned by your user
 
@@ -478,10 +484,10 @@ Want to see it in action? Here's the fastest way:
 cd loops
 echo "OPENAI_API_KEY=your-key-here" > .env
 echo "OPENAI_MODEL=gpt-4o-mini" >> .env
-chmod +x docker-run.sh docker-stop.sh docker-clean.sh
+chmod +x scripts/docker/docker-run.sh scripts/docker/docker-stop.sh scripts/docker/docker-clean.sh
 
 # 2. Run the demo (takes 2-3 minutes)
-./docker-run.sh
+./scripts/docker/docker-run.sh
 
 # 3. Verify the results - all tables should be created
 docker-compose exec loops python3 -c "
@@ -526,5 +532,5 @@ For production environments, consider the following enhancements:
 ## 📚 Learn More
 
 - **[AGENTS.md](AGENTS.md)** - Detailed instructions for AI agents working with this codebase
-- **[SKILLS.md](SKILLS.md)** - Master skills index and workflow overview
+- **[docs/SKILLS.md](docs/SKILLS.md)** - Master skills index and workflow overview
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed architecture diagrams and explanations

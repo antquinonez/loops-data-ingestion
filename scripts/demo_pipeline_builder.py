@@ -217,7 +217,7 @@ def run_full_demo():
         print("=" * 80)
         print("\nSet your OpenAI API key and run:")
         print("  export OPENAI_API_KEY='your-key'")
-        print("  python demo_pipeline_builder.py")
+        print("  python scripts/demo_pipeline_builder.py")
         print("\nFor now, the tool test above shows what the agent can do.")
     
     # Step 3: Execute the generated pipelines

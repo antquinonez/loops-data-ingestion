@@ -104,7 +104,7 @@ async def handle_list_resources() -> ListResourcesResult:
         ))
     
     # SKILLS.md
-    skills_md = PROJECT_ROOT / "SKILLS.md"
+    skills_md = PROJECT_ROOT / "docs" / "SKILLS.md"
     if skills_md.exists():
         resources.append(ResourceTemplate(
             uri=f"file://{skills_md}",
@@ -514,7 +514,7 @@ def main():
     logger.info("  - ingestion.log (ingestion pipeline logs)")
     logger.info("  - source_data.csv (source data with intentional errors)")
     logger.info("  - ingestion.db (DuckDB database)")
-    logger.info("  - SKILLS.md (troubleshooting guide)")
+    logger.info("  - docs/SKILLS.md (troubleshooting guide)")
     logger.info("Available tools:")
     logger.info("  - query_database: Execute SQL queries")
     logger.info("  - get_data_quality_report: Generate data quality reports")

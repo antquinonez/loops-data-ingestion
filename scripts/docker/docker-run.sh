@@ -4,7 +4,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+cd "$PROJECT_ROOT"
 
 # Get current user's UID and GID to avoid permission issues
 # This ensures files created in mounted volumes are owned by the current user
@@ -53,7 +54,7 @@ echo ""
 echo "Container started. Running demo..."
 echo ""
 echo "Press Ctrl+C to stop the demo at any time."
-echo "Use './docker-stop.sh' to stop the container after the demo completes."
+echo "Use './scripts/docker/docker-stop.sh' to stop the container after the demo completes."
 echo ""
 
 # Run the demo in the container
@@ -62,5 +63,5 @@ docker-compose exec loops python run_demo.py
 echo ""
 echo "========================================"
 echo "  Demo complete!"
-echo "  Container is still running (use docker-stop.sh to stop)"
+echo "  Container is still running (use ./scripts/docker/docker-stop.sh to stop)"
 echo "========================================"

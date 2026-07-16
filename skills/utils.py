@@ -160,7 +160,7 @@ def get_agent_context(stage: int, project_root: Optional[Path] = None) -> str:
     """
     Get a complete context string for an agent operating in a specific stage.
     
-    This combines the master SKILLS.md index with the stage-specific skills
+    This combines the master docs/SKILLS.md index with the stage-specific skills
     to give the agent a complete picture of the workflow and its role.
     
     Args:
@@ -173,7 +173,7 @@ def get_agent_context(stage: int, project_root: Optional[Path] = None) -> str:
     root = project_root or PROJECT_ROOT
     
     # Load master skills index
-    master_skills = load_skills_file("SKILLS.md", root)
+    master_skills = load_skills_file("docs/SKILLS.md", root)
     
     # Load stage-specific skills
     stage_skills = load_skills_for_agent(stage, root)
@@ -258,7 +258,7 @@ def get_complete_workflow_context(project_root: Optional[Path] = None) -> str:
     parts = []
     
     # Load master skills
-    master_skills = load_skills_file("SKILLS.md", root)
+    master_skills = load_skills_file("docs/SKILLS.md", root)
     parts.append(master_skills)
     
     # Add all stage skills
@@ -404,7 +404,7 @@ def create_nanobot_stage_config(stage: int, model: str = "gpt-4o-mini",
         "temperature": 0.3,
         "system_prompt": system_prompt,
         "context_files": [
-            str((project_root or PROJECT_ROOT) / "SKILLS.md"),
+            str((project_root or PROJECT_ROOT) / "docs" / "SKILLS.md"),
             str((project_root or PROJECT_ROOT) / stage_summary.get("path", ""))
         ],
         "stage": stage,

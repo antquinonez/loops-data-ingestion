@@ -6,7 +6,7 @@ This script uses the MCP tools directly (without starting a server)
 to validate data in the database and files.
 
 Usage:
-    python validate_with_mcp.py
+    python scripts/validate_with_mcp.py
 """
 
 import sys
@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 
 # Setup project paths
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["PYTHONPATH"] = str(PROJECT_ROOT)
 

@@ -860,7 +860,7 @@ flowchart TB
 ## See Also
 
 - [README.md](README.md) - Project overview and quick start
-- [SKILLS.md](SKILLS.md) - Agent skills and workflows (includes pipeline-aware validation details)
+- [docs/SKILLS.md](docs/SKILLS.md) - Agent skills and workflows (includes pipeline-aware validation details)
 - [AGENTS.md](AGENTS.md) - Instructions for AI agents working with this repo
 - [flows/investigation_skills.md](flows/investigation_skills.md) - Investigation agent skills
 - [agents/pipeline_builder/skills.md](agents/pipeline_builder/skills.md) - Pipeline builder skills
